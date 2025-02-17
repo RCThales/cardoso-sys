@@ -1,14 +1,30 @@
-
 import { useState, useEffect } from "react";
-import { calculateTotalPrice, PRODUCTS, getProductConstants } from "../utils/priceCalculator";
+import {
+  calculateTotalPrice,
+  PRODUCTS,
+  getProductConstants,
+} from "../utils/priceCalculator";
 import { Slider } from "./ui/slider";
 import { Card } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { motion } from "framer-motion";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "./ui/select";
 import { Button } from "./ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "./ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "./ui/dialog";
 import { Info } from "lucide-react";
+import React from "react";
 
 const SPECIAL_RATES = [
   { days: 10, price: 40 },
@@ -38,7 +54,7 @@ export const RentalCalculator = () => {
         <div className="space-y-8">
           <div className="text-center space-y-2">
             <Badge variant="secondary" className="mb-2">
-              Calculadora de Aluguel
+              <>Calculadora de Aluguel</>
             </Badge>
             <h1 className="text-4xl font-semibold tracking-tight">
               Calcule seu Aluguel
@@ -71,7 +87,9 @@ export const RentalCalculator = () => {
 
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Duração do Aluguel</span>
-                <span className="text-sm text-muted-foreground">{days} dias</span>
+                <span className="text-sm text-muted-foreground">
+                  {days} dias
+                </span>
               </div>
               <Slider
                 value={[days]}
@@ -90,7 +108,9 @@ export const RentalCalculator = () => {
               className="p-6 rounded-lg bg-secondary/50"
             >
               <div className="text-center space-y-2">
-                <span className="text-sm text-muted-foreground">Preço Total</span>
+                <span className="text-sm text-muted-foreground">
+                  Preço Total
+                </span>
                 <div className="text-5xl font-semibold tracking-tight">
                   R${price.toFixed(2)}
                 </div>
@@ -101,18 +121,20 @@ export const RentalCalculator = () => {
             </motion.div>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
-              {SPECIAL_RATES.map(({ days: specialDays, price: specialPrice }) => (
-                <Card
-                  key={specialDays}
-                  className="p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors"
-                  onClick={() => setDays(specialDays)}
-                >
-                  <div className="font-medium">{specialDays} dias</div>
-                  <div className="text-sm text-muted-foreground">
-                    R${specialPrice}
-                  </div>
-                </Card>
-              ))}
+              {SPECIAL_RATES.map(
+                ({ days: specialDays, price: specialPrice }) => (
+                  <Card
+                    key={specialDays}
+                    className="p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors"
+                    onClick={() => setDays(specialDays)}
+                  >
+                    <div className="font-medium">{specialDays} dias</div>
+                    <div className="text-sm text-muted-foreground">
+                      R${specialPrice}
+                    </div>
+                  </Card>
+                )
+              )}
             </div>
           </div>
         </div>
