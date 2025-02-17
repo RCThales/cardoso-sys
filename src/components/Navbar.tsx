@@ -16,9 +16,12 @@ export const Navbar = () => {
   return (
     <nav className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
-        <div className="flex gap-2 items-center mr-4">
+        <div 
+          className="flex gap-2 items-center mr-4 cursor-pointer" 
+          onClick={() => navigate("/")}
+        >
           <Calculator className="h-6 w-6" />
-          <span className="font-semibold">Cardoso Calc</span>
+          <span className="font-semibold">CARDOSO SYS</span>
         </div>
         <div className="flex-1" />
         <LocaleToggle />
