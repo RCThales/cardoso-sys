@@ -30,21 +30,21 @@ export const RentalCalculator = () => {
       <div className="space-y-8">
         <div className="text-center space-y-2">
           <Badge variant="secondary" className="mb-2">
-            Rental Calculator
+            Calculadora de Aluguel
           </Badge>
           <h1 className="text-4xl font-semibold tracking-tight">
-            Calculate Your Rental
+            Calcule seu Aluguel
           </h1>
           <p className="text-muted-foreground">
-            Adjust the slider to see your rental price
+            Ajuste o controle deslizante para ver o preço do aluguel
           </p>
         </div>
 
         <div className="space-y-6">
           <div className="space-y-4">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-medium">Rental Duration</span>
-              <span className="text-sm text-muted-foreground">{days} days</span>
+              <span className="text-sm font-medium">Duração do Aluguel</span>
+              <span className="text-sm text-muted-foreground">{days} dias</span>
             </div>
             <Slider
               value={[days]}
@@ -63,12 +63,12 @@ export const RentalCalculator = () => {
             className="p-6 rounded-lg bg-secondary/50"
           >
             <div className="text-center space-y-2">
-              <span className="text-sm text-muted-foreground">Total Price</span>
+              <span className="text-sm text-muted-foreground">Preço Total</span>
               <div className="text-5xl font-semibold tracking-tight">
-                ${price.toFixed(2)}
+                R${price.toFixed(2)}
               </div>
               <div className="text-sm text-muted-foreground">
-                {price / days <= 2 && "Best value!"}
+                {price / days <= 2 && "Melhor valor!"}
               </div>
             </div>
           </motion.div>
@@ -80,9 +80,9 @@ export const RentalCalculator = () => {
                 className="p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors"
                 onClick={() => setDays(specialDays)}
               >
-                <div className="font-medium">{specialDays} days</div>
+                <div className="font-medium">{specialDays} dias</div>
                 <div className="text-sm text-muted-foreground">
-                  ${specialPrice}
+                  R${specialPrice}
                 </div>
               </Card>
             ))}
