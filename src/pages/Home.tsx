@@ -35,7 +35,7 @@ const menuItems = [
     route: "/temp3",
     color: "from-orange-500 to-yellow-500",
   },
-];
+] as const;
 
 const Home = () => {
   const navigate = useNavigate();
