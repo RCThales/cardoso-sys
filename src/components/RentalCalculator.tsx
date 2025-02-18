@@ -114,7 +114,6 @@ export const RentalCalculator = () => {
   };
 
   const selectedProductData = products?.find(p => p.id === selectedProduct);
-  const constants = selectedProductData?.constants;
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
 
   const handleAddToCart = () => {
@@ -186,7 +185,9 @@ export const RentalCalculator = () => {
                   <SelectContent>
                     {products.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.name}
+                        {product.name} {product.sizes && product.sizes.length > 0 
+                          ? "(verificar tamanhos)"
+                          : `(${getAvailableQuantity(product.id)} disponíveis)`}
                       </SelectItem>
                     ))}
                   </SelectContent>

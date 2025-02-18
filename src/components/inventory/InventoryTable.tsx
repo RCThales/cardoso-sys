@@ -178,7 +178,7 @@ export const InventoryTable = () => {
                   <div className="mt-2 space-y-1">
                     {items.map(item => (
                       <div key={item.id} className="flex justify-between text-sm text-muted-foreground">
-                        <span>Tamanho {item.size}</span>
+                        <span>{item.size}</span>
                         <span className="ml-4">{item.total_quantity - item.rented_quantity} disponíveis</span>
                       </div>
                     ))}
