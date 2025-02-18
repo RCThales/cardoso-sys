@@ -18,25 +18,27 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
     },
   },
   "muletas-canadenses": {
-    CONSTANTE_VALOR_ALUGUEL_A: 4.2,
-    CONSTANTE_VALOR_ALUGUEL_B: 2.1,
-    REGRESSION_DISCOUNT: 0.055, // Valor específico
+    CONSTANTE_VALOR_ALUGUEL_A: 3.72,
+    CONSTANTE_VALOR_ALUGUEL_B: 1.89,
+    REGRESSION_DISCOUNT: 0.0608, // Valor específico
     SPECIAL_RATES: {
-      7: 35,
-      10: 45,
-      15: 55,
-      30: 80,
+      7: 30,
+      10: 40,
+      15: 50,
+      30: 75,
     },
   },
   "botas-ortopedicas": {
-    CONSTANTE_VALOR_ALUGUEL_A: 4.5,
-    CONSTANTE_VALOR_ALUGUEL_B: 2.5,
-    REGRESSION_DISCOUNT: 0.0608, // Valor específico
+    CONSTANTE_VALOR_ALUGUEL_A: 5.92,
+    CONSTANTE_VALOR_ALUGUEL_B: 1.85,
+    REGRESSION_DISCOUNT: 0.065, // Valor específico
     SPECIAL_RATES: {
+      5: 30,
       7: 40,
       10: 50,
       15: 60,
-      30: 90,
+      20: 70,
+      30: 80,
     },
   },
   "sandalias-baruk": {
@@ -77,6 +79,7 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
 export function calculateDailyRate(rentalDays: number, productId: string) {
   const constants = PRODUCT_CONSTANTS[productId];
 
+  console.log(Math.exp(-constants.REGRESSION_DISCOUNT * rentalDays));
   return (
     constants.CONSTANTE_VALOR_ALUGUEL_A *
       Math.exp(-constants.REGRESSION_DISCOUNT * rentalDays) +
@@ -92,11 +95,9 @@ export function calculateTotalPrice(rentalDays: number, productId: string) {
   const constants = PRODUCT_CONSTANTS[productId];
   const days = Math.max(1, Math.min(365, rentalDays));
 
-  /*
   if (constants.SPECIAL_RATES[days] !== undefined) {
     return constants.SPECIAL_RATES[days];
   }
-  */
 
   const totalPrice = calculateDailyRate(days, productId) * days;
   return roundToNearestHalf(totalPrice);
