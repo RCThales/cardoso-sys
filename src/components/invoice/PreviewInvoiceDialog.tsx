@@ -61,6 +61,9 @@ export const PreviewInvoiceDialog = ({
               <p>Data: {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}</p>
               <p>Vencimento: {format(parseISO(invoice.due_date), "dd/MM/yyyy")}</p>
               <p>Status: {invoice.is_paid ? "Pago" : "Pendente"}</p>
+              {invoice.is_paid && invoice.payment_method && (
+                <p>Forma de Pagamento: {invoice.payment_method}</p>
+              )}
             </div>
           </div>
 
@@ -70,6 +73,7 @@ export const PreviewInvoiceDialog = ({
               <TableHeader>
                 <TableRow>
                   <TableHead>Descrição</TableHead>
+                  <TableHead>Dias</TableHead>
                   <TableHead>Quantidade</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                 </TableRow>
@@ -78,6 +82,7 @@ export const PreviewInvoiceDialog = ({
                 {invoice.items.map((item, index) => (
                   <TableRow key={index}>
                     <TableCell>{item.description}</TableCell>
+                    <TableCell>{item.rentalDays}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
                     <TableCell className="text-right">R$ {formatCurrency(item.total)}</TableCell>
                   </TableRow>
@@ -85,6 +90,30 @@ export const PreviewInvoiceDialog = ({
               </TableBody>
             </Table>
           </div>
+
+          {invoice.extensions && invoice.extensions.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-2">Extensões do Aluguel</h3>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Data</TableHead>
+                    <TableHead>Dias Adicionais</TableHead>
+                    <TableHead className="text-right">Custo Adicional</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invoice.extensions.map((extension, index) => (
+                    <TableRow key={index}>
+                      <TableCell>{format(parseISO(extension.date), "dd/MM/yyyy")}</TableCell>
+                      <TableCell>{extension.days}</TableCell>
+                      <TableCell className="text-right">R$ {formatCurrency(extension.additionalCost)}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
+          )}
 
           <div className="text-right space-y-1">
             <p className="font-semibold">Total: R$ {formatCurrency(invoice.total)}</p>

@@ -1,18 +1,19 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
 import { useToast } from "./ui/use-toast";
 import { Invoice, convertDatabaseInvoice } from "./invoice/types";
 import { formatCurrency } from "@/utils/formatters";
-import { saveAs } from 'file-saver';
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
-import { useNavigate } from "react-router-dom";
+import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
+import { saveAs } from "file-saver";
+import { generatePDF } from "@/utils/pdfGenerator";
 
 export const InvoiceHistory = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
+  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const { toast } = useToast();
-  const navigate = useNavigate();
 
   useEffect(() => {
     fetchInvoices();
@@ -33,7 +34,6 @@ export const InvoiceHistory = () => {
       return;
     }
 
-    // Convert database records to Invoice type
     const convertedInvoices = invoicesData.map(convertDatabaseInvoice);
     setInvoices(convertedInvoices);
   };
@@ -77,46 +77,25 @@ export const InvoiceHistory = () => {
     await fetchInvoices();
   };
 
-  const handleDownload = (invoice: Invoice) => {
-    const doc = new jsPDF();
-
-    // Cabeçalho
-    doc.text(`Fatura #${invoice.invoice_number}`, 10, 10);
-
-    // Informações do Cliente
-    doc.text(`Cliente: ${invoice.client_name}`, 10, 20);
-    doc.text(`CPF: ${invoice.client_cpf}`, 10, 25);
-    doc.text(`Telefone: ${invoice.client_phone}`, 10, 30);
-    doc.text(`Endereço: ${invoice.client_address}, ${invoice.client_address_number} ${invoice.client_address_complement} - ${invoice.client_city}, ${invoice.client_state} - ${invoice.client_postal_code}`, 10, 35);
-
-    // Tabela de Itens
-    const columns = ["Descrição", "Quantidade", "Preço Unitário", "Total"];
-    const rows = invoice.items.map(item => [item.description, item.quantity, formatCurrency(item.price), formatCurrency(item.total)]);
-
-    autoTable(doc, {
-      head: [columns],
-      body: rows,
-      startY: 40,
-    });
-
-    const finalY = (doc as any).lastAutoTable.finalY;
-
-    // Totais
-    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 10, finalY + 10);
-    doc.text(`Data da Fatura: ${new Date(invoice.invoice_date).toLocaleDateString()}`, 10, finalY + 15);
-    doc.text(`Data de Vencimento: ${new Date(invoice.due_date).toLocaleDateString()}`, 10, finalY + 20);
-
-    doc.save(`fatura_${invoice.invoice_number}.pdf`);
+  const handlePreview = (invoice: Invoice) => {
+    setPreviewInvoice(invoice);
+    setPreviewOpen(true);
   };
 
-  const handlePreview = (invoice: Invoice) => {
-    navigate(`/invoice-preview/${invoice.id}`);
+  const handleDownload = async (invoice: Invoice) => {
+    try {
+      const pdfBlob = await generatePDF(invoice);
+      saveAs(pdfBlob, `fatura-${invoice.invoice_number}.pdf`);
+    } catch (error) {
+      toast({
+        title: "Erro ao gerar PDF",
+        description: "Não foi possível gerar o PDF da fatura",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleDelete = async (invoiceId: number) => {
-    const confirmDelete = window.confirm("Tem certeza que deseja excluir esta fatura?");
-    if (!confirmDelete) return;
-
     const { error } = await supabase
       .from("invoices")
       .delete()
@@ -124,30 +103,39 @@ export const InvoiceHistory = () => {
 
     if (error) {
       toast({
-        title: "Erro ao excluir fatura",
+        title: "Erro ao deletar fatura",
         description: error.message,
         variant: "destructive",
       });
       return;
     }
 
-    toast({
-      title: "Fatura excluída",
-      description: "Fatura excluída com sucesso.",
-    });
-
     await fetchInvoices();
+    toast({
+      title: "Fatura deletada",
+      description: "A fatura foi deletada com sucesso",
+    });
   };
 
   return (
-    <InvoiceTable
-      invoices={invoices}
-      onTogglePaid={handleTogglePaid}
-      onToggleReturned={handleToggleReturned}
-      onDownload={handleDownload}
-      onPreview={handlePreview}
-      onDelete={handleDelete}
-      formatCurrency={formatCurrency}
-    />
+    <>
+      <InvoiceTable
+        invoices={invoices}
+        onTogglePaid={handleTogglePaid}
+        onToggleReturned={handleToggleReturned}
+        onDownload={handleDownload}
+        onPreview={handlePreview}
+        onDelete={handleDelete}
+        formatCurrency={formatCurrency}
+      />
+
+      <PreviewInvoiceDialog
+        invoice={previewInvoice}
+        open={previewOpen}
+        onOpenChange={setPreviewOpen}
+        onDownload={handleDownload}
+        formatCurrency={formatCurrency}
+      />
+    </>
   );
 };
