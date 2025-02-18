@@ -8,6 +8,7 @@ import { useState } from "react";
 import { InventorySearch } from "./InventorySearch";
 import { InventoryFilters } from "./InventoryFilters";
 import { InventoryTableRow } from "./InventoryTableRow";
+import { InventoryAdjustModal } from "./InventoryAdjustModal";
 
 export const InventoryTable = () => {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -15,7 +16,10 @@ export const InventoryTable = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showRented, setShowRented] = useState(false);
   const [showAvailable, setShowAvailable] = useState(false);
-  const [adjustQuantity, setAdjustQuantity] = useState<Record<number, number>>({});
+  const [selectedItem, setSelectedItem] = useState<{
+    item: any;
+    product: any;
+  } | null>(null);
   const { toast } = useToast();
 
   const { data: inventory, isLoading, refetch } = useQuery({
@@ -34,7 +38,7 @@ export const InventoryTable = () => {
     queryFn: fetchProducts,
   });
 
-  const handleUpdateQuantity = async (itemId: number, change: number) => {
+  const handleUpdateQuantity = async (itemId: number, change: number, adjustValue: number) => {
     if (isUpdating) return;
 
     try {
@@ -42,8 +46,7 @@ export const InventoryTable = () => {
       const item = inventory?.find(i => i.id === itemId);
       if (!item) return;
 
-      const adjustmentValue = adjustQuantity[itemId] || 1;
-      const newQuantity = Math.max(0, item.total_quantity + (change * adjustmentValue));
+      const newQuantity = Math.max(0, item.total_quantity + (change * adjustValue));
       
       const { error } = await supabase
         .from('inventory')
@@ -58,6 +61,8 @@ export const InventoryTable = () => {
         title: "Sucesso",
         description: "Quantidade atualizada com sucesso",
       });
+      
+      setSelectedItem(null);
     } catch (error) {
       toast({
         title: "Erro",
@@ -67,14 +72,6 @@ export const InventoryTable = () => {
     } finally {
       setIsUpdating(false);
     }
-  };
-
-  const handleAdjustQuantityChange = (itemId: number, value: string) => {
-    const numValue = parseInt(value) || 1;
-    setAdjustQuantity(prev => ({
-      ...prev,
-      [itemId]: Math.max(1, numValue)
-    }));
   };
 
   if (isLoading || !products) {
@@ -124,7 +121,6 @@ export const InventoryTable = () => {
             <TableHead className="text-right">Quantidade Total</TableHead>
             <TableHead className="text-right">Quantidade Alugada</TableHead>
             <TableHead className="text-right">Quantidade Disponível</TableHead>
-            <TableHead className="text-right">Ajuste</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -137,15 +133,23 @@ export const InventoryTable = () => {
                 key={item.id}
                 item={item}
                 product={product}
-                adjustQuantity={adjustQuantity[item.id] || 1}
-                isUpdating={isUpdating}
-                onAdjustQuantityChange={(value) => handleAdjustQuantityChange(item.id, value)}
-                onUpdateQuantity={(change) => handleUpdateQuantity(item.id, change)}
+                onAdjustClick={() => setSelectedItem({ item, product })}
               />
             );
           })}
         </TableBody>
       </Table>
+
+      {selectedItem && (
+        <InventoryAdjustModal
+          open={!!selectedItem}
+          onOpenChange={(open) => !open && setSelectedItem(null)}
+          item={selectedItem.item}
+          product={selectedItem.product}
+          onUpdateQuantity={handleUpdateQuantity}
+          isUpdating={isUpdating}
+        />
+      )}
     </div>
   );
 };

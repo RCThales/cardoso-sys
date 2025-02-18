@@ -1,8 +1,7 @@
 
 import { Button } from "../ui/button";
-import { Input } from "../ui/input";
 import { TableCell, TableRow } from "../ui/table";
-import { Plus, Minus } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 interface InventoryTableRowProps {
   item: {
@@ -15,19 +14,13 @@ interface InventoryTableRowProps {
     product_code: string;
     name: string;
   } | undefined;
-  adjustQuantity: number;
-  isUpdating: boolean;
-  onAdjustQuantityChange: (value: string) => void;
-  onUpdateQuantity: (change: number) => void;
+  onAdjustClick: () => void;
 }
 
 export const InventoryTableRow = ({
   item,
   product,
-  adjustQuantity,
-  isUpdating,
-  onAdjustQuantityChange,
-  onUpdateQuantity,
+  onAdjustClick,
 }: InventoryTableRowProps) => {
   const availableQuantity = item.total_quantity - item.rented_quantity;
 
@@ -39,33 +32,15 @@ export const InventoryTableRow = ({
       <TableCell className="text-right">{item.rented_quantity}</TableCell>
       <TableCell className="text-right">{availableQuantity}</TableCell>
       <TableCell className="text-right">
-        <Input
-          type="number"
-          min="1"
-          value={adjustQuantity}
-          onChange={(e) => onAdjustQuantityChange(e.target.value)}
-          className="w-20 text-right"
-        />
-      </TableCell>
-      <TableCell className="text-right">
-        <div className="flex justify-end gap-2">
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onUpdateQuantity(-1)}
-            disabled={isUpdating || item.total_quantity <= item.rented_quantity}
-          >
-            <Minus className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="outline"
-            size="icon"
-            onClick={() => onUpdateQuantity(1)}
-            disabled={isUpdating}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={onAdjustClick}
+          className="ml-auto"
+        >
+          <Pencil className="h-4 w-4 mr-2" />
+          Ajustar Quantidade
+        </Button>
       </TableCell>
     </TableRow>
   );
