@@ -55,12 +55,17 @@ const SortableSizeItem = ({ size, quantity, onQuantityChange, onRemove }: Sortab
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    cursor: 'grab',
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="flex items-center gap-2 mb-2">
-      <Badge variant="secondary" className="px-2 py-1 min-w-[60px]">
+    <div style={style} className="flex items-center gap-2 mb-2">
+      <Badge 
+        variant="secondary" 
+        className="px-2 py-1 min-w-[60px] cursor-grab"
+        ref={setNodeRef}
+        {...attributes}
+        {...listeners}
+      >
         {size}
         <button
           type="button"
