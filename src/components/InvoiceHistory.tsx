@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import {
@@ -25,14 +24,12 @@ import { useToast } from "./ui/use-toast";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
-// Extendendo o tipo jsPDF para incluir autoTable
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => void;
   }
 }
 
-// Atualizando a interface Invoice para usar Json do Supabase
 interface InvoiceItem {
   description: string;
   quantity: number;
@@ -75,10 +72,16 @@ export const InvoiceHistory = () => {
       .order("created_at", { ascending: false });
 
     if (data) {
-      // Convertendo os dados para o tipo Invoice[]
       const formattedInvoices: Invoice[] = data.map(invoice => ({
         ...invoice,
-        items: invoice.items as InvoiceItem[],
+        items: (invoice.items as any[]).map(item => ({
+          description: item.description as string,
+          quantity: Number(item.quantity),
+          price: Number(item.price),
+          total: Number(item.total),
+          productId: item.productId as string | undefined,
+          rentalDays: item.rentalDays ? Number(item.rentalDays) : undefined
+        })),
         created_at: invoice.created_at || new Date().toISOString(),
         payment_received: invoice.payment_received || 0
       }));
@@ -113,12 +116,10 @@ export const InvoiceHistory = () => {
   const generatePDF = (invoice: Invoice) => {
     const doc = new jsPDF();
     
-    // Add logo
     const img = new Image();
     img.src = "/lovable-uploads/e9185795-25bc-4086-a973-5a5ff9e3c108.png";
     doc.addImage(img, "PNG", 15, 15, 60, 20);
 
-    // Company info
     doc.setFontSize(10);
     doc.text("Cardoso Aluguel de Muletas e Produtos Ortopédicos", 15, 45);
     doc.text("CNPJ: 57.684.914/0001-36", 15, 50);
@@ -126,13 +127,11 @@ export const InvoiceHistory = () => {
     doc.text("Brasília Distrito Federal 71926250", 15, 60);
     doc.text("cardosoalugueldemuletas@gmail.com", 15, 65);
 
-    // Invoice info
     doc.setFontSize(20);
     doc.text("FATURA", 150, 30);
     doc.setFontSize(12);
     doc.text(`Nº ${invoice.invoice_number}`, 150, 40);
 
-    // Client info
     doc.setFontSize(10);
     doc.text("PARA:", 15, 80);
     doc.text(invoice.client_name, 15, 85);
@@ -140,11 +139,9 @@ export const InvoiceHistory = () => {
     doc.text(`${invoice.client_city} - ${invoice.client_state}`, 15, 95);
     doc.text(invoice.client_postal_code, 15, 100);
 
-    // Dates
     doc.text(`Data da Fatura: ${format(new Date(invoice.invoice_date), "dd/MM/yyyy")}`, 150, 80);
     doc.text(`Vencimento: ${format(new Date(invoice.due_date), "dd/MM/yyyy")}`, 150, 85);
 
-    // Items table
     const tableData = invoice.items.map((item: InvoiceItem) => [
       item.description,
       item.quantity,
@@ -158,14 +155,12 @@ export const InvoiceHistory = () => {
       body: tableData,
     });
 
-    // Totals
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.text(`Subtotal: R$ ${invoice.total.toFixed(2)}`, 150, finalY);
     doc.text(`Total: R$ ${invoice.total.toFixed(2)}`, 150, finalY + 5);
     doc.text(`Pago: R$ ${invoice.payment_received.toFixed(2)}`, 150, finalY + 10);
     doc.text(`Saldo Devido: R$ ${invoice.balance_due.toFixed(2)}`, 150, finalY + 15);
 
-    // Footer
     doc.setFontSize(8);
     doc.text("Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços,", 15, 270);
     doc.text("conforme lei complementar 116/2003.", 15, 275);
