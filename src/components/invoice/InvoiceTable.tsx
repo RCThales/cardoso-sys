@@ -156,10 +156,10 @@ export const InvoiceTable = ({
                 {invoice.invoice_number}
                 {invoice.extensions?.length > 0 && (
                   <div className="text-xs text-muted-foreground mt-1">
-                    Extensões: {invoice.extensions.map((ext: any, idx: number) => (
+                    Extensões: {invoice.extensions.map((ext: InvoiceExtension, idx: number) => (
                       <span key={idx}>
                         {format(parseISO(ext.date), "dd/MM/yyyy")} (+{ext.days} dias)
-                        {idx < invoice.extensions.length - 1 ? ", " : ""}
+                        {idx < (invoice.extensions?.length || 0) - 1 ? ", " : ""}
                       </span>
                     ))}
                   </div>
