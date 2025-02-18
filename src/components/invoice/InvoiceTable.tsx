@@ -13,6 +13,7 @@ import { Switch } from "../ui/switch";
 import { Download, Eye, Trash2 } from "lucide-react";
 import { Invoice } from "./types";
 import { cn } from "@/lib/utils";
+import { useToast } from "../ui/use-toast";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -33,6 +34,20 @@ export const InvoiceTable = ({
   onDelete,
   formatCurrency,
 }: InvoiceTableProps) => {
+  const { toast } = useToast();
+
+  const handleReturnedToggle = (invoice: Invoice) => {
+    if (!invoice.is_paid) {
+      toast({
+        title: "Ação não permitida",
+        description: "A fatura precisa estar paga para marcar como devolvido",
+        variant: "destructive",
+      });
+      return;
+    }
+    onToggleReturned(invoice.id, invoice.is_returned);
+  };
+
   return (
     <Table>
       <TableHeader>
@@ -73,7 +88,8 @@ export const InvoiceTable = ({
             <TableCell>
               <Switch
                 checked={invoice.is_returned}
-                onCheckedChange={() => onToggleReturned(invoice.id, invoice.is_returned)}
+                onCheckedChange={() => handleReturnedToggle(invoice)}
+                disabled={!invoice.is_paid}
               />
             </TableCell>
             <TableCell className="text-right space-x-2">
