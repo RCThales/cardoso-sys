@@ -104,6 +104,14 @@ export const InvoiceGenerator = () => {
 
   const discountOptions = Array.from({ length: 21 }, (_, i) => i * 5);
 
+  const isFormValid = useMemo(() => validateRequiredFields(), [
+    clientData.name,
+    clientData.cpf,
+    clientData.phone,
+    clientData.postalCode,
+    items.length
+  ]);
+
   if (!products) {
     return <div>Carregando...</div>;
   }
@@ -187,7 +195,7 @@ export const InvoiceGenerator = () => {
           <Button 
             onClick={handleGenerateInvoice} 
             className="w-full md:w-auto"
-            disabled={!validateRequiredFields()}
+            disabled={!isFormValid}
           >
             Gerar Fatura e Finalizar
           </Button>
