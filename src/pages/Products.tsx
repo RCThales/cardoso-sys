@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -50,6 +51,7 @@ const Products = () => {
     setBasePrice(product.base_price.toString());
     setSizes((product.sizes || []).map(s => s.size));
 
+    // Carregar quantidades do inventário
     const { data: inventoryData, error } = await supabase
       .from("inventory")
       .select("size, total_quantity")
@@ -64,6 +66,7 @@ const Products = () => {
       return;
     }
 
+    // Atualizar quantidades baseado nos dados do inventário
     const quantities = {};
     inventoryData.forEach(item => {
       quantities[item.size] = item.total_quantity;
@@ -166,6 +169,7 @@ const Products = () => {
       setName("");
       setBasePrice("");
       setSizes([]);
+      setQuantities({});
       refetch();
     } catch (error) {
       toast({
@@ -219,6 +223,7 @@ const Products = () => {
     setName("");
     setBasePrice("");
     setSizes([]);
+    setQuantities({});
   };
 
   return (
@@ -265,7 +270,7 @@ const Products = () => {
               selectedProduct={selectedProduct}
               sizes={sizes}
               setSizes={setSizes}
-              quantities={quantities}
+              initialQuantities={quantities}
             />
           </DialogContent>
         </Dialog>
