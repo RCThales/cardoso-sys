@@ -1,12 +1,18 @@
-
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
-import { Calculator, LineChart, Package, ShoppingBag, DollarSign, Wallet } from "lucide-react";
+import {
+  Calculator,
+  LineChart,
+  Package,
+  ShoppingBag,
+  DollarSign,
+  Wallet,
+} from "lucide-react";
 
 const menuItems = [
   {
-    title: "Calculadora",
+    title: "Aluguel",
     description: "Calculadora de aluguéis",
     icon: Calculator,
     route: "/calc",
@@ -56,9 +62,7 @@ const Home = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container py-8">
-        <h1 className="text-3xl font-bold tracking-tight mb-6">
-          Bem-vindo(a)
-        </h1>
+        <h1 className="text-3xl font-bold tracking-tight mb-6">Bem-vindo(a)</h1>
         <p className="text-muted-foreground mb-8">
           Selecione uma opção abaixo para começar
         </p>
@@ -73,7 +77,9 @@ const Home = () => {
                 <div className="flex-grow flex items-center justify-center">
                   <item.icon className="h-12 w-12" />
                 </div>
-                <h2 className="text-lg font-semibold mt-4 text-center">{item.title}</h2>
+                <h2 className="text-lg font-semibold mt-4 text-center">
+                  {item.title}
+                </h2>
                 <p className="text-sm mt-2 text-center text-white/80">
                   {item.description}
                 </p>
