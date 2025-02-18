@@ -8,6 +8,7 @@ import { useInvoiceGeneration } from "@/hooks/useInvoiceGeneration";
 import { Input } from "./ui/input";
 import { useCartStore } from "@/store/cartStore";
 import { useEffect } from "react";
+import { PRODUCTS } from "@/utils/priceCalculator";
 
 export const InvoiceGenerator = () => {
   const {
