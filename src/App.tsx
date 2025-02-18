@@ -9,6 +9,7 @@ import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import Placeholder from "./pages/Placeholder";
+import InvoicePage from "./pages/InvoicePage";
 
 const queryClient = new QueryClient();
 
@@ -21,7 +22,7 @@ const App = () => (
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/calc" element={<Index />} />
-          <Route path="/temp1" element={<Placeholder />} />
+          <Route path="/temp1" element={<InvoicePage />} />
           <Route path="/temp2" element={<Placeholder />} />
           <Route path="/temp3" element={<Placeholder />} />
           <Route path="/auth" element={<Auth />} />
