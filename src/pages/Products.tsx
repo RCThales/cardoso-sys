@@ -1,10 +1,9 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Trash2, Pencil } from "lucide-react";
-import { useState } from "react";
+import { Plus, Trash2, Pencil, Search } from "lucide-react";
+import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +17,7 @@ const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [name, setName] = useState("");
   const [basePrice, setBasePrice] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
   const { data: products, refetch } = useQuery({
@@ -28,6 +28,18 @@ const Products = () => {
       return data as unknown as Product[];
     },
   });
+
+  const filteredProducts = useMemo(() => {
+    if (!products) return [];
+    if (!searchTerm) return products;
+
+    const searchTermLower = searchTerm.toLowerCase();
+    return products.filter(
+      (product) =>
+        product.name.toLowerCase().includes(searchTermLower) ||
+        product.product_code.toLowerCase().includes(searchTermLower)
+    );
+  }, [products, searchTerm]);
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
@@ -147,8 +159,18 @@ const Products = () => {
           </Button>
         </div>
 
+        <div className="relative mb-6">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+          <Input
+            className="pl-10"
+            placeholder="Buscar por nome ou código do produto..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {products?.map((product) => (
+          {filteredProducts.map((product) => (
             <Card key={product.id} className="p-6">
               <div className="flex justify-between items-start">
                 <div>
