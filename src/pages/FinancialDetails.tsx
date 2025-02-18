@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
@@ -41,7 +40,7 @@ const FinancialDetails = () => {
       const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-      // Fetch invoices
+      // Fetch invoices for the specific month
       const { data: invoices, error: invoicesError } = await supabase
         .from("invoices")
         .select("*")
@@ -53,7 +52,7 @@ const FinancialDetails = () => {
         return;
       }
 
-      // Fetch investments
+      // Fetch all investments
       const { data: investments, error: investmentsError } = await supabase
         .from("investments")
         .select("amount");
@@ -65,31 +64,30 @@ const FinancialDetails = () => {
 
       const totalInvestment = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
 
-      const financialSummary = invoices.reduce(
-        (acc: FinancialSummary, invoice: InvoiceRow) => {
-          acc.grossIncome += Number(invoice.total);
-          const expenses = Number(invoice.total) * 0.2;
-          acc.expenses += expenses;
-          acc.netProfit += Number(invoice.total) - expenses;
-          acc.invoiceCount++;
-          return acc;
-        },
-        {
-          grossIncome: 0,
-          expenses: 0,
-          netProfit: 0,
-          totalInvestment,
-          invoiceCount: 0,
-          averageTicket: 0,
-        }
-      );
+      // Calcular o resumo financeiro
+      let grossIncome = 0;
+      let expenses = 0;
+      let invoiceCount = 0;
 
-      financialSummary.averageTicket = 
-        financialSummary.invoiceCount > 0 
-          ? financialSummary.grossIncome / financialSummary.invoiceCount 
-          : 0;
+      invoices.forEach((invoice: InvoiceRow) => {
+        grossIncome += Number(invoice.total);
+        expenses += Number(invoice.total) * 0.2;
+        invoiceCount++;
+      });
 
-      setSummary(financialSummary);
+      // Calcular o lucro líquido subtraindo despesas E investimentos
+      const netProfit = grossIncome - expenses - totalInvestment;
+
+      const averageTicket = invoiceCount > 0 ? grossIncome / invoiceCount : 0;
+
+      setSummary({
+        grossIncome,
+        expenses,
+        netProfit,
+        totalInvestment,
+        invoiceCount,
+        averageTicket,
+      });
     };
 
     fetchData();
@@ -162,7 +160,7 @@ const FinancialDetails = () => {
                 R$ {formatCurrency(summary.netProfit)}
               </div>
               <p className="text-xs text-muted-foreground">
-                Após descontos e despesas
+                Após despesas e investimentos
               </p>
             </CardContent>
           </Card>
