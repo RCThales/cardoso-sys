@@ -61,6 +61,12 @@ export const useInvoiceGeneration = () => {
 
     newItems[index] = item;
     setItems(newItems);
+    
+    console.log("Item atualizado:", {
+      field,
+      value,
+      item: newItems[index]
+    });
   };
 
   const removeItem = (index: number) => {
@@ -68,10 +74,20 @@ export const useInvoiceGeneration = () => {
   };
 
   const calculateSubtotal = (): number => {
-    return items.reduce((sum, item) => {
+    const total = items.reduce((sum, item) => {
       const itemTotal = typeof item.total === 'number' ? item.total : 0;
       return sum + itemTotal;
     }, 0);
+    
+    console.log("Calculando total:", {
+      items: items.map(item => ({
+        description: item.description,
+        total: item.total
+      })),
+      totalCalculado: total
+    });
+    
+    return total;
   };
 
   const generateInvoice = async () => {
@@ -107,8 +123,7 @@ export const useInvoiceGeneration = () => {
         return;
       }
 
-      const subtotal = calculateSubtotal();
-      const total = subtotal;
+      const total = calculateSubtotal();
       const invoiceNumber = `INV-${Date.now()}`;
       const today = new Date();
       const dueDate = new Date();
@@ -120,6 +135,11 @@ export const useInvoiceGeneration = () => {
         price: Number(item.price) || 0,
         total: Number(item.total) || 0
       })) as Json;
+
+      console.log("Enviando para o banco:", {
+        items: itemsForDb,
+        total
+      });
 
       const { error } = await supabase.from("invoices").insert({
         invoice_number: invoiceNumber,
@@ -136,7 +156,7 @@ export const useInvoiceGeneration = () => {
         due_date: format(dueDate, "yyyy-MM-dd"),
         payment_terms: "30 dias",
         items: itemsForDb,
-        subtotal,
+        subtotal: total,
         total,
         is_paid: clientData.isPaid,
         user_id: user.id,

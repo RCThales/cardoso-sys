@@ -39,12 +39,24 @@ export const InvoiceItems = ({
       const item = items[index];
       const rentalDays = Number(item.rentalDays) || 1;
       const quantity = Number(item.quantity) || 1;
-      const total = calculateTotalPrice(rentalDays, productId) * quantity;
+      const dailyPrice = calculateTotalPrice(rentalDays, productId);
+      const total = dailyPrice * quantity;
       
+      // Primeiro atualiza o productId e a descrição
       onUpdateItem(index, "productId", productId);
       onUpdateItem(index, "description", selectedProduct.name);
-      onUpdateItem(index, "price", total.toString());
+      
+      // Depois atualiza o preço e o total
+      onUpdateItem(index, "price", dailyPrice.toString());
       onUpdateItem(index, "total", total.toString());
+      
+      console.log("Produto selecionado:", {
+        name: selectedProduct.name,
+        dailyPrice,
+        total,
+        quantity,
+        rentalDays
+      });
     }
   };
 
@@ -53,10 +65,11 @@ export const InvoiceItems = ({
     if (item.productId) {
       const rentalDays = Number(days) || 1;
       const quantity = Number(item.quantity) || 1;
-      const total = calculateTotalPrice(rentalDays, item.productId) * quantity;
+      const dailyPrice = calculateTotalPrice(rentalDays, item.productId);
+      const total = dailyPrice * quantity;
       
       onUpdateItem(index, "rentalDays", days);
-      onUpdateItem(index, "price", total.toString());
+      onUpdateItem(index, "price", dailyPrice.toString());
       onUpdateItem(index, "total", total.toString());
     }
   };
@@ -66,7 +79,8 @@ export const InvoiceItems = ({
     if (item.productId && item.rentalDays) {
       const quantityNum = Number(quantity) || 1;
       const rentalDays = Number(item.rentalDays) || 1;
-      const total = calculateTotalPrice(rentalDays, item.productId) * quantityNum;
+      const dailyPrice = calculateTotalPrice(rentalDays, item.productId);
+      const total = dailyPrice * quantityNum;
       
       onUpdateItem(index, "quantity", quantity);
       onUpdateItem(index, "total", total.toString());
@@ -104,7 +118,7 @@ export const InvoiceItems = ({
             >
               <SelectTrigger className="h-10">
                 <SelectValue placeholder="Selecione um produto">
-                  {PRODUCTS.find(p => p.id === item.productId)?.name || "Selecione um produto"}
+                  {item.description || "Selecione um produto"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>
