@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,6 +19,35 @@ interface ClientData {
   deliveryFee: number;
 }
 
+const validateCPF = (cpf: string) => {
+  const strCPF = cpf.replace(/[^\d]/g, '');
+  if (strCPF.length !== 11) return false;
+  
+  if (strCPF === '00000000000') return false;
+  
+  let sum = 0;
+  let rest;
+  
+  for (let i = 1; i <= 9; i++) {
+    sum = sum + parseInt(strCPF.substring(i-1, i)) * (11 - i);
+  }
+  
+  rest = (sum * 10) % 11;
+  if ((rest === 10) || (rest === 11)) rest = 0;
+  if (rest !== parseInt(strCPF.substring(9, 10))) return false;
+  
+  sum = 0;
+  for (let i = 1; i <= 10; i++) {
+    sum = sum + parseInt(strCPF.substring(i-1, i)) * (12 - i);
+  }
+  
+  rest = (sum * 10) % 11;
+  if ((rest === 10) || (rest === 11)) rest = 0;
+  if (rest !== parseInt(strCPF.substring(10, 11))) return false;
+  
+  return true;
+};
+
 export const useInvoiceGeneration = () => {
   const { toast } = useToast();
   const [items, setItems] = useState<InvoiceItem[]>([]);
@@ -36,6 +64,19 @@ export const useInvoiceGeneration = () => {
     isPaid: false,
     deliveryFee: 0,
   });
+
+  const validateRequiredFields = () => {
+    if (!clientData.name || !clientData.postalCode || !clientData.cpf || !clientData.phone) {
+      return false;
+    }
+    if (!validateCPF(clientData.cpf)) {
+      return false;
+    }
+    if (items.length === 0) {
+      return false;
+    }
+    return true;
+  };
 
   const addItem = () => {
     setItems([
@@ -80,21 +121,39 @@ export const useInvoiceGeneration = () => {
     return total;
   };
 
-  const generateInvoice = async () => {
-    try {
-      if (!clientData.name || !clientData.postalCode || !clientData.cpf || !clientData.phone) {
-        toast({
-          title: "Erro",
-          description: "Nome, CEP, CPF e telefone são obrigatórios",
-          variant: "destructive",
-        });
-        return;
+  const updateInventory = async (items: InvoiceItem[]) => {
+    for (const item of items) {
+      if (item.productId === 'delivery-fee') continue;
+      
+      const { data: inventoryItem, error: fetchError } = await supabase
+        .from('inventory')
+        .select('rented_quantity')
+        .eq('product_id', item.productId)
+        .single();
+
+      if (fetchError) {
+        throw new Error(`Erro ao buscar item do estoque: ${item.productId}`);
       }
 
-      if (items.length === 0) {
+      const { error: updateError } = await supabase
+        .from('inventory')
+        .update({ 
+          rented_quantity: (inventoryItem?.rented_quantity || 0) + item.quantity 
+        })
+        .eq('product_id', item.productId);
+
+      if (updateError) {
+        throw new Error(`Erro ao atualizar estoque: ${item.productId}`);
+      }
+    }
+  };
+
+  const generateInvoice = async () => {
+    try {
+      if (!validateRequiredFields()) {
         toast({
           title: "Erro",
-          description: "Adicione pelo menos um item à fatura",
+          description: "Por favor, preencha todos os campos obrigatórios e verifique se o CPF é válido",
           variant: "destructive",
         });
         return;
@@ -136,6 +195,8 @@ export const useInvoiceGeneration = () => {
         }
       ] as Json;
 
+      await updateInventory(items);
+
       const { error } = await supabase.from("invoices").insert({
         invoice_number: invoiceNumber,
         client_name: clientData.name,
@@ -164,7 +225,6 @@ export const useInvoiceGeneration = () => {
         description: "Fatura gerada com sucesso",
       });
 
-      // Limpar formulário
       setItems([]);
       setClientData({
         name: "",
@@ -185,6 +245,7 @@ export const useInvoiceGeneration = () => {
         description: "Erro ao gerar fatura",
         variant: "destructive",
       });
+      console.error(error);
     }
   };
 
@@ -198,5 +259,6 @@ export const useInvoiceGeneration = () => {
     removeItem,
     calculateSubtotal,
     generateInvoice,
+    validateRequiredFields,
   };
 };

@@ -23,6 +23,7 @@ export const InvoiceGenerator = () => {
     calculateSubtotal,
     generateInvoice,
     setItems,
+    validateRequiredFields,
   } = useInvoiceGeneration();
 
   const cartItems = useCartStore((state) => state.items);
@@ -63,13 +64,17 @@ export const InvoiceGenerator = () => {
   }, 0);
 
   const handleGenerateInvoice = async () => {
+    if (!validateRequiredFields()) return;
     await generateInvoice();
     clearCart();
+    navigate("/invoices");
   };
 
   const handleBack = () => {
     navigate("/calc");
   };
+
+  const isFormValid = validateRequiredFields();
 
   return (
     <Card className="p-6">
@@ -123,7 +128,11 @@ export const InvoiceGenerator = () => {
           <Button variant="outline" onClick={handleBack}>
             Voltar
           </Button>
-          <Button onClick={handleGenerateInvoice} className="w-full md:w-auto">
+          <Button 
+            onClick={handleGenerateInvoice} 
+            className="w-full md:w-auto"
+            disabled={!isFormValid}
+          >
             Gerar Fatura e Finalizar
           </Button>
         </div>
