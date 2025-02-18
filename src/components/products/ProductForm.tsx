@@ -59,22 +59,25 @@ const SortableSizeItem = ({ size, quantity, onQuantityChange, onRemove }: Sortab
 
   return (
     <div style={style} className="flex items-center gap-2 mb-2">
-      <Badge 
-        variant="secondary" 
-        className="px-2 py-1 min-w-[60px] cursor-grab"
+      <div 
         ref={setNodeRef}
         {...attributes}
         {...listeners}
       >
-        {size}
-        <button
-          type="button"
-          onClick={onRemove}
-          className="ml-2 hover:text-destructive"
+        <Badge 
+          variant="secondary" 
+          className="px-2 py-1 min-w-[60px] cursor-grab"
         >
-          <X className="h-3 w-3" />
-        </button>
-      </Badge>
+          {size}
+          <button
+            type="button"
+            onClick={onRemove}
+            className="ml-2 hover:text-destructive"
+          >
+            <X className="h-3 w-3" />
+          </button>
+        </Badge>
+      </div>
       <Input
         type="number"
         min="0"
