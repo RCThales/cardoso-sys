@@ -31,8 +31,7 @@ const CreateInvoice = () => {
       const notification = new Notification('Fatura Gerada', {
         body: 'Uma nova fatura foi gerada com sucesso!',
         icon: '/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png',
-        badge: '/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png',
-        vibrate: [200, 100, 200]
+        badge: '/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png'
       });
 
       notification.onclick = () => {
