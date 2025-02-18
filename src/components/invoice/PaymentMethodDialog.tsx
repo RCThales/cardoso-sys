@@ -41,9 +41,9 @@ export const PaymentMethodDialog = ({
         version: '01',
         key: '61981988450',
         name: 'Fernando Rodrigues Cardoso',
-        city: 'São Paulo',
-        transactionId: 'CARDOSORENT_' + Date.now().toString().slice(-8),
-        message: 'Pagamento Cardoso Muletas',
+        city: 'Brasília',
+        transactionId: 'MULETAS_' + Date.now().toString().slice(-8),
+        message: 'Cardoso Aluguel de Muletas',
         value: total,
       });
 
