@@ -28,6 +28,21 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       30: 75,
     },
   },
+
+  andador: {
+    CONSTANTE_VALOR_ALUGUEL_A: 7.2,
+    CONSTANTE_VALOR_ALUGUEL_B: 2.5,
+    REGRESSION_DISCOUNT: 0.09, // Valor específico
+    SPECIAL_RATES: {
+      5: 35,
+      7: 45,
+      10: 55,
+      15: 65,
+      20: 75,
+      30: 90,
+    },
+  },
+
   "botas-ortopedicas": {
     CONSTANTE_VALOR_ALUGUEL_A: 5.92,
     CONSTANTE_VALOR_ALUGUEL_B: 1.85,
@@ -42,14 +57,14 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
     },
   },
   "sandalias-baruk": {
-    CONSTANTE_VALOR_ALUGUEL_A: 3.95,
-    CONSTANTE_VALOR_ALUGUEL_B: 1.75,
-    REGRESSION_DISCOUNT: 0.062, // Valor específico
+    CONSTANTE_VALOR_ALUGUEL_A: 3.72,
+    CONSTANTE_VALOR_ALUGUEL_B: 1.89,
+    REGRESSION_DISCOUNT: 0.0608, // Valor específico
     SPECIAL_RATES: {
-      7: 35,
-      10: 35,
-      15: 45,
-      30: 70,
+      7: 30,
+      10: 40,
+      15: 50,
+      30: 75,
     },
   },
   "cadeira-de-rodas": {
@@ -63,7 +78,7 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       30: 100,
     },
   },
-  tipoias: {
+  "cadeira-de-banho": {
     CONSTANTE_VALOR_ALUGUEL_A: 3.5,
     CONSTANTE_VALOR_ALUGUEL_B: 1.65,
     REGRESSION_DISCOUNT: 0.065, // Valor específico
@@ -106,10 +121,11 @@ export function calculateTotalPrice(rentalDays: number, productId: string) {
 export const PRODUCTS = [
   { id: "muletas-axilares", name: "Muletas Axilares" },
   { id: "muletas-canadenses", name: "Muletas Canadenses" },
+  { id: "andador", name: "Andador" },
   { id: "botas-ortopedicas", name: "Botas Ortopédicas" },
   { id: "sandalias-baruk", name: "Sandálias Baruk" },
   { id: "cadeira-de-rodas", name: "Cadeira de Rodas" },
-  { id: "tipoias", name: "Tipóias" },
+  { id: "cadeira-de-banho", name: "Cadeira de Banho" },
 ];
 
 export const getProductConstants = (productId: string) =>
