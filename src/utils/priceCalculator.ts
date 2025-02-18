@@ -13,7 +13,6 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       10: 40,
       15: 50,
       30: 75,
-      60: 120,
     },
   },
   "muletas-canadenses": {
@@ -24,7 +23,6 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       10: 45,
       15: 55,
       30: 80,
-      60: 130,
     },
   },
   "botas-ortopedicas": {
@@ -35,7 +33,6 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       10: 50,
       15: 60,
       30: 90,
-      60: 140,
     },
   },
   "sandalias-baruk": {
@@ -46,7 +43,6 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       10: 35,
       15: 45,
       30: 70,
-      60: 110,
     },
   },
   "cadeira-de-rodas": {
@@ -57,7 +53,6 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       10: 55,
       15: 65,
       30: 100,
-      60: 150,
     },
   },
   tipoias: {
@@ -68,7 +63,6 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       10: 30,
       15: 40,
       30: 60,
-      60: 100,
     },
   },
 };
@@ -92,11 +86,9 @@ export function calculateTotalPrice(rentalDays: number, productId: string) {
   const constants = PRODUCT_CONSTANTS[productId];
   const days = Math.max(1, Math.min(365, rentalDays));
 
-  /*
   if (constants.SPECIAL_RATES[days] !== undefined) {
     return constants.SPECIAL_RATES[days];
   }
-    */
 
   const totalPrice = calculateDailyRate(days, productId) * days;
   return roundToNearestHalf(totalPrice);

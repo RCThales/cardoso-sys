@@ -40,3 +40,10 @@
 .read-the-docs {
   color: #888;
 }
+
+.slider-thumb {
+  width: 30px; /* Aumentando o tamanho do círculo */
+  height: 30px; /* Aumentando o tamanho do círculo */
+  border-radius: 50%; /* Garantindo que seja um círculo */
+  background-color: #4caf50; /* Escolha a cor que preferir */
+}

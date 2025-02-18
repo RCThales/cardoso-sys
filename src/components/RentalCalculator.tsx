@@ -26,13 +26,6 @@ import {
 import { Info } from "lucide-react";
 import React from "react";
 
-const SPECIAL_RATES = [
-  { days: 10, price: 40 },
-  { days: 15, price: 50 },
-  { days: 30, price: 75 },
-  { days: 60, price: 120 },
-];
-
 export const RentalCalculator = () => {
   const [days, setDays] = useState(1);
   const [price, setPrice] = useState(0);
@@ -46,7 +39,21 @@ export const RentalCalculator = () => {
     setDays(value[0]);
   };
 
+  const handleDaysInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDays = parseInt(e.target.value, 10);
+    if (newDays >= 1 && newDays <= 60) {
+      setDays(newDays);
+    }
+  };
+
   const constants = getProductConstants(selectedProduct);
+
+  const specialRates = Object.entries(constants.SPECIAL_RATES).map(
+    ([days, price]) => ({
+      days: parseInt(days, 10),
+      price,
+    })
+  );
 
   return (
     <>
@@ -87,15 +94,25 @@ export const RentalCalculator = () => {
 
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Duração do Aluguel</span>
-                <span className="text-sm text-muted-foreground">
-                  {days} dias
-                </span>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="number"
+                    value={days}
+                    onChange={handleDaysInputChange}
+                    min={1}
+                    max={180}
+                    className="w-16 text-center border p-2 rounded-md"
+                  />
+                  <span className="text-sm text-muted-foreground">
+                    {days} dias
+                  </span>
+                </div>
               </div>
               <Slider
                 value={[days]}
                 onValueChange={handleDaysChange}
                 min={1}
-                max={60}
+                max={180}
                 step={1}
                 className="w-full"
               />
@@ -121,7 +138,7 @@ export const RentalCalculator = () => {
             </motion.div>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
-              {SPECIAL_RATES.map(
+              {specialRates.map(
                 ({ days: specialDays, price: specialPrice }) => (
                   <Card
                     key={specialDays}
