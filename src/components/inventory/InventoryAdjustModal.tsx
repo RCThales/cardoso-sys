@@ -40,21 +40,21 @@ export const InventoryAdjustModal = ({
         </DialogHeader>
         <div className="space-y-6 py-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div>
+            <div className="min-w-[120px]">
               <span className="text-muted-foreground">Código:</span>
-              <p className="font-medium">{product?.product_code}</p>
+              <p className="font-medium truncate">{product?.product_code}</p>
             </div>
-            <div>
+            <div className="min-w-[120px]">
               <span className="text-muted-foreground">Quantidade Total:</span>
-              <p className="font-medium">{item.total_quantity}</p>
+              <p className="font-medium truncate">{item.total_quantity}</p>
             </div>
-            <div>
+            <div className="min-w-[120px]">
               <span className="text-muted-foreground">Quantidade Alugada:</span>
-              <p className="font-medium">{item.rented_quantity}</p>
+              <p className="font-medium truncate">{item.rented_quantity}</p>
             </div>
-            <div>
+            <div className="min-w-[120px]">
               <span className="text-muted-foreground">Quantidade Disponível:</span>
-              <p className="font-medium">{availableQuantity}</p>
+              <p className="font-medium truncate">{availableQuantity}</p>
             </div>
           </div>
 
@@ -69,6 +69,7 @@ export const InventoryAdjustModal = ({
               value={adjustQuantity}
               onChange={(e) => setAdjustQuantity(Math.max(1, parseInt(e.target.value) || 1))}
               className="w-full"
+              style={{ maxWidth: "100%" }}
             />
           </div>
 
