@@ -1,3 +1,4 @@
+
 import { Input } from "../ui/input";
 import { 
   Select,
@@ -22,6 +23,7 @@ interface ClientData {
   state: string;
   postalCode: string;
   isPaid: boolean;
+  deliveryFee: number;
 }
 
 interface ClientFormProps {

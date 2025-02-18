@@ -34,7 +34,7 @@ export const useInvoiceGeneration = () => {
     state: "",
     postalCode: "",
     isPaid: false,
-    deliveryFee: 20, // Valor padrão do frete
+    deliveryFee: 20,
   });
 
   const addItem = () => {
@@ -81,7 +81,6 @@ export const useInvoiceGeneration = () => {
       return sum + itemTotal;
     }, 0);
     
-    // Adiciona o frete ao total
     const total = itemsTotal + (clientData.deliveryFee || 0);
     
     console.log("Calculando total:", {
@@ -136,25 +135,26 @@ export const useInvoiceGeneration = () => {
       const dueDate = new Date();
       dueDate.setDate(today.getDate() + 30);
 
-      const itemsForDb = items.map(item => ({
-        ...item,
-        quantity: Number(item.quantity) || 0,
-        price: Number(item.price) || 0,
-        total: Number(item.total) || 0
-      })) as Json;
-
-      // Adiciona o frete aos itens
-      itemsForDb.push({
-        description: "Frete",
-        quantity: 1,
-        price: clientData.deliveryFee,
-        total: clientData.deliveryFee,
-        productId: "delivery-fee",
-        rentalDays: 1
-      });
+      // Criar uma nova array com todos os itens, incluindo o frete
+      const allItems = [
+        ...items.map(item => ({
+          ...item,
+          quantity: Number(item.quantity) || 0,
+          price: Number(item.price) || 0,
+          total: Number(item.total) || 0
+        })),
+        {
+          description: "Frete",
+          quantity: 1,
+          price: clientData.deliveryFee,
+          total: clientData.deliveryFee,
+          productId: "delivery-fee",
+          rentalDays: 1
+        }
+      ] as Json;
 
       console.log("Enviando para o banco:", {
-        items: itemsForDb,
+        items: allItems,
         total
       });
 
@@ -172,7 +172,7 @@ export const useInvoiceGeneration = () => {
         invoice_date: format(today, "yyyy-MM-dd"),
         due_date: format(dueDate, "yyyy-MM-dd"),
         payment_terms: "30 dias",
-        items: itemsForDb,
+        items: allItems,
         subtotal: total,
         total,
         is_paid: clientData.isPaid,
@@ -199,7 +199,7 @@ export const useInvoiceGeneration = () => {
         state: "",
         postalCode: "",
         isPaid: false,
-        deliveryFee: 20, // Mantém o valor padrão do frete
+        deliveryFee: 20,
       });
     } catch (error) {
       toast({
