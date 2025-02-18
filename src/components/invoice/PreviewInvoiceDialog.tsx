@@ -79,14 +79,17 @@ export const PreviewInvoiceDialog = ({
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {invoice.items.map((item, index) => (
-                  <TableRow key={index}>
-                    <TableCell>{item.description}</TableCell>
-                    <TableCell>{item.rentalDays}</TableCell>
-                    <TableCell>{item.quantity}</TableCell>
-                    <TableCell className="text-right">R$ {formatCurrency(item.total)}</TableCell>
-                  </TableRow>
-                ))}
+                {invoice.items.map((item, index) => {
+                  const description = item.size ? `${item.description} (${item.size})` : item.description;
+                  return (
+                    <TableRow key={index}>
+                      <TableCell>{description}</TableCell>
+                      <TableCell>{item.rentalDays}</TableCell>
+                      <TableCell>{item.quantity}</TableCell>
+                      <TableCell className="text-right">R$ {formatCurrency(item.total)}</TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

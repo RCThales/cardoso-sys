@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { fetchProducts } from "@/utils/priceCalculator";
@@ -73,6 +72,14 @@ export const InventoryTable = () => {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const sortSizes = (items: any[]) => {
+    const sizeOrder = ['P', 'M', 'G'];
+    return [...items].sort((a, b) => {
+      if (!a.size || !b.size) return 0;
+      return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
+    });
   };
 
   if (isLoading || !products) {
@@ -172,13 +179,15 @@ export const InventoryTable = () => {
               );
             }
 
+            const sortedItems = sortSizes(items);
+
             return (
               <TableRow key={productId}>
                 <TableCell className="font-medium">{product.product_code}</TableCell>
                 <TableCell>
                   <div className="font-medium">{product.name}</div>
                   <div className="mt-2 space-y-1">
-                    {items.map(item => item.size && (
+                    {sortedItems.map(item => item.size && (
                       <div key={item.id} className="flex justify-between text-sm text-muted-foreground">
                         <span>{item.size}</span>
                         <span className="ml-4">{item.total_quantity - item.rented_quantity} disponíveis</span>
@@ -187,17 +196,17 @@ export const InventoryTable = () => {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  {items.filter(item => item.size).reduce((sum, item) => sum + item.total_quantity, 0)}
+                  {sortedItems.filter(item => item.size).reduce((sum, item) => sum + item.total_quantity, 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {items.filter(item => item.size).reduce((sum, item) => sum + item.rented_quantity, 0)}
+                  {sortedItems.filter(item => item.size).reduce((sum, item) => sum + item.rented_quantity, 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {items.filter(item => item.size).reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
+                  {sortedItems.filter(item => item.size).reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex flex-col space-y-2">
-                    {items.map(item => item.size && (
+                    {sortedItems.map(item => item.size && (
                       <Button
                         key={item.id}
                         variant="outline"
