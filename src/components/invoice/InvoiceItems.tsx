@@ -69,6 +69,10 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
 
+  const getProductName = (productId: string) => {
+    return PRODUCTS.find(p => p.id === productId)?.name || "Selecione um produto";
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -87,7 +91,9 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
               onValueChange={(value) => handleProductChange(index, value)}
             >
               <SelectTrigger>
-                <SelectValue placeholder="Selecione um produto" />
+                <SelectValue>
+                  {getProductName(item.productId)}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {PRODUCTS.map((product) => (
