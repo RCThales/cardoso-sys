@@ -15,23 +15,27 @@ import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <Toaster />
-    <Sonner />
-    <TooltipProvider>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/calc" element={<Index />} />
-        <Route path="/invoices/create" element={<CreateInvoice />} />
-        <Route path="/invoices/history" element={<InvoiceHistory />} />
-        <Route path="/inventory" element={<Inventory />} />
-        <Route path="/products" element={<Products />} />
-        <Route path="/auth" element={<Auth />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/calc" element={<Index />} />
+            <Route path="/invoices/create" element={<CreateInvoice />} />
+            <Route path="/invoices/history" element={<InvoiceHistory />} />
+            <Route path="/inventory" element={<Inventory />} />
+            <Route path="/products" element={<Products />} />
+            <Route path="/auth" element={<Auth />} />
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+};
 
 export default App;
