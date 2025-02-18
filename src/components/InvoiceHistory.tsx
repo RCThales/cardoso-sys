@@ -8,6 +8,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
 import { saveAs } from "file-saver";
 import { generatePDF } from "@/utils/pdfGenerator";
+import { Json } from "@/integrations/supabase/types";
 
 export const InvoiceHistory = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
