@@ -1,7 +1,8 @@
+
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
-import { Calculator, LineChart, Package, FileSpreadsheet } from "lucide-react";
+import { Calculator, LineChart, Package, Star } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -28,10 +29,10 @@ const menuItems = [
     color: "from-green-500 to-emerald-500",
   },
   {
-    title: "Cardoso TEMP III",
-    description: "Em desenvolvimento",
-    icon: FileSpreadsheet,
-    route: "/temp3",
+    title: "Reviews",
+    description: "Avaliações do Google",
+    icon: Star,
+    route: "/reviews",
     color: "from-orange-500 to-yellow-500",
   },
 ] as const;

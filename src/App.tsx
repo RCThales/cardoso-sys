@@ -8,10 +8,10 @@ import Home from "./pages/Home";
 import Index from "./pages/Index";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
-import Placeholder from "./pages/Placeholder";
 import InvoiceHistory from "./pages/InvoiceHistory";
 import CreateInvoice from "./pages/CreateInvoice";
 import Inventory from "./pages/Inventory";
+import Reviews from "./pages/Reviews";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +26,7 @@ const App = () => (
         <Route path="/invoices/create" element={<CreateInvoice />} />
         <Route path="/invoices/history" element={<InvoiceHistory />} />
         <Route path="/inventory" element={<Inventory />} />
-        <Route path="/temp3" element={<Placeholder />} />
+        <Route path="/reviews" element={<Reviews />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
