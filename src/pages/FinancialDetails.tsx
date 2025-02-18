@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { format, subMonths } from "date-fns";
@@ -37,53 +36,22 @@ const FinancialDetails = () => {
     ? format(new Date(parseInt(year || ""), parseInt(month) - 1, 1), "MMMM 'de' yyyy", { locale: ptBR }) 
     : "";
 
-  const fetchSummaryForDate = async (date: Date) => {
-    const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
-    const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+  const calculateExpenseDetails = (grossIncome: number) => [
+    {
+      description: "Custos operacionais (15%)",
+      amount: grossIncome * 0.15,
+    },
+    {
+      description: "Desconto de impostos (5%)",
+      amount: grossIncome * 0.05,
+    },
+  ];
 
-    const { data: invoices, error: invoicesError } = await supabase
-      .from("invoices")
-      .select("*")
-      .gte("invoice_date", startDate.toISOString())
-      .lte("invoice_date", endDate.toISOString());
-
-    if (invoicesError) {
-      console.error("Error fetching monthly data:", invoicesError);
-      return null;
-    }
-
-    const { data: investments, error: investmentsError } = await supabase
-      .from("investments")
-      .select("amount");
-
-    if (investmentsError) {
-      console.error("Error fetching investments:", investmentsError);
-      return null;
-    }
-
-    const totalInvestment = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
-
-    let grossIncome = 0;
-    let expenses = 0;
-    let invoiceCount = 0;
-
-    invoices.forEach((invoice: InvoiceRow) => {
-      grossIncome += Number(invoice.total);
-      expenses += Number(invoice.total) * 0.2;
-      invoiceCount++;
-    });
-
-    const netProfit = grossIncome - expenses - totalInvestment;
-    const averageTicket = invoiceCount > 0 ? grossIncome / invoiceCount : 0;
-
-    return {
-      grossIncome,
-      expenses,
-      netProfit,
-      totalInvestment,
-      invoiceCount,
-      averageTicket,
-    };
+  const getInvestmentDetails = (investments: any[]) => {
+    return investments.map(inv => ({
+      description: inv.name,
+      amount: Number(inv.amount),
+    }));
   };
 
   useEffect(() => {
@@ -93,15 +61,51 @@ const FinancialDetails = () => {
       const currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const previousDate = subMonths(currentDate, 1);
 
-      const currentSummary = await fetchSummaryForDate(currentDate);
-      if (currentSummary) {
-        setSummary(currentSummary);
-      }
+      const { data: investments } = await supabase
+        .from("investments")
+        .select("*")
+        .order("date", { ascending: false });
 
-      const prevSummary = await fetchSummaryForDate(previousDate);
-      if (prevSummary) {
-        setPreviousSummary(prevSummary);
-      }
+      const { data: currentInvoices } = await supabase
+        .from("invoices")
+        .select("*")
+        .gte("invoice_date", currentDate.toISOString())
+        .lte("invoice_date", new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString());
+
+      const { data: previousInvoices } = await supabase
+        .from("invoices")
+        .select("*")
+        .gte("invoice_date", previousDate.toISOString())
+        .lte("invoice_date", new Date(previousDate.getFullYear(), previousDate.getMonth() + 1, 0).toISOString());
+
+      const currentGrossIncome = currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+      const previousGrossIncome = previousInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+      
+      const currentExpenses = currentGrossIncome * 0.2;
+      const previousExpenses = previousGrossIncome * 0.2;
+
+      const totalInvestment = investments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
+
+      const currentSummary = {
+        grossIncome: currentGrossIncome,
+        expenses: currentExpenses,
+        netProfit: currentGrossIncome - currentExpenses - totalInvestment,
+        totalInvestment,
+        invoiceCount: currentInvoices?.length || 0,
+        averageTicket: currentInvoices?.length ? currentGrossIncome / currentInvoices.length : 0,
+      };
+
+      const previousSummary = {
+        grossIncome: previousGrossIncome,
+        expenses: previousExpenses,
+        netProfit: previousGrossIncome - previousExpenses - totalInvestment,
+        totalInvestment,
+        invoiceCount: previousInvoices?.length || 0,
+        averageTicket: previousInvoices?.length ? previousGrossIncome / previousInvoices.length : 0,
+      };
+
+      setSummary(currentSummary);
+      setPreviousSummary(previousSummary);
     };
 
     fetchData();
@@ -129,6 +133,8 @@ const FinancialDetails = () => {
             description="Inclui descontos e custos operacionais"
             icon={TrendingDown}
             iconColor="text-red-500"
+            showDetails
+            details={calculateExpenseDetails(summary.grossIncome)}
           />
           <FinancialCard
             title="Lucro Líquido"
@@ -145,6 +151,8 @@ const FinancialDetails = () => {
             description="Em equipamentos e infraestrutura"
             icon={LineChart}
             iconColor="text-blue-500"
+            showDetails
+            details={getInvestmentDetails(summary.investments || [])}
           />
           <FinancialCard
             title="Ticket Médio"
