@@ -1,3 +1,4 @@
+
 import { format, parseISO } from "date-fns";
 import {
   Table,
@@ -10,7 +11,7 @@ import {
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Check, Download, Eye, Trash2, Clock } from "lucide-react";
-import { Invoice } from "./types";
+import { Invoice, InvoiceExtension } from "./types";
 import { cn } from "@/lib/utils";
 import { useToast } from "../ui/use-toast";
 import { useState } from "react";
