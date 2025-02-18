@@ -1,4 +1,3 @@
-
 import { format, parseISO } from "date-fns";
 import {
   Table,
@@ -84,7 +83,14 @@ export const InvoiceTable = ({
 
   const calculateAdditionalCost = (days: number) => {
     if (!selectedInvoice) return 0;
-    return (selectedInvoice.total / selectedInvoice.items[0].rentalDays) * days;
+    
+    const rentalItems = selectedInvoice.items.filter(item => item.productId !== 'delivery-fee');
+    
+    const dailyRate = rentalItems.reduce((sum, item) => {
+      return sum + (item.total / item.rentalDays);
+    }, 0);
+    
+    return dailyRate * days;
   };
 
   const handleExtendConfirm = async (days: number, additionalCost: number) => {

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -13,6 +12,8 @@ export const InvoiceHistory = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
+  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -117,6 +118,46 @@ export const InvoiceHistory = () => {
     });
   };
 
+  const handleExtendConfirm = async (days: number, additionalCost: number) => {
+    if (selectedInvoice) {
+      const extension = {
+        date: new Date().toISOString(),
+        days,
+        additionalCost,
+      };
+
+      const newTotal = selectedInvoice.total + additionalCost;
+      const extensions = [...(selectedInvoice.extensions || []), extension];
+
+      const { error } = await supabase
+        .from("invoices")
+        .update({ 
+          extensions,
+          total: newTotal,
+          is_paid: false // Reset payment status
+        })
+        .eq("id", selectedInvoice.id);
+
+      if (error) {
+        toast({
+          title: "Erro ao estender aluguel",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setExtendDialogOpen(false);
+      setSelectedInvoice(null);
+      await fetchInvoices();
+      
+      toast({
+        title: "Sucesso",
+        description: "Aluguel estendido com sucesso",
+      });
+    }
+  };
+
   return (
     <>
       <InvoiceTable
@@ -136,6 +177,12 @@ export const InvoiceHistory = () => {
         onDownload={handleDownload}
         formatCurrency={formatCurrency}
       />
+
+      {extendDialogOpen && (
+        <div>
+          {/* Extend dialog content */}
+        </div>
+      )}
     </>
   );
 };

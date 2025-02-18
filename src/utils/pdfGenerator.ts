@@ -5,7 +5,6 @@ import { Invoice, InvoiceExtension } from "@/components/invoice/types";
 import { format, parseISO } from "date-fns";
 import { formatCurrency } from "./formatters";
 
-// Extend jsPDF type to include lastAutoTable
 interface ExtendedJsPDF extends jsPDF {
   lastAutoTable?: {
     finalY: number;
@@ -44,12 +43,30 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   ], pageWidth - 60, 45);
 
   // Tabela de Itens
-  const itemsTableData = invoice.items.map(item => [
-    item.description,
-    item.rentalDays.toString(),
-    item.quantity.toString(),
-    `R$ ${formatCurrency(item.total)}`,
-  ]);
+  const itemsTableData: string[][] = [];
+  
+  // Adiciona os itens principais
+  invoice.items.forEach(item => {
+    if (item.productId !== 'delivery-fee') {
+      itemsTableData.push([
+        item.description,
+        item.rentalDays.toString(),
+        item.quantity.toString(),
+        `R$ ${formatCurrency(item.total)}`,
+      ]);
+    }
+  });
+
+  // Adiciona o frete se existir
+  const deliveryItem = invoice.items.find(item => item.productId === 'delivery-fee');
+  if (deliveryItem && deliveryItem.total > 0) {
+    itemsTableData.push([
+      'Frete',
+      '1',
+      '1',
+      `R$ ${formatCurrency(deliveryItem.total)}`,
+    ]);
+  }
 
   autoTable(doc, {
     head: [['Descrição', 'Dias', 'Quantidade', 'Total']],
@@ -59,6 +76,8 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     headStyles: { fillColor: [41, 128, 185] },
   });
 
+  let currentY = doc.lastAutoTable?.finalY || 85;
+
   // Extensões (se houver)
   if (invoice.extensions && invoice.extensions.length > 0) {
     const extensionsTableData = invoice.extensions.map((ext: InvoiceExtension) => [
@@ -67,27 +86,54 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
       `R$ ${formatCurrency(ext.additionalCost)}`,
     ]);
 
-    const finalY = doc.lastAutoTable?.finalY || 85;
-
     autoTable(doc, {
       head: [['Data da Extensão', 'Dias Adicionais', 'Custo Adicional']],
       body: extensionsTableData,
-      startY: finalY + 10,
+      startY: currentY + 10,
       theme: 'grid',
       headStyles: { fillColor: [41, 128, 185] },
     });
+
+    currentY = doc.lastAutoTable?.finalY || currentY;
   }
 
-  // Total
-  doc.setFontSize(12);
-  doc.setFont(undefined, 'bold');
-  const finalY = doc.lastAutoTable?.finalY || 85;
-  doc.text(
-    `Total: R$ ${formatCurrency(invoice.total)}`,
-    pageWidth - 15,
-    finalY + 20,
-    { align: "right" }
-  );
+  // Resumo financeiro
+  const summaryData = [];
+  
+  // Subtotal
+  const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+  summaryData.push(['Subtotal', `R$ ${formatCurrency(subtotal)}`]);
+  
+  // Frete (se houver)
+  if (deliveryItem && deliveryItem.total > 0) {
+    summaryData.push(['Frete', `R$ ${formatCurrency(deliveryItem.total)}`]);
+  }
+  
+  // Desconto (se houver)
+  const discount = subtotal - invoice.total;
+  if (discount > 0) {
+    summaryData.push(['Desconto', `- R$ ${formatCurrency(discount)}`]);
+  }
+
+  // Extensões (valor total)
+  if (invoice.extensions && invoice.extensions.length > 0) {
+    const extensionsTotal = invoice.extensions.reduce((sum, ext) => sum + ext.additionalCost, 0);
+    summaryData.push(['Total das Extensões', `R$ ${formatCurrency(extensionsTotal)}`]);
+  }
+
+  // Total Final
+  summaryData.push(['Total', `R$ ${formatCurrency(invoice.total)}`]);
+
+  autoTable(doc, {
+    body: summaryData,
+    startY: currentY + 10,
+    theme: 'plain',
+    styles: { cellPadding: 1 },
+    columnStyles: {
+      0: { cellWidth: 100 },
+      1: { cellWidth: 50, halign: 'right' },
+    },
+  });
 
   return doc.output('blob');
 };
