@@ -8,7 +8,7 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { PRODUCTS } from "@/utils/priceCalculator";
+import { fetchProducts } from "@/utils/priceCalculator";
 import { supabase } from "@/integrations/supabase/client";
 
 export const InventoryTable = () => {
@@ -23,7 +23,12 @@ export const InventoryTable = () => {
     },
   });
 
-  if (isLoading) {
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
+
+  if (isLoading || !products) {
     return <div className="text-center">Carregando...</div>;
   }
 
@@ -39,7 +44,7 @@ export const InventoryTable = () => {
       </TableHeader>
       <TableBody>
         {inventory?.map((item) => {
-          const product = PRODUCTS.find((p) => p.id === item.product_id);
+          const product = products.find((p) => p.id === item.product_id);
           const availableQuantity = item.total_quantity - item.rented_quantity;
           
           return (

@@ -1,8 +1,9 @@
+
 import { useState, useEffect } from "react";
 import {
   calculateTotalPrice,
-  PRODUCTS,
   getProductConstants,
+  fetchProducts,
 } from "../utils/priceCalculator";
 import { Slider } from "./ui/slider";
 import { Card } from "./ui/card";
@@ -31,13 +32,30 @@ import { useCartStore } from "@/store/cartStore";
 import { useToast } from "./ui/use-toast";
 import { CartDrawer } from "./cart/CartDrawer";
 
+interface Product {
+  id: string;
+  name: string;
+  base_price: number;
+  constants: {
+    CONSTANTE_VALOR_ALUGUEL_A: number;
+    CONSTANTE_VALOR_ALUGUEL_B: number;
+    REGRESSION_DISCOUNT: number;
+    SPECIAL_RATES: Record<number, number>;
+  };
+}
+
 export const RentalCalculator = () => {
   const [days, setDays] = useState(1);
   const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
-  const [selectedProduct, setSelectedProduct] = useState("muletas-axilares");
+  const [selectedProduct, setSelectedProduct] = useState("");
   const { toast } = useToast();
   const { addItem } = useCartStore();
+
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
 
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
@@ -49,8 +67,16 @@ export const RentalCalculator = () => {
   });
 
   useEffect(() => {
-    setPrice(calculateTotalPrice(days, selectedProduct));
-  }, [days, selectedProduct]);
+    if (products && products.length > 0) {
+      if (!selectedProduct) {
+        setSelectedProduct(products[0].id);
+      }
+      const constants = getProductConstants(products, selectedProduct);
+      if (constants) {
+        setPrice(calculateTotalPrice(days, constants));
+      }
+    }
+  }, [days, selectedProduct, products]);
 
   const getAvailableQuantity = (productId: string) => {
     const item = inventory?.find((i) => i.product_id === productId);
@@ -77,10 +103,12 @@ export const RentalCalculator = () => {
     }
   };
 
-  const constants = getProductConstants(selectedProduct);
+  const constants = products?.find(p => p.id === selectedProduct)?.constants;
   const availableQuantity = getAvailableQuantity(selectedProduct);
 
   const handleAddToCart = () => {
+    if (!products) return;
+    
     if (quantity > availableQuantity) {
       toast({
         title: "Erro",
@@ -103,12 +131,16 @@ export const RentalCalculator = () => {
     });
   };
 
-  const specialRates = Object.entries(constants.SPECIAL_RATES).map(
+  if (!products) {
+    return <div>Carregando...</div>;
+  }
+
+  const specialRates = constants ? Object.entries(constants.SPECIAL_RATES).map(
     ([days, price]) => ({
       days: parseInt(days, 10),
       price,
     })
-  );
+  ) : [];
 
   return (
     <div className="relative">
@@ -138,7 +170,7 @@ export const RentalCalculator = () => {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {PRODUCTS.map((product) => (
+                    {products.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
                         {product.name} ({getAvailableQuantity(product.id)}{" "}
                         disponíveis)
@@ -247,13 +279,13 @@ export const RentalCalculator = () => {
             <div>
               <div className="font-medium">CONSTANTE_VALOR_ALUGUEL_A</div>
               <div className="text-muted-foreground">
-                {constants.CONSTANTE_VALOR_ALUGUEL_A}
+                {constants?.CONSTANTE_VALOR_ALUGUEL_A}
               </div>
             </div>
             <div>
               <div className="font-medium">CONSTANTE_VALOR_ALUGUEL_B</div>
               <div className="text-muted-foreground">
-                {constants.CONSTANTE_VALOR_ALUGUEL_B}
+                {constants?.CONSTANTE_VALOR_ALUGUEL_B}
               </div>
             </div>
           </div>

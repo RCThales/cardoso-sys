@@ -1,7 +1,6 @@
 
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cartStore";
-import { PRODUCTS } from "@/utils/priceCalculator";
 import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 import {
   Sheet,
@@ -15,11 +14,17 @@ import { Input } from "../ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../ui/use-toast";
+import { fetchProducts } from "@/utils/priceCalculator";
 
 export const CartDrawer = () => {
   const { items, addItem, removeItem } = useCartStore();
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
 
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
@@ -60,6 +65,10 @@ export const CartDrawer = () => {
 
   const totalPrice = items.reduce((acc, item) => acc + item.total, 0);
 
+  if (!products) {
+    return null;
+  }
+
   return (
     <Sheet>
       <SheetTrigger asChild>
@@ -78,7 +87,7 @@ export const CartDrawer = () => {
         </SheetHeader>
         <div className="mt-4 space-y-4">
           {items.map((item) => {
-            const product = PRODUCTS.find((p) => p.id === item.productId);
+            const product = products.find((p) => p.id === item.productId);
             return (
               <div key={item.productId} className="flex flex-col space-y-2 p-4 border rounded-lg">
                 <div className="flex justify-between items-center">

@@ -8,7 +8,8 @@ import { useInvoiceGeneration } from "@/hooks/useInvoiceGeneration";
 import { Input } from "./ui/input";
 import { useCartStore } from "@/store/cartStore";
 import { useEffect } from "react";
-import { PRODUCTS } from "@/utils/priceCalculator";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
 import {
   Select,
@@ -36,21 +37,28 @@ export const InvoiceGenerator = () => {
   const cartItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
 
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
+
   useEffect(() => {
-    const newItems = cartItems.map(cartItem => {
-      const product = PRODUCTS.find(p => p.id === cartItem.productId);
-      return {
-        productId: cartItem.productId,
-        description: product?.name || "",
-        quantity: cartItem.quantity,
-        rentalDays: cartItem.days,
-        price: cartItem.total / cartItem.quantity,
-        total: cartItem.total
-      };
-    });
-    
-    setItems(newItems);
-  }, [cartItems, setItems]);
+    if (products) {
+      const newItems = cartItems.map(cartItem => {
+        const product = products.find(p => p.id === cartItem.productId);
+        return {
+          productId: cartItem.productId,
+          description: product?.name || "",
+          quantity: cartItem.quantity,
+          rentalDays: cartItem.days,
+          price: cartItem.total / cartItem.quantity,
+          total: cartItem.total
+        };
+      });
+      
+      setItems(newItems);
+    }
+  }, [cartItems, setItems, products]);
 
   const formatCurrency = (value: number | string | null | undefined): string => {
     if (value === null || value === undefined) return "0.00";
@@ -97,6 +105,10 @@ export const InvoiceGenerator = () => {
   const isFormValid = validateRequiredFields();
 
   const discountOptions = Array.from({ length: 21 }, (_, i) => i * 5);
+
+  if (!products) {
+    return <div>Carregando...</div>;
+  }
 
   return (
     <Card className="p-6">

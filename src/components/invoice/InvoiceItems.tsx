@@ -1,5 +1,7 @@
+
 import { Button } from "../ui/button";
-import { PRODUCTS } from "@/utils/priceCalculator";
+import { useQuery } from "@tanstack/react-query";
+import { fetchProducts } from "@/utils/priceCalculator";
 
 export interface InvoiceItem {
   description: string;
@@ -23,7 +25,10 @@ interface InvoiceItemsProps {
 }
 
 export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
-  console.log("items1", items);
+  const { data: products } = useQuery({
+    queryKey: ["products"],
+    queryFn: fetchProducts,
+  });
 
   const formatCurrency = (
     value: number | string | null | undefined
@@ -32,6 +37,10 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
     const numValue = typeof value === "string" ? parseFloat(value) : value;
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
+
+  if (!products) {
+    return null;
+  }
 
   return (
     <div className="space-y-4">
@@ -61,7 +70,7 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
             {items.map((item, index) => (
               <tr key={index} className="border-t">
                 <td className="px-4 py-3 align-middle">
-                  {PRODUCTS.find((p) => p.id === item.productId)?.name ||
+                  {products.find((p) => p.id === item.productId)?.name ||
                     item.description ||
                     ""}
                 </td>
