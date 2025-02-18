@@ -74,7 +74,7 @@ export const RentalCalculator = () => {
 
   const handleProductChange = (productId: string) => {
     setSelectedProduct(productId);
-    const product = products?.find(p => p.id === productId);
+    const product = products?.find((p) => p.id === productId);
     if (product?.sizes && product.sizes.length > 0) {
       setSelectedSize(product.sizes[0].size);
     } else {
@@ -95,7 +95,10 @@ export const RentalCalculator = () => {
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuantity = parseInt(e.target.value, 10);
-    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
+    const availableQuantity = getAvailableQuantity(
+      selectedProduct,
+      selectedSize
+    );
 
     if (newQuantity >= 1 && newQuantity <= availableQuantity) {
       setQuantity(newQuantity);
@@ -113,15 +116,18 @@ export const RentalCalculator = () => {
     }
   };
 
-  const selectedProductData = products?.find(p => p.id === selectedProduct);
+  const selectedProductData = products?.find((p) => p.id === selectedProduct);
   const constants = selectedProductData?.constants;
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
 
   const handleAddToCart = () => {
     if (!products) return;
-    
-    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
-    
+
+    const availableQuantity = getAvailableQuantity(
+      selectedProduct,
+      selectedSize
+    );
+
     if (quantity > availableQuantity) {
       toast({
         title: "Erro",
@@ -136,7 +142,7 @@ export const RentalCalculator = () => {
       quantity,
       days,
       total: price * quantity,
-      size: selectedSize || undefined
+      size: selectedSize || undefined,
     });
 
     toast({
@@ -149,17 +155,21 @@ export const RentalCalculator = () => {
     return <div>Carregando...</div>;
   }
 
-  const specialRates = constants ? Object.entries(constants.SPECIAL_RATES || {}).map(
-    ([days, price]) => ({
-      days: parseInt(days, 10),
-      price: price as number,
-    })
-  ) : [];
+  const specialRates = constants
+    ? Object.entries(constants.SPECIAL_RATES || {}).map(([days, price]) => ({
+        days: parseInt(days, 10),
+        price: price as number,
+      }))
+    : [];
 
   return (
     <div className="relative">
       <div className="fixed top-2 right-4 z-50 flex items-center gap-2">
-        <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => supabase.auth.signOut()}
+        >
           <LogOut className="h-5 w-5" />
         </Button>
         <CartDrawer />
@@ -189,7 +199,8 @@ export const RentalCalculator = () => {
                   <SelectContent>
                     {products.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.name} {product.sizes && product.sizes.length > 0 
+                        {product.name}{" "}
+                        {product.sizes && product.sizes.length > 0
                           ? "(verificar tamanhos)"
                           : `(${getAvailableQuantity(product.id)} disponíveis)`}
                       </SelectItem>
@@ -198,26 +209,29 @@ export const RentalCalculator = () => {
                 </Select>
               </div>
 
-              {selectedProductData?.sizes && selectedProductData.sizes.length > 0 && (
-                <div className="space-y-2">
-                  <span className="text-sm font-medium">Tamanho</span>
-                  <Select
-                    value={selectedSize}
-                    onValueChange={setSelectedSize}
-                  >
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {selectedProductData.sizes.map((size) => (
-                        <SelectItem key={size.size} value={size.size}>
-                          {size.size} ({getAvailableQuantity(selectedProduct, size.size)} disponíveis)
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+              {selectedProductData?.sizes &&
+                selectedProductData.sizes.length > 0 && (
+                  <div className="space-y-2">
+                    <span className="text-sm font-medium">Tamanho</span>
+                    <Select
+                      value={selectedSize}
+                      onValueChange={setSelectedSize}
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {selectedProductData.sizes.map((size) => (
+                          <SelectItem key={size.size} value={size.size}>
+                            {size.size} (
+                            {getAvailableQuantity(selectedProduct, size.size)}{" "}
+                            disponíveis)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
 
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Quantidade</span>

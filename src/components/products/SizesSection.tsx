@@ -1,4 +1,3 @@
-
 import {
   DndContext,
   closestCenter,
@@ -6,12 +5,12 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
-} from '@dnd-kit/core';
+} from "@dnd-kit/core";
 import {
   SortableContext,
   sortableKeyboardCoordinates,
   verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+} from "@dnd-kit/sortable";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { SortableSizeItem } from "./SortableSizeItem";
@@ -35,7 +34,7 @@ export const SizesSection = ({
   onAddSize,
   onRemoveSize,
   onQuantityChange,
-  onDragEnd
+  onDragEnd,
 }: SizesSectionProps) => {
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -64,10 +63,7 @@ export const SizesSection = ({
           collisionDetection={closestCenter}
           onDragEnd={onDragEnd}
         >
-          <SortableContext
-            items={sizes}
-            strategy={verticalListSortingStrategy}
-          >
+          <SortableContext items={sizes} strategy={verticalListSortingStrategy}>
             {sizes.map((size) => (
               <SortableSizeItem
                 key={size}

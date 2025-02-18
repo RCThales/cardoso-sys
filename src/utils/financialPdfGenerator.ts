@@ -1,9 +1,11 @@
-
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { formatCurrency } from "./formatters";
+import { Chart, registerables } from "chart.js";
+
+Chart.register(...registerables);
 
 interface FinancialSummary {
   grossIncome: number;
@@ -32,20 +34,25 @@ export const generateFinancialPDF = async (
   // Cabeçalho
   doc.setFontSize(20);
   doc.text("RELATÓRIO FINANCEIRO", pageWidth / 2, 20, { align: "center" });
-  
+
   // Período
   doc.setFontSize(16);
   doc.text(monthName, pageWidth / 2, 30, { align: "center" });
-  
+
   // Informações da empresa
   doc.setFontSize(10);
-  doc.text([
-    "Cardoso Aluguel de Muletas",
-    "Quadra 207, Lote 4, Residencial Imprensa IV, Águas Claras",
-    "Brasília - Distrito Federal - 71926250",
-    "CNPJ: 57.684.914/0001-36",
-    "cardosoalugueldemuletas@gmail.com"
-  ], pageWidth / 2, 45, { align: "center" });
+  doc.text(
+    [
+      "Cardoso Aluguel de Muletas",
+      "Quadra 207, Lote 4, Residencial Imprensa IV, Águas Claras",
+      "Brasília - Distrito Federal - 71926250",
+      "CNPJ: 57.684.914/0001-36",
+      "cardosoalugueldemuletas@gmail.com",
+    ],
+    pageWidth / 2,
+    45,
+    { align: "center" }
+  );
 
   // Data do relatório
   doc.setFontSize(10);
@@ -67,7 +74,7 @@ export const generateFinancialPDF = async (
     head: [["Indicador", "Valor"]],
     body: data,
     theme: "grid",
-    headStyles: { 
+    headStyles: {
       fillColor: [41, 128, 185],
       textColor: [255, 255, 255],
       fontSize: 12,
@@ -85,23 +92,22 @@ export const generateFinancialPDF = async (
     },
   });
 
-  // Detalhamento das Despesas
+  // Detalhamento das Despesas e Investimentos (na mesma página)
   let currentY = (doc as any).lastAutoTable.finalY + 20;
-  
+
   doc.setFontSize(14);
   doc.text("Detalhamento das Despesas", 20, currentY);
-  
   currentY += 10;
-  
+
   autoTable(doc, {
     startY: currentY,
     head: [["Descrição", "Valor"]],
-    body: expenseDetails.map(detail => [
+    body: expenseDetails.map((detail) => [
       detail.description,
-      `R$ ${formatCurrency(detail.amount)}`
+      `R$ ${formatCurrency(detail.amount)}`,
     ]),
     theme: "grid",
-    headStyles: { 
+    headStyles: {
       fillColor: [231, 76, 60],
       textColor: [255, 255, 255],
       fontSize: 12,
@@ -112,23 +118,21 @@ export const generateFinancialPDF = async (
     },
   });
 
-  // Detalhamento dos Investimentos
   currentY = (doc as any).lastAutoTable.finalY + 20;
-  
+
   doc.setFontSize(14);
   doc.text("Detalhamento dos Investimentos", 20, currentY);
-  
   currentY += 10;
-  
+
   autoTable(doc, {
     startY: currentY,
     head: [["Descrição", "Valor"]],
-    body: investmentDetails.map(detail => [
+    body: investmentDetails.map((detail) => [
       detail.description,
-      `R$ ${formatCurrency(detail.amount)}`
+      `R$ ${formatCurrency(detail.amount)}`,
     ]),
     theme: "grid",
-    headStyles: { 
+    headStyles: {
       fillColor: [52, 152, 219],
       textColor: [255, 255, 255],
       fontSize: 12,
