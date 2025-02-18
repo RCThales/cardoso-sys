@@ -48,19 +48,31 @@ export const ProductForm = ({
 
           if (error) throw error;
 
-          // Use upsert em vez de insert para o inventário
-          const { error: inventoryError } = await supabase
+          // Primeiro, verifique se o registro já existe
+          const { data: existingInventory, error: checkError } = await supabase
             .from("inventory")
-            .upsert({
-              product_id: selectedProduct.id,
-              size: newSize,
-              total_quantity: 0,
-              rented_quantity: 0,
-            }, {
-              onConflict: 'product_id,size'
-            });
+            .select()
+            .eq("product_id", selectedProduct.id)
+            .eq("size", newSize)
+            .single();
 
-          if (inventoryError) throw inventoryError;
+          if (checkError && checkError.code !== "PGRST116") {
+            throw checkError;
+          }
+
+          if (!existingInventory) {
+            // Se não existir, faça a inserção
+            const { error: insertError } = await supabase
+              .from("inventory")
+              .insert({
+                product_id: selectedProduct.id,
+                size: newSize,
+                total_quantity: 0,
+                rented_quantity: 0,
+              });
+
+            if (insertError) throw insertError;
+          }
         }
 
         setSizes([...sizes, newSize]);
