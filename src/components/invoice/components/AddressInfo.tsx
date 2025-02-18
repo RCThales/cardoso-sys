@@ -32,6 +32,8 @@ export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps
     }));
   };
 
+  const isCEPValid = clientData.postalCode.length === 8;
+
   const handleCepChange = async (cep: string) => {
     if (cep.length === 8) {
       setIsLoading(true);
@@ -72,11 +74,11 @@ export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps
           placeholder="Digite o CEP"
           disabled={isLoading}
           className={cn({
-            "border-red-500": touchedFields.postalCode && !clientData.postalCode,
+            "border-red-500": touchedFields.postalCode && !isCEPValid,
           })}
         />
-        {touchedFields.postalCode && !clientData.postalCode && (
-          <p className="text-sm text-red-500">CEP é obrigatório</p>
+        {touchedFields.postalCode && !isCEPValid && (
+          <p className="text-sm text-red-500">CEP inválido</p>
         )}
       </div>
 

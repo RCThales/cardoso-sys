@@ -35,7 +35,8 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
     onClientDataChange({ ...clientData, phone: formattedPhone });
   };
 
-  const isCPFValid = !clientData.cpf || validateCPF(clientData.cpf);
+  const isCPFValid = validateCPF(clientData.cpf);
+  const isPhoneValid = clientData.phone.replace(/\D/g, '').length === 11;
 
   return (
     <>
@@ -85,11 +86,11 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
           placeholder="(00) 00000-0000"
           maxLength={15}
           className={cn({
-            "border-red-500": touchedFields.phone && clientData.phone === "",
+            "border-red-500": touchedFields.phone && !isPhoneValid,
           })}
         />
-        {touchedFields.phone && clientData.phone === "" && (
-          <p className="text-sm text-red-500">Telefone é obrigatório</p>
+        {touchedFields.phone && !isPhoneValid && (
+          <p className="text-sm text-red-500">Telefone inválido</p>
         )}
       </div>
     </>
