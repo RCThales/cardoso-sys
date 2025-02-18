@@ -1,15 +1,17 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Plus, Trash2, Pencil, Search } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@/utils/priceCalculator";
 import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
+import { ProductForm } from "@/components/products/ProductForm";
+import { ProductCard } from "@/components/products/ProductCard";
+import { ProductSearch } from "@/components/products/ProductSearch";
 
 const Products = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -159,52 +161,19 @@ const Products = () => {
           </Button>
         </div>
 
-        <div className="relative mb-6">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-          <Input
-            className="pl-10"
-            placeholder="Buscar por nome ou código do produto..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
+        <ProductSearch searchTerm={searchTerm} onSearch={setSearchTerm} />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {filteredProducts.map((product) => (
-            <Card key={product.id} className="p-6">
-              <div className="flex justify-between items-start">
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-                  <p className="text-muted-foreground">
-                    Valor base: R$ {product.base_price.toFixed(2)}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Código: {product.product_code}
-                  </p>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-blue-500 hover:text-blue-500 hover:bg-blue-50"
-                    onClick={() => handleEdit(product)}
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                    onClick={() => {
-                      setSelectedProduct(product);
-                      setIsDeleteDialogOpen(true);
-                    }}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </div>
-            </Card>
+            <ProductCard
+              key={product.id}
+              product={product}
+              onEdit={handleEdit}
+              onDelete={(product) => {
+                setSelectedProduct(product);
+                setIsDeleteDialogOpen(true);
+              }}
+            />
           ))}
         </div>
 
@@ -215,29 +184,14 @@ const Products = () => {
                 {selectedProduct ? "Editar Produto" : "Novo Produto"}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Nome do Produto</label>
-                <Input
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Valor Base</label>
-                <Input
-                  required
-                  type="number"
-                  step="0.01"
-                  value={basePrice}
-                  onChange={(e) => setBasePrice(e.target.value)}
-                />
-              </div>
-              <Button type="submit" className="w-full">
-                {selectedProduct ? "Atualizar Produto" : "Adicionar Produto"}
-              </Button>
-            </form>
+            <ProductForm
+              onSubmit={handleSubmit}
+              name={name}
+              setName={setName}
+              basePrice={basePrice}
+              setBasePrice={setBasePrice}
+              selectedProduct={selectedProduct}
+            />
           </DialogContent>
         </Dialog>
 
