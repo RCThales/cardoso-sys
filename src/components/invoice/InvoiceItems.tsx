@@ -1,4 +1,3 @@
-
 import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
@@ -34,6 +33,8 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
     return null;
   }
 
+  console.log(items);
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -64,7 +65,12 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
               const productName = product ? (
                 <>
                   {product.name}
-                  {item.size && <span className="text-muted-foreground ml-2">({item.size})</span>}
+
+                  {product.sizes.length > 0 && (
+                    <span className="text-muted-foreground ml-2">
+                      ({item.size})
+                    </span>
+                  )}
                 </>
               ) : (
                 item.description
@@ -76,7 +82,9 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
                   <td className="px-4 py-3 align-middle">
                     {item.rentalDays || 1}
                   </td>
-                  <td className="px-4 py-3 align-middle">{item.quantity || 1}</td>
+                  <td className="px-4 py-3 align-middle">
+                    {item.quantity || 1}
+                  </td>
                   <td className="px-4 py-3 text-right align-middle">
                     R$ {formatCurrency(item.total)}
                   </td>

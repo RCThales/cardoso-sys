@@ -22,7 +22,9 @@ interface InvoiceGeneratorProps {
   onInvoiceCreated?: () => void;
 }
 
-export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) => {
+export const InvoiceGenerator = ({
+  onInvoiceCreated,
+}: InvoiceGeneratorProps) => {
   const navigate = useNavigate();
   const {
     items,
@@ -47,23 +49,26 @@ export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) =>
 
   useEffect(() => {
     if (products) {
-      const newItems = cartItems.map(cartItem => {
-        const product = products.find(p => p.id === cartItem.productId);
+      const newItems = cartItems.map((cartItem) => {
+        const product = products.find((p) => p.id === cartItem.productId);
         return {
           productId: cartItem.productId,
           description: product?.name || "",
           quantity: cartItem.quantity,
           rentalDays: cartItem.days,
           price: cartItem.total / cartItem.quantity,
-          total: cartItem.total
+          total: cartItem.total,
+          size: cartItem.size || null,
         };
       });
-      
+
       setItems(newItems);
     }
   }, [cartItems, setItems, products]);
 
-  const formatCurrency = (value: number | string | null | undefined): string => {
+  const formatCurrency = (
+    value: number | string | null | undefined
+  ): string => {
     if (value === null || value === undefined) return "0.00";
     const numValue = typeof value === "string" ? parseFloat(value) : value;
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
@@ -83,10 +88,14 @@ export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) =>
     });
   };
 
-  const itemsSubtotal = useMemo(() => items.reduce((sum, item) => {
-    const itemTotal = typeof item.total === 'number' ? item.total : 0;
-    return sum + itemTotal;
-  }, 0), [items]);
+  const itemsSubtotal = useMemo(
+    () =>
+      items.reduce((sum, item) => {
+        const itemTotal = typeof item.total === "number" ? item.total : 0;
+        return sum + itemTotal;
+      }, 0),
+    [items]
+  );
 
   const calculateTotal = () => {
     const subtotal = itemsSubtotal + (clientData.deliveryFee || 0);
@@ -99,7 +108,7 @@ export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) =>
     await generateInvoice();
     clearCart();
     onInvoiceCreated?.();
-    navigate("/invoices");
+    navigate("/invoices/history");
   };
 
   const handleBack = () => {
@@ -108,13 +117,16 @@ export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) =>
 
   const discountOptions = Array.from({ length: 21 }, (_, i) => i * 5);
 
-  const isFormValid = useMemo(() => validateRequiredFields(), [
-    clientData.name,
-    clientData.cpf,
-    clientData.phone,
-    clientData.postalCode,
-    items.length
-  ]);
+  const isFormValid = useMemo(
+    () => validateRequiredFields(),
+    [
+      clientData.name,
+      clientData.cpf,
+      clientData.phone,
+      clientData.postalCode,
+      items.length,
+    ]
+  );
 
   if (!products) {
     return <div>Carregando...</div>;
@@ -143,7 +155,7 @@ export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) =>
             <span className="font-medium">Subtotal:</span>
             <span>R$ {formatCurrency(itemsSubtotal)}</span>
           </div>
-          
+
           <div className="flex justify-between items-center">
             <label className="font-medium" htmlFor="deliveryFee">
               Frete:
@@ -196,8 +208,8 @@ export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) =>
           <Button variant="outline" onClick={handleBack}>
             Voltar
           </Button>
-          <Button 
-            onClick={handleGenerateInvoice} 
+          <Button
+            onClick={handleGenerateInvoice}
             className="w-full md:w-auto"
             disabled={!isFormValid}
           >
