@@ -75,18 +75,18 @@ export const InvoiceHistory = () => {
     if (data) {
       const formattedInvoices: Invoice[] = data.map(invoice => ({
         ...invoice,
-        items: (invoice.items as any[]).map(item => ({
-          description: item.description as string,
-          quantity: Number(item.quantity) || 0,
-          price: Number(item.price) || 0,
-          total: Number(item.total) || 0,
-          productId: item.productId as string | undefined,
-          rentalDays: item.rentalDays ? Number(item.rentalDays) : undefined
-        })),
+        items: Array.isArray(invoice.items) ? (invoice.items as any[]).map(item => ({
+          description: String(item.description || ''),
+          quantity: parseFloat(item.quantity) || 0,
+          price: parseFloat(item.price) || 0,
+          total: parseFloat(item.total) || 0,
+          productId: item.productId ? String(item.productId) : undefined,
+          rentalDays: item.rentalDays ? parseFloat(item.rentalDays) : undefined
+        })) : [],
         created_at: invoice.created_at || new Date().toISOString(),
-        payment_received: Number(invoice.payment_received) || 0,
-        total: Number(invoice.total) || 0,
-        balance_due: Number(invoice.balance_due) || 0
+        payment_received: parseFloat(String(invoice.payment_received)) || 0,
+        total: parseFloat(String(invoice.total)) || 0,
+        balance_due: parseFloat(String(invoice.balance_due)) || 0
       }));
       setInvoices(formattedInvoices);
     }
@@ -116,9 +116,10 @@ export const InvoiceHistory = () => {
     setDeleteInvoiceId(null);
   };
 
-  const formatCurrency = (value: number) => {
-    const safeNumber = Number(value) || 0;
-    return safeNumber.toFixed(2);
+  const formatCurrency = (value: number | string | null | undefined): string => {
+    if (value === null || value === undefined) return "0.00";
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
 
   const generatePDF = (invoice: Invoice) => {
