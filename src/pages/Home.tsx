@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -5,7 +6,7 @@ import { Calculator, LineChart, Package, ShoppingBag, DollarSign, Wallet } from 
 
 const menuItems = [
   {
-    title: "Cardoso Calc",
+    title: "Calculadora",
     description: "Calculadora de aluguéis",
     icon: Calculator,
     route: "/calc",
@@ -13,24 +14,10 @@ const menuItems = [
   },
   {
     title: "Faturas",
-    description: "Gerenciamento de faturas",
+    description: "Lista de faturas",
     icon: LineChart,
     route: "/invoices/history",
     color: "from-blue-500 to-cyan-500",
-  },
-  {
-    title: "Financeiro",
-    description: "Análise financeira",
-    icon: DollarSign,
-    route: "/financial",
-    color: "from-emerald-500 to-teal-500",
-  },
-  {
-    title: "Investimentos",
-    description: "Controle de investimentos",
-    icon: Wallet,
-    route: "/investments",
-    color: "from-yellow-500 to-orange-500",
   },
   {
     title: "Estoque",
@@ -40,11 +27,25 @@ const menuItems = [
     color: "from-green-500 to-emerald-500",
   },
   {
+    title: "Financeiro",
+    description: "Análise financeira",
+    icon: DollarSign,
+    route: "/financial",
+    color: "from-yellow-500 to-orange-500",
+  },
+  {
+    title: "Investimentos",
+    description: "Controle de investimentos",
+    icon: Wallet,
+    route: "/investments",
+    color: "from-red-500 to-pink-500",
+  },
+  {
     title: "Produtos",
     description: "Gerenciamento de produtos",
     icon: ShoppingBag,
     route: "/products",
-    color: "from-orange-500 to-red-500",
+    color: "from-purple-500 to-indigo-500",
   },
 ] as const;
 

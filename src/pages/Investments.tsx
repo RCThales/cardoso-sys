@@ -1,6 +1,5 @@
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
@@ -9,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Navbar } from "@/components/Navbar";
-import { Plus } from "lucide-react";
+import { Plus, Trash, Edit } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/utils/formatters";
 
@@ -25,7 +24,8 @@ const Investments = () => {
   const { toast } = useToast();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [newInvestment, setNewInvestment] = useState({
+  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
+  const [formData, setFormData] = useState({
     name: "",
     amount: "",
     date: new Date().toISOString().split("T")[0],
@@ -53,21 +53,25 @@ const Investments = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const { data, error } = await supabase
-      .from("investments")
-      .insert([
-        {
-          name: newInvestment.name,
-          amount: Number(newInvestment.amount),
-          date: newInvestment.date,
-          description: newInvestment.description || null,
-        },
-      ])
-      .select();
+    const investmentData = {
+      name: formData.name,
+      amount: Number(formData.amount),
+      date: formData.date,
+      description: formData.description || null,
+    };
+
+    const { error } = editingInvestment
+      ? await supabase
+          .from("investments")
+          .update(investmentData)
+          .eq("id", editingInvestment.id)
+      : await supabase
+          .from("investments")
+          .insert([investmentData]);
 
     if (error) {
       toast({
-        title: "Erro ao adicionar investimento",
+        title: `Erro ao ${editingInvestment ? 'editar' : 'adicionar'} investimento`,
         description: "Tente novamente mais tarde",
         variant: "destructive",
       });
@@ -75,17 +79,52 @@ const Investments = () => {
     }
 
     toast({
-      title: "Investimento adicionado",
-      description: "O investimento foi registrado com sucesso",
+      title: `Investimento ${editingInvestment ? 'editado' : 'adicionado'}`,
+      description: `O investimento foi ${editingInvestment ? 'atualizado' : 'registrado'} com sucesso`,
     });
 
     setIsDialogOpen(false);
-    setNewInvestment({
+    setFormData({
       name: "",
       amount: "",
       date: new Date().toISOString().split("T")[0],
       description: "",
     });
+    setEditingInvestment(null);
+    fetchInvestments();
+  };
+
+  const handleEdit = (investment: Investment) => {
+    setEditingInvestment(investment);
+    setFormData({
+      name: investment.name,
+      amount: investment.amount.toString(),
+      date: investment.date,
+      description: investment.description || "",
+    });
+    setIsDialogOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    const { error } = await supabase
+      .from("investments")
+      .delete()
+      .eq("id", id);
+
+    if (error) {
+      toast({
+        title: "Erro ao excluir investimento",
+        description: "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Investimento excluído",
+      description: "O investimento foi removido com sucesso",
+    });
+
     fetchInvestments();
   };
 
@@ -111,7 +150,9 @@ const Investments = () => {
             </DialogTrigger>
             <DialogContent>
               <DialogHeader>
-                <DialogTitle>Adicionar Investimento</DialogTitle>
+                <DialogTitle>
+                  {editingInvestment ? "Editar Investimento" : "Adicionar Investimento"}
+                </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div>
@@ -120,8 +161,8 @@ const Investments = () => {
                   </label>
                   <Input
                     id="name"
-                    value={newInvestment.name}
-                    onChange={(e) => setNewInvestment({ ...newInvestment, name: e.target.value })}
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     required
                   />
                 </div>
@@ -133,8 +174,8 @@ const Investments = () => {
                     id="amount"
                     type="number"
                     step="0.01"
-                    value={newInvestment.amount}
-                    onChange={(e) => setNewInvestment({ ...newInvestment, amount: e.target.value })}
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
                     required
                   />
                 </div>
@@ -145,8 +186,8 @@ const Investments = () => {
                   <Input
                     id="date"
                     type="date"
-                    value={newInvestment.date}
-                    onChange={(e) => setNewInvestment({ ...newInvestment, date: e.target.value })}
+                    value={formData.date}
+                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     required
                   />
                 </div>
@@ -156,12 +197,12 @@ const Investments = () => {
                   </label>
                   <Input
                     id="description"
-                    value={newInvestment.description}
-                    onChange={(e) => setNewInvestment({ ...newInvestment, description: e.target.value })}
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   />
                 </div>
                 <Button type="submit" className="w-full">
-                  Adicionar
+                  {editingInvestment ? "Salvar" : "Adicionar"}
                 </Button>
               </form>
             </DialogContent>
@@ -185,9 +226,25 @@ const Investments = () => {
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <CardTitle>{investment.name}</CardTitle>
-                  <span className="text-lg font-bold">
-                    R$ {formatCurrency(investment.amount)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-lg font-bold">
+                      R$ {formatCurrency(investment.amount)}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleEdit(investment)}
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleDelete(investment.id)}
+                    >
+                      <Trash className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
