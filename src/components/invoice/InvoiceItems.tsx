@@ -27,18 +27,25 @@ interface InvoiceItemsProps {
   onRemoveItem: (index: number) => void;
 }
 
-export const InvoiceItems = ({ items, onAddItem, onUpdateItem, onRemoveItem }: InvoiceItemsProps) => {
+export const InvoiceItems = ({ 
+  items, 
+  onAddItem, 
+  onUpdateItem, 
+  onRemoveItem 
+}: InvoiceItemsProps) => {
   const handleProductChange = (index: number, productId: string) => {
     const selectedProduct = PRODUCTS.find(p => p.id === productId);
-    const item = items[index];
-    const rentalDays = Number(item.rentalDays) || 1;
-    const quantity = Number(item.quantity) || 1;
-    const total = calculateTotalPrice(rentalDays, productId) * quantity;
-    
-    onUpdateItem(index, "productId", productId);
-    onUpdateItem(index, "description", selectedProduct?.name || "");
-    onUpdateItem(index, "price", total.toString());
-    onUpdateItem(index, "total", total.toString());
+    if (selectedProduct) {
+      const item = items[index];
+      const rentalDays = Number(item.rentalDays) || 1;
+      const quantity = Number(item.quantity) || 1;
+      const total = calculateTotalPrice(rentalDays, productId) * quantity;
+      
+      onUpdateItem(index, "productId", productId);
+      onUpdateItem(index, "description", selectedProduct.name);
+      onUpdateItem(index, "price", total.toString());
+      onUpdateItem(index, "total", total.toString());
+    }
   };
 
   const handleDaysChange = (index: number, days: string) => {
@@ -72,6 +79,12 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem, onRemoveItem }: I
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
 
+  const handleRemoveItem = (index: number) => {
+    if (typeof onRemoveItem === 'function') {
+      onRemoveItem(index);
+    }
+  };
+
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -90,7 +103,9 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem, onRemoveItem }: I
               onValueChange={(value) => handleProductChange(index, value)}
             >
               <SelectTrigger className="h-10">
-                <SelectValue placeholder="Selecione um produto" />
+                <SelectValue placeholder="Selecione um produto">
+                  {PRODUCTS.find(p => p.id === item.productId)?.name || "Selecione um produto"}
+                </SelectValue>
               </SelectTrigger>
               <SelectContent>
                 {PRODUCTS.map((product) => (
@@ -139,7 +154,7 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem, onRemoveItem }: I
             <Button 
               variant="destructive" 
               size="icon"
-              onClick={() => onRemoveItem(index)}
+              onClick={() => handleRemoveItem(index)}
               className="h-10 w-10"
             >
               <Trash2 className="h-4 w-4" />
