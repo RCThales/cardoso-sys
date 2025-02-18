@@ -1,3 +1,4 @@
+
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
@@ -91,22 +92,38 @@ export const generateFinancialPDF = async (
   const total = metrics.reduce((sum, metric) => sum + Math.abs(metric.value), 0);
 
   // Cores para o gráfico
-  const colors = [[41, 128, 185], [231, 76, 60], [46, 204, 113]];
+  const colors = [
+    { r: 41, g: 128, b: 185 },
+    { r: 231, g: 76, b: 60 },
+    { r: 46, g: 204, b: 113 }
+  ];
 
   metrics.forEach((metric, index) => {
     const portion = Math.abs(metric.value) / total;
     const angle = portion * 2 * Math.PI;
+    const { r, g, b } = colors[index];
     
-    // Desenha o setor
-    doc.setFillColor(...colors[index]);
-    doc.sector(centerX, centerY, radius, startAngle, startAngle + angle, 'F');
+    // Desenha arcos para simular um gráfico de pizza
+    doc.setFillColor(r, g, b);
+    const x1 = centerX + radius * Math.cos(startAngle);
+    const y1 = centerY + radius * Math.sin(startAngle);
+    const x2 = centerX + radius * Math.cos(startAngle + angle);
+    const y2 = centerY + radius * Math.sin(startAngle + angle);
+    
+    // Desenha triângulos para formar o gráfico de pizza
+    doc.triangle(
+      centerX, centerY,
+      x1, y1,
+      x2, y2,
+      'F'
+    );
     
     // Atualiza o ângulo inicial para o próximo setor
     startAngle += angle;
     
     // Adiciona a legenda
     const legendY = 250 + (index * 15);
-    doc.setFillColor(...colors[index]);
+    doc.setFillColor(r, g, b);
     doc.rect(20, legendY - 5, 10, 10, 'F');
     doc.setFontSize(10);
     doc.text(
