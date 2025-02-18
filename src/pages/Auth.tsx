@@ -4,7 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Accessibility, Camera } from "lucide-react";
+import { Camera } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 import Webcam from "react-webcam";
@@ -46,8 +46,6 @@ const Auth = () => {
     if (webcamRef.current) {
       const imageSrc = webcamRef.current.getScreenshot();
       if (imageSrc) {
-        // Por enquanto, vamos apenas mostrar uma mensagem de sucesso
-        // Em uma implementação real, você enviaria esta imagem para um serviço de reconhecimento facial
         toast({
           title: "Foto capturada com sucesso",
           description: "Funcionalidade em desenvolvimento",
@@ -68,9 +66,12 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <Accessibility className="h-12 w-12" />
+            <img 
+              src="/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png" 
+              alt="Cardoso Logo" 
+              className="h-28 w-auto"
+            />
           </div>
-          <h2 className="text-2xl font-bold">Cardoso SYS</h2>
           <p className="text-muted-foreground">
             Entre com suas credenciais para acessar
           </p>
