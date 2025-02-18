@@ -1,17 +1,28 @@
 
 import { supabase } from "@/integrations/supabase/client";
 
-type ProductConstants = {
+export type ProductConstants = {
   CONSTANTE_VALOR_ALUGUEL_A: number;
   CONSTANTE_VALOR_ALUGUEL_B: number;
   REGRESSION_DISCOUNT: number;
   SPECIAL_RATES: Record<number, number>;
 };
 
-export async function fetchProducts() {
+export interface Product {
+  id: string;
+  name: string;
+  base_price: number;
+  constants: ProductConstants;
+}
+
+export async function fetchProducts(): Promise<Product[]> {
   const { data, error } = await supabase.from("products").select("*");
   if (error) throw error;
-  return data;
+  
+  return data.map(item => ({
+    ...item,
+    constants: item.constants as ProductConstants
+  }));
 }
 
 export function calculateDailyRate(rentalDays: number, constants: ProductConstants) {
@@ -38,7 +49,7 @@ export function calculateTotalPrice(rentalDays: number, constants: ProductConsta
   return roundToNearestHalf(totalPrice);
 }
 
-export const getProductConstants = (products: any[], productId: string) => {
+export const getProductConstants = (products: Product[], productId: string): ProductConstants | undefined => {
   const product = products.find((p) => p.id === productId);
   return product?.constants;
 };

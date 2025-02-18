@@ -4,6 +4,8 @@ import {
   calculateTotalPrice,
   getProductConstants,
   fetchProducts,
+  type Product,
+  type ProductConstants,
 } from "../utils/priceCalculator";
 import { Slider } from "./ui/slider";
 import { Card } from "./ui/card";
@@ -31,20 +33,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/store/cartStore";
 import { useToast } from "./ui/use-toast";
 import { CartDrawer } from "./cart/CartDrawer";
-
-interface ProductConstants {
-  CONSTANTE_VALOR_ALUGUEL_A: number;
-  CONSTANTE_VALOR_ALUGUEL_B: number;
-  REGRESSION_DISCOUNT: number;
-  SPECIAL_RATES: Record<number, number>;
-}
-
-interface Product {
-  id: string;
-  name: string;
-  base_price: number;
-  constants: ProductConstants;
-}
 
 export const RentalCalculator = () => {
   const [days, setDays] = useState(1);
