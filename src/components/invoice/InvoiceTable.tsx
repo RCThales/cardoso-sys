@@ -1,18 +1,6 @@
 
-import { format, parseISO } from "date-fns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
-import { Button } from "../ui/button";
-import { Switch } from "../ui/switch";
-import { Check, Download, Eye, Trash2 } from "lucide-react";
-import { Invoice, InvoiceExtension } from "./types";
-import { cn } from "@/lib/utils";
+import { Table, TableBody } from "../ui/table";
+import { Invoice } from "./types";
 import { useToast } from "../ui/use-toast";
 import { useState } from "react";
 import { ReturnConfirmDialog } from "./ReturnConfirmDialog";
@@ -20,6 +8,8 @@ import { PaymentMethodDialog } from "./PaymentMethodDialog";
 import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
 import ReactConfetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
+import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
+import { InvoiceTableRow } from "./table/InvoiceTableRow";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -114,102 +104,21 @@ export const InvoiceTable = ({
     <>
       {showConfetti && <ReactConfetti width={width} height={height} recycle={false} />}
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nº Fatura</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-            <TableHead>Pago</TableHead>
-            <TableHead>Devolvido</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
+        <InvoiceTableHeader />
         <TableBody>
           {invoices.map((invoice) => (
-            <TableRow 
+            <InvoiceTableRow
               key={invoice.id}
-              className={cn({
-                "bg-green-50 hover:bg-green-100": invoice.is_paid && invoice.is_returned,
-                "bg-yellow-50 hover:bg-yellow-100": invoice.is_paid && !invoice.is_returned,
-                "bg-red-50 hover:bg-red-100": !invoice.is_paid && !invoice.is_returned,
-              })}
-            >
-              <TableCell>
-                {invoice.invoice_number}
-                {invoice.extensions && invoice.extensions.length > 0 && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    <span className="font-medium">Extensões:</span>
-                    {invoice.extensions.map((ext: InvoiceExtension, idx: number) => (
-                      <div key={idx} className="ml-2">
-                        {format(parseISO(ext.date), "dd/MM/yyyy")} (+{ext.days} dias)
-                        {ext.additionalCost > 0 && ` - R$ ${formatCurrency(ext.additionalCost)}`}
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
-              </TableCell>
-              <TableCell>{invoice.client_name}</TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.total)}
-              </TableCell>
-              <TableCell>
-                {invoice.is_paid && invoice.is_returned ? (
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span className="text-xs text-muted-foreground">
-                      {invoice.payment_method}
-                    </span>
-                  </div>
-                ) : (
-                  <Switch
-                    checked={invoice.is_paid}
-                    onCheckedChange={() => handlePaymentToggle(invoice)}
-                    disabled={invoice.is_returned}
-                  />
-                )}
-              </TableCell>
-              <TableCell>
-                {invoice.is_returned ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Switch
-                    checked={invoice.is_returned}
-                    onCheckedChange={() => handleReturnedToggle(invoice)}
-                    disabled={!invoice.is_paid || invoice.is_returned}
-                  />
-                )}
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onDownload(invoice)}
-                  title="Baixar PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onPreview(invoice)}
-                  title="Visualizar fatura"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => handleDeleteClick(invoice)}
-                  title="Deletar fatura"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
+              invoice={invoice}
+              onTogglePaid={() => handlePaymentToggle(invoice)}
+              onToggleReturned={() => handleReturnedToggle(invoice)}
+              onDownload={() => onDownload(invoice)}
+              onPreview={() => onPreview(invoice)}
+              onDelete={() => handleDeleteClick(invoice)}
+              formatCurrency={formatCurrency}
+              isPaidDisabled={invoice.is_returned}
+              isReturnedDisabled={!invoice.is_paid || invoice.is_returned}
+            />
           ))}
         </TableBody>
       </Table>
