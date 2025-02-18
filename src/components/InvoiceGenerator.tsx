@@ -67,7 +67,7 @@ export const InvoiceGenerator = () => {
     clearCart();
   };
 
-  const handleCancel = () => {
+  const handleBack = () => {
     navigate("/calc");
   };
 
@@ -120,8 +120,8 @@ export const InvoiceGenerator = () => {
         </div>
 
         <div className="flex justify-end gap-4">
-          <Button variant="outline" onClick={handleCancel}>
-            Cancelar Pedido
+          <Button variant="outline" onClick={handleBack}>
+            Voltar
           </Button>
           <Button onClick={handleGenerateInvoice} className="w-full md:w-auto">
             Gerar Fatura e Finalizar

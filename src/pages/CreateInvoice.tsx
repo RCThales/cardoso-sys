@@ -4,7 +4,6 @@ import { Navbar } from "@/components/Navbar";
 import { InvoiceGenerator } from "@/components/InvoiceGenerator";
 import { useCartStore } from "@/store/cartStore";
 import { useNavigate } from "react-router-dom";
-import { CartDrawer } from "@/components/cart/CartDrawer";
 
 const CreateInvoice = () => {
   const { items } = useCartStore();
@@ -26,12 +25,7 @@ const CreateInvoice = () => {
             Preencha os dados para gerar a fatura
           </p>
         </div>
-        <div className="relative">
-          <div className="fixed top-4 right-4 z-50">
-            <CartDrawer />
-          </div>
-          <InvoiceGenerator />
-        </div>
+        <InvoiceGenerator />
       </div>
     </div>
   );
