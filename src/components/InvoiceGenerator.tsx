@@ -10,6 +10,13 @@ import { useCartStore } from "@/store/cartStore";
 import { useEffect } from "react";
 import { PRODUCTS } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export const InvoiceGenerator = () => {
   const navigate = useNavigate();
@@ -58,10 +65,23 @@ export const InvoiceGenerator = () => {
     });
   };
 
+  const handleDiscountChange = (value: string) => {
+    setClientData({
+      ...clientData,
+      specialDiscount: Number(value) || 0,
+    });
+  };
+
   const itemsSubtotal = items.reduce((sum, item) => {
     const itemTotal = typeof item.total === 'number' ? item.total : 0;
     return sum + itemTotal;
   }, 0);
+
+  const calculateTotal = () => {
+    const subtotal = itemsSubtotal + (clientData.deliveryFee || 0);
+    const discount = (subtotal * clientData.specialDiscount) / 100;
+    return subtotal - discount;
+  };
 
   const handleGenerateInvoice = async () => {
     if (!validateRequiredFields()) return;
@@ -75,6 +95,8 @@ export const InvoiceGenerator = () => {
   };
 
   const isFormValid = validateRequiredFields();
+
+  const discountOptions = Array.from({ length: 21 }, (_, i) => i * 5);
 
   return (
     <Card className="p-6">
@@ -116,10 +138,33 @@ export const InvoiceGenerator = () => {
             </div>
           </div>
 
+          <div className="flex justify-between items-center">
+            <label className="font-medium" htmlFor="specialDiscount">
+              Desconto Especial:
+            </label>
+            <div className="w-32">
+              <Select
+                value={String(clientData.specialDiscount)}
+                onValueChange={handleDiscountChange}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o desconto" />
+                </SelectTrigger>
+                <SelectContent>
+                  {discountOptions.map((discount) => (
+                    <SelectItem key={discount} value={String(discount)}>
+                      {discount}%
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="flex justify-between items-center pt-4 border-t">
             <span className="font-medium text-lg">Total:</span>
             <span className="text-xl font-bold">
-              R$ {formatCurrency(calculateSubtotal())}
+              R$ {formatCurrency(calculateTotal())}
             </span>
           </div>
         </div>

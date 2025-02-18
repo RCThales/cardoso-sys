@@ -11,6 +11,7 @@ export interface ClientData {
   postalCode: string;
   isPaid: boolean;
   deliveryFee: number;
+  specialDiscount: number;
 }
 
 export const DEFAULT_CLIENT_DATA: ClientData = {
@@ -25,4 +26,5 @@ export const DEFAULT_CLIENT_DATA: ClientData = {
   postalCode: "",
   isPaid: false,
   deliveryFee: 0,
+  specialDiscount: 0,
 };

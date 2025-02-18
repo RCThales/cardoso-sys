@@ -64,9 +64,10 @@ export const useInvoiceGeneration = () => {
       return sum + itemTotal;
     }, 0);
     
-    const total = itemsTotal + (clientData.deliveryFee || 0);
+    const subtotal = itemsTotal + (clientData.deliveryFee || 0);
+    const discount = (subtotal * clientData.specialDiscount) / 100;
     
-    return total;
+    return subtotal - discount;
   };
 
   const generateInvoice = async () => {
