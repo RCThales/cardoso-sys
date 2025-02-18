@@ -1,6 +1,7 @@
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2 } from "lucide-react";
 import type { Product } from "@/utils/priceCalculator";
 
@@ -22,6 +23,18 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
           <p className="text-muted-foreground">
             Código: {product.product_code}
           </p>
+          {product.sizes && product.sizes.length > 0 && (
+            <div className="mt-2">
+              <p className="text-sm text-muted-foreground mb-1">Tamanhos:</p>
+              <div className="flex flex-wrap gap-2">
+                {product.sizes.map((size: { size: string }) => (
+                  <Badge key={size.size} variant="secondary">
+                    {size.size}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
         <div className="flex gap-2">
           <Button

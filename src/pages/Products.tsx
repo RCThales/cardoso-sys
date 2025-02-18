@@ -19,6 +19,7 @@ const Products = () => {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [name, setName] = useState("");
   const [basePrice, setBasePrice] = useState("");
+  const [sizes, setSizes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const { toast } = useToast();
 
@@ -47,12 +48,15 @@ const Products = () => {
     setSelectedProduct(product);
     setName(product.name);
     setBasePrice(product.base_price.toString());
+    setSizes((product.sizes || []).map(s => s.size));
     setIsOpen(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const sizeObjects = sizes.map(size => ({ size }));
+      
       if (selectedProduct) {
         // Editar produto existente
         const { error } = await supabase
@@ -60,10 +64,27 @@ const Products = () => {
           .update({
             name,
             base_price: parseFloat(basePrice),
+            sizes: sizeObjects,
           })
           .eq("id", selectedProduct.id);
 
         if (error) throw error;
+
+        // Atualizar o estoque para cada tamanho
+        for (const size of sizes) {
+          const { error: inventoryError } = await supabase
+            .from("inventory")
+            .upsert({
+              product_id: selectedProduct.id,
+              size,
+              total_quantity: 0,
+              rented_quantity: 0,
+            }, {
+              onConflict: 'product_id,size'
+            });
+
+          if (inventoryError) throw inventoryError;
+        }
 
         toast({
           title: "Sucesso",
@@ -72,11 +93,14 @@ const Products = () => {
       } else {
         // Criar novo produto
         const productCode = '#' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const productId = name.toLowerCase().replace(/\s+/g, "-");
+        
         const { error } = await supabase.from("products").insert({
-          id: name.toLowerCase().replace(/\s+/g, "-"),
+          id: productId,
           name,
           base_price: parseFloat(basePrice),
           product_code: productCode,
+          sizes: sizeObjects,
           constants: {
             CONSTANTE_VALOR_ALUGUEL_A: 3.72,
             CONSTANTE_VALOR_ALUGUEL_B: 1.89,
@@ -92,6 +116,20 @@ const Products = () => {
 
         if (error) throw error;
 
+        // Criar entradas no estoque para cada tamanho
+        for (const size of sizes) {
+          const { error: inventoryError } = await supabase
+            .from("inventory")
+            .insert({
+              product_id: productId,
+              size,
+              total_quantity: 0,
+              rented_quantity: 0,
+            });
+
+          if (inventoryError) throw inventoryError;
+        }
+
         toast({
           title: "Sucesso",
           description: "Produto adicionado com sucesso",
@@ -102,6 +140,7 @@ const Products = () => {
       setSelectedProduct(null);
       setName("");
       setBasePrice("");
+      setSizes([]);
       refetch();
     } catch (error) {
       toast({
@@ -118,6 +157,15 @@ const Products = () => {
     if (!selectedProduct) return;
 
     try {
+      // Primeiro, excluir registros do inventário
+      const { error: inventoryError } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("product_id", selectedProduct.id);
+
+      if (inventoryError) throw inventoryError;
+
+      // Depois, excluir o produto
       const { error } = await supabase
         .from("products")
         .delete()
@@ -147,6 +195,7 @@ const Products = () => {
     setSelectedProduct(null);
     setName("");
     setBasePrice("");
+    setSizes([]);
   };
 
   return (
@@ -191,6 +240,8 @@ const Products = () => {
               basePrice={basePrice}
               setBasePrice={setBasePrice}
               selectedProduct={selectedProduct}
+              sizes={sizes}
+              setSizes={setSizes}
             />
           </DialogContent>
         </Dialog>

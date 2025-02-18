@@ -14,18 +14,21 @@ export type Database = {
           id: number
           product_id: string
           rented_quantity: number
+          size: string | null
           total_quantity: number
         }
         Insert: {
           id?: number
           product_id: string
           rented_quantity?: number
+          size?: string | null
           total_quantity?: number
         }
         Update: {
           id?: number
           product_id?: string
           rented_quantity?: number
+          size?: string | null
           total_quantity?: number
         }
         Relationships: []
@@ -142,6 +145,7 @@ export type Database = {
           id: string
           name: string
           product_code: string
+          sizes: Json | null
         }
         Insert: {
           base_price: number
@@ -149,6 +153,7 @@ export type Database = {
           id: string
           name: string
           product_code: string
+          sizes?: Json | null
         }
         Update: {
           base_price?: number
@@ -156,6 +161,7 @@ export type Database = {
           id?: string
           name?: string
           product_code?: string
+          sizes?: Json | null
         }
         Relationships: []
       }
