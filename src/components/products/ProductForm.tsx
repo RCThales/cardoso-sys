@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,29 +55,21 @@ const SortableSizeItem = ({ size, quantity, onQuantityChange, onRemove }: Sortab
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
+    cursor: 'grab',
   };
 
   return (
-    <div style={style} className="flex items-center gap-2 mb-2">
-      <div 
-        ref={setNodeRef}
-        {...attributes}
-        {...listeners}
-      >
-        <Badge 
-          variant="secondary" 
-          className="px-2 py-1 min-w-[60px] cursor-grab"
+    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="flex items-center gap-2 mb-2">
+      <Badge variant="secondary" className="px-2 py-1 min-w-[60px]">
+        {size}
+        <button
+          type="button"
+          onClick={onRemove}
+          className="ml-2 hover:text-destructive"
         >
-          {size}
-          <button
-            type="button"
-            onClick={onRemove}
-            className="ml-2 hover:text-destructive"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        </Badge>
-      </div>
+          <X className="h-3 w-3" />
+        </button>
+      </Badge>
       <Input
         type="number"
         min="0"
@@ -202,14 +195,10 @@ export const ProductForm = ({
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     
-    if (!active || !over || active.id === over.id) {
-      return;
-    }
-    
-    const oldIndex = sizes.indexOf(active.id);
-    const newIndex = sizes.indexOf(over.id);
-    
-    if (oldIndex !== -1 && newIndex !== -1) {
+    if (active.id !== over.id) {
+      const oldIndex = sizes.indexOf(active.id);
+      const newIndex = sizes.indexOf(over.id);
+      
       const newSizes = arrayMove(sizes, oldIndex, newIndex);
       setSizes(newSizes);
 
