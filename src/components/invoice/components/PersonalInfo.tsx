@@ -2,6 +2,8 @@
 import { Input } from "../../ui/input";
 import { formatCPF, formatPhone } from "@/utils/formatters";
 import { ClientData } from "../types/clientForm";
+import { validateCPF } from "@/utils/validateCPF";
+import { cn } from "@/lib/utils";
 
 interface PersonalInfoProps {
   clientData: ClientData;
@@ -19,6 +21,8 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
     onClientDataChange({ ...clientData, phone: formattedPhone });
   };
 
+  const isCPFValid = !clientData.cpf || validateCPF(clientData.cpf);
+
   return (
     <>
       <div className="space-y-2">
@@ -29,7 +33,13 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
           onChange={(e) =>
             onClientDataChange({ ...clientData, name: e.target.value })
           }
+          className={cn({
+            "border-red-500": clientData.name === "",
+          })}
         />
+        {clientData.name === "" && (
+          <p className="text-sm text-red-500">Nome é obrigatório</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -40,7 +50,13 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
           onChange={(e) => handleCPFChange(e.target.value)}
           placeholder="000.000.000-00"
           maxLength={14}
+          className={cn({
+            "border-red-500": !isCPFValid,
+          })}
         />
+        {!isCPFValid && (
+          <p className="text-sm text-red-500">CPF inválido</p>
+        )}
       </div>
 
       <div className="space-y-2">
@@ -51,7 +67,13 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
           onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder="(00) 00000-0000"
           maxLength={15}
+          className={cn({
+            "border-red-500": clientData.phone === "",
+          })}
         />
+        {clientData.phone === "" && (
+          <p className="text-sm text-red-500">Telefone é obrigatório</p>
+        )}
       </div>
     </>
   );

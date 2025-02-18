@@ -14,15 +14,32 @@ export const useInvoiceGeneration = () => {
   const [clientData, setClientData] = useState<ClientData>(DEFAULT_CLIENT_DATA);
 
   const validateRequiredFields = () => {
-    if (!clientData.name || !clientData.postalCode || !clientData.cpf || !clientData.phone) {
-      return false;
+    const errors: string[] = [];
+
+    if (!clientData.name) errors.push("Nome é obrigatório");
+    if (!clientData.postalCode) errors.push("CEP é obrigatório");
+    if (!clientData.phone) errors.push("Telefone é obrigatório");
+    
+    if (!clientData.cpf) {
+      errors.push("CPF é obrigatório");
+    } else if (!validateCPF(clientData.cpf)) {
+      errors.push("CPF inválido");
     }
-    if (!validateCPF(clientData.cpf)) {
-      return false;
-    }
+
     if (items.length === 0) {
+      errors.push("Adicione pelo menos um item");
+    }
+
+    if (errors.length > 0) {
+      toast({
+        title: "Campos inválidos",
+        description: errors.join(", "),
+        variant: "destructive",
+        duration: 3000,
+      });
       return false;
     }
+
     return true;
   };
 
@@ -73,11 +90,6 @@ export const useInvoiceGeneration = () => {
   const generateInvoice = async () => {
     try {
       if (!validateRequiredFields()) {
-        toast({
-          title: "Erro",
-          description: "Por favor, preencha todos os campos obrigatórios e verifique se o CPF é válido",
-          variant: "destructive",
-        });
         return;
       }
 
@@ -90,6 +102,7 @@ export const useInvoiceGeneration = () => {
           title: "Erro",
           description: "Você precisa estar logado para gerar faturas",
           variant: "destructive",
+          duration: 3000,
         });
         return;
       }
@@ -102,6 +115,7 @@ export const useInvoiceGeneration = () => {
       toast({
         title: "Sucesso!",
         description: "Fatura gerada com sucesso",
+        duration: 3000,
       });
 
       setItems([]);
@@ -111,6 +125,7 @@ export const useInvoiceGeneration = () => {
         title: "Erro",
         description: "Erro ao gerar fatura",
         variant: "destructive",
+        duration: 3000,
       });
       console.error(error);
     }

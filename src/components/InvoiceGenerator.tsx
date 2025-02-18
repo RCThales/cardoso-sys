@@ -1,4 +1,3 @@
-
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -11,6 +10,7 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
+import { validateCPF } from "@/utils/validateCPF";
 import {
   Select,
   SelectContent,
@@ -145,6 +145,7 @@ export const InvoiceGenerator = () => {
                 value={clientData.deliveryFee}
                 onChange={(e) => handleDeliveryFeeChange(e.target.value)}
                 min={0}
+                step="0.01"
                 className="text-right"
               />
             </div>
