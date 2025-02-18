@@ -42,6 +42,19 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
       30: 90,
     },
   },
+  "imobilizador-de-joelho": {
+    CONSTANTE_VALOR_ALUGUEL_A: 7.2,
+    CONSTANTE_VALOR_ALUGUEL_B: 2.5,
+    REGRESSION_DISCOUNT: 0.09, // Valor específico
+    SPECIAL_RATES: {
+      5: 35,
+      7: 45,
+      10: 55,
+      15: 65,
+      20: 75,
+      30: 90,
+    },
+  },
 
   "botas-ortopedicas": {
     CONSTANTE_VALOR_ALUGUEL_A: 5.92,
@@ -122,6 +135,7 @@ export const PRODUCTS = [
   { id: "muletas-axilares", name: "Muletas Axilares" },
   { id: "muletas-canadenses", name: "Muletas Canadenses" },
   { id: "andador", name: "Andador" },
+  { id: "imobilizador-de-joelho", name: "Imobilizador de Joelho" },
   { id: "botas-ortopedicas", name: "Botas Ortopédicas" },
   { id: "sandalias-baruk", name: "Sandálias Baruk" },
   { id: "cadeira-de-rodas", name: "Cadeira de Rodas" },
