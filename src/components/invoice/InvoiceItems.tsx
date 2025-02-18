@@ -101,7 +101,7 @@ export const InvoiceItems = ({
               Produto
             </label>
             {readOnly ? (
-              <Input value={item.description} readOnly />
+              <Input value={item.description || ''} readOnly />
             ) : (
               <Select
                 value={item.productId || ""}
@@ -129,7 +129,7 @@ export const InvoiceItems = ({
             <Input
               type="number"
               placeholder="Dias"
-              value={item.rentalDays.toString()}
+              value={(item.rentalDays || 1).toString()}
               onChange={(e) => handleDaysChange(index, e.target.value)}
               min={1}
               readOnly={readOnly}
@@ -142,7 +142,7 @@ export const InvoiceItems = ({
             <Input
               type="number"
               placeholder="Qtd"
-              value={item.quantity.toString()}
+              value={(item.quantity || 1).toString()}
               onChange={(e) => handleQuantityChange(index, e.target.value)}
               min={1}
               readOnly={readOnly}
