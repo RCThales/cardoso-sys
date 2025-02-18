@@ -26,6 +26,7 @@ export type Database = {
           id: number
           invoice_date: string
           invoice_number: string
+          is_paid: boolean
           items: Json
           payment_received: number | null
           payment_terms: string | null
@@ -49,6 +50,7 @@ export type Database = {
           id?: number
           invoice_date: string
           invoice_number: string
+          is_paid?: boolean
           items: Json
           payment_received?: number | null
           payment_terms?: string | null
@@ -72,6 +74,7 @@ export type Database = {
           id?: number
           invoice_date?: string
           invoice_number?: string
+          is_paid?: boolean
           items?: Json
           payment_received?: number | null
           payment_terms?: string | null

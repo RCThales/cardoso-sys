@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import {
@@ -56,8 +55,7 @@ interface Invoice {
   client_cpf: string;
   client_phone: string;
   total: number;
-  payment_received: number;
-  balance_due: number;
+  is_paid: boolean;
   client_address: string;
   client_address_number: string;
   client_address_complement: string;
@@ -102,9 +100,8 @@ export const InvoiceHistory = () => {
             rentalDays: item.rentalDays ? parseFloat(item.rentalDays) : undefined
           })) : [],
           created_at: invoice.created_at || new Date().toISOString(),
-          payment_received: parseFloat(String(invoice.payment_received)) || 0,
           total: parseFloat(String(invoice.total)) || 0,
-          balance_due: parseFloat(String(invoice.balance_due)) || 0
+          is_paid: !!invoice.is_paid
         }));
         setInvoices(formattedInvoices);
       }
@@ -199,8 +196,6 @@ export const InvoiceHistory = () => {
     const finalY = (doc as any).lastAutoTable.finalY + 10;
     doc.text(`Subtotal: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
     doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY + 5);
-    doc.text(`Pago: R$ ${formatCurrency(invoice.payment_received)}`, 150, finalY + 10);
-    doc.text(`Saldo Devido: R$ ${formatCurrency(invoice.balance_due)}`, 150, finalY + 15);
 
     doc.setFontSize(8);
     doc.text("Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços,", 15, 270);
@@ -256,14 +251,16 @@ export const InvoiceHistory = () => {
             <TableHead>Data</TableHead>
             <TableHead>Cliente</TableHead>
             <TableHead className="text-right">Total</TableHead>
-            <TableHead className="text-right">Recebido</TableHead>
-            <TableHead className="text-right">Saldo</TableHead>
+            <TableHead>Status</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {filteredInvoices.map((invoice) => (
-            <TableRow key={invoice.id}>
+            <TableRow 
+              key={invoice.id}
+              className={invoice.is_paid ? "bg-green-50" : "bg-yellow-50"}
+            >
               <TableCell>{invoice.invoice_number}</TableCell>
               <TableCell>
                 {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
@@ -272,11 +269,8 @@ export const InvoiceHistory = () => {
               <TableCell className="text-right">
                 R$ {formatCurrency(invoice.total)}
               </TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.payment_received)}
-              </TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.balance_due)}
+              <TableCell>
+                {invoice.is_paid ? "Pago" : "Pendente"}
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
@@ -353,6 +347,7 @@ export const InvoiceHistory = () => {
                   <p>Nº: {previewInvoice.invoice_number}</p>
                   <p>Data: {format(parseISO(previewInvoice.invoice_date), "dd/MM/yyyy")}</p>
                   <p>Vencimento: {format(parseISO(previewInvoice.due_date), "dd/MM/yyyy")}</p>
+                  <p>Status: {previewInvoice.is_paid ? "Pago" : "Pendente"}</p>
                 </div>
               </div>
 
@@ -381,10 +376,7 @@ export const InvoiceHistory = () => {
               </div>
 
               <div className="text-right space-y-1">
-                <p>Subtotal: R$ {formatCurrency(previewInvoice.total)}</p>
-                <p>Total: R$ {formatCurrency(previewInvoice.total)}</p>
-                <p>Pago: R$ {formatCurrency(previewInvoice.payment_received)}</p>
-                <p className="font-semibold">Saldo Devido: R$ {formatCurrency(previewInvoice.balance_due)}</p>
+                <p className="font-semibold">Total: R$ {formatCurrency(previewInvoice.total)}</p>
               </div>
             </div>
           )}

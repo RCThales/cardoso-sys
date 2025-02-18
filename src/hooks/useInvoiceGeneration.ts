@@ -16,6 +16,7 @@ interface ClientData {
   city: string;
   state: string;
   postalCode: string;
+  isPaid: boolean;
 }
 
 export const useInvoiceGeneration = () => {
@@ -31,6 +32,7 @@ export const useInvoiceGeneration = () => {
     city: "",
     state: "",
     postalCode: "",
+    isPaid: false,
   });
 
   const addItem = () => {
@@ -70,10 +72,10 @@ export const useInvoiceGeneration = () => {
 
   const generateInvoice = async () => {
     try {
-      if (!clientData.cpf || !clientData.phone) {
+      if (!clientData.name || !clientData.postalCode || !clientData.cpf || !clientData.phone) {
         toast({
           title: "Erro",
-          description: "CPF e telefone são obrigatórios",
+          description: "Nome, CEP, CPF e telefone são obrigatórios",
           variant: "destructive",
         });
         return;
@@ -123,7 +125,7 @@ export const useInvoiceGeneration = () => {
         items: itemsForDb,
         subtotal,
         total,
-        balance_due: total,
+        is_paid: clientData.isPaid,
         user_id: user.id,
       });
 
@@ -146,6 +148,7 @@ export const useInvoiceGeneration = () => {
         city: "",
         state: "",
         postalCode: "",
+        isPaid: false,
       });
     } catch (error) {
       toast({
