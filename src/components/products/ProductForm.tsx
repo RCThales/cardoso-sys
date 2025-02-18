@@ -55,12 +55,11 @@ const SortableSizeItem = ({ size, quantity, onQuantityChange, onRemove }: Sortab
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
-    cursor: 'grab',
   };
 
   return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="flex items-center gap-2 mb-2">
-      <Badge variant="secondary" className="px-2 py-1 min-w-[60px]">
+    <div ref={setNodeRef} style={style} className="flex items-center gap-2 mb-2">
+      <Badge variant="secondary" className="px-2 py-1 min-w-[60px] cursor-grab" {...attributes} {...listeners}>
         {size}
         <button
           type="button"
@@ -121,17 +120,12 @@ export const ProductForm = ({
 
           const { error: inventoryError } = await supabase
             .from("inventory")
-            .upsert(
-              {
-                product_id: selectedProduct.id,
-                size: newSize,
-                total_quantity: 0,
-                rented_quantity: 0,
-              },
-              {
-                onConflict: 'product_id,size'
-              }
-            );
+            .insert({
+              product_id: selectedProduct.id,
+              size: newSize,
+              total_quantity: 0,
+              rented_quantity: 0,
+            });
 
           if (inventoryError) throw inventoryError;
         }
