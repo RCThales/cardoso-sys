@@ -58,8 +58,9 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Adiciona os itens principais
   invoice.items.forEach(item => {
     if (item.productId !== 'delivery-fee') {
+      const description = item.size ? `${item.description} (${item.size})` : item.description;
       itemsTableData.push([
-        item.description,
+        description,
         item.rentalDays.toString(),
         item.quantity.toString(),
         `R$ ${formatCurrency(item.total)}`,

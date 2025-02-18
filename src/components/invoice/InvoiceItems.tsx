@@ -1,4 +1,3 @@
-
 import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
@@ -67,22 +66,30 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
             </tr>
           </thead>
           <tbody>
-            {items.map((item, index) => (
-              <tr key={index} className="border-t">
-                <td className="px-4 py-3 align-middle">
-                  {products.find((p) => p.id === item.productId)?.name ||
-                    item.description ||
-                    ""}
-                </td>
-                <td className="px-4 py-3 align-middle">
-                  {item.rentalDays || 1}
-                </td>
-                <td className="px-4 py-3 align-middle">{item.quantity || 1}</td>
-                <td className="px-4 py-3 text-right align-middle">
-                  R$ {formatCurrency(item.total)}
-                </td>
-              </tr>
-            ))}
+            {items.map((item, index) => {
+              const product = products.find((p) => p.id === item.productId);
+              const productName = product ? (
+                <>
+                  {product.name}
+                  {item.size && <span className="text-muted-foreground ml-2">({item.size})</span>}
+                </>
+              ) : (
+                item.description
+              );
+
+              return (
+                <tr key={index} className="border-t">
+                  <td className="px-4 py-3 align-middle">{productName}</td>
+                  <td className="px-4 py-3 align-middle">
+                    {item.rentalDays || 1}
+                  </td>
+                  <td className="px-4 py-3 align-middle">{item.quantity || 1}</td>
+                  <td className="px-4 py-3 text-right align-middle">
+                    R$ {formatCurrency(item.total)}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
