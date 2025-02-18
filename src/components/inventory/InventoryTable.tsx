@@ -30,6 +30,7 @@ export const InventoryTable = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showRented, setShowRented] = useState(false);
   const [showAvailable, setShowAvailable] = useState(false);
+  const [adjustQuantity, setAdjustQuantity] = useState<Record<number, number>>({});
   const { toast } = useToast();
 
   const { data: inventory, isLoading, refetch } = useQuery({
@@ -56,7 +57,8 @@ export const InventoryTable = () => {
       const item = inventory?.find(i => i.id === itemId);
       if (!item) return;
 
-      const newQuantity = Math.max(0, item.total_quantity + change);
+      const adjustmentValue = adjustQuantity[itemId] || 1;
+      const newQuantity = Math.max(0, item.total_quantity + (change * adjustmentValue));
       
       const { error } = await supabase
         .from('inventory')
@@ -80,6 +82,14 @@ export const InventoryTable = () => {
     } finally {
       setIsUpdating(false);
     }
+  };
+
+  const handleAdjustQuantityChange = (itemId: number, value: string) => {
+    const numValue = parseInt(value) || 1;
+    setAdjustQuantity(prev => ({
+      ...prev,
+      [itemId]: Math.max(1, numValue)
+    }));
   };
 
   if (isLoading || !products) {
@@ -158,6 +168,7 @@ export const InventoryTable = () => {
             <TableHead className="text-right">Quantidade Total</TableHead>
             <TableHead className="text-right">Quantidade Alugada</TableHead>
             <TableHead className="text-right">Quantidade Disponível</TableHead>
+            <TableHead className="text-right">Ajuste</TableHead>
             <TableHead className="text-right">Ações</TableHead>
           </TableRow>
         </TableHeader>
@@ -173,6 +184,15 @@ export const InventoryTable = () => {
                 <TableCell className="text-right">{item.total_quantity}</TableCell>
                 <TableCell className="text-right">{item.rented_quantity}</TableCell>
                 <TableCell className="text-right">{availableQuantity}</TableCell>
+                <TableCell className="text-right">
+                  <Input
+                    type="number"
+                    min="1"
+                    value={adjustQuantity[item.id] || 1}
+                    onChange={(e) => handleAdjustQuantityChange(item.id, e.target.value)}
+                    className="w-20 text-right"
+                  />
+                </TableCell>
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-2">
                     <Button

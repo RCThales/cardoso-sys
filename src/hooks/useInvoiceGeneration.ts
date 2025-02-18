@@ -14,33 +14,13 @@ export const useInvoiceGeneration = () => {
   const [clientData, setClientData] = useState<ClientData>(DEFAULT_CLIENT_DATA);
 
   const validateRequiredFields = () => {
-    const errors: string[] = [];
+    const hasName = !!clientData.name;
+    const hasPostalCode = !!clientData.postalCode;
+    const hasPhone = !!clientData.phone;
+    const hasCPF = !!clientData.cpf && validateCPF(clientData.cpf);
+    const hasItems = items.length > 0;
 
-    if (!clientData.name) errors.push("Nome é obrigatório");
-    if (!clientData.postalCode) errors.push("CEP é obrigatório");
-    if (!clientData.phone) errors.push("Telefone é obrigatório");
-    
-    if (!clientData.cpf) {
-      errors.push("CPF é obrigatório");
-    } else if (!validateCPF(clientData.cpf)) {
-      errors.push("CPF inválido");
-    }
-
-    if (items.length === 0) {
-      errors.push("Adicione pelo menos um item");
-    }
-
-    if (errors.length > 0) {
-      toast({
-        title: "Campos inválidos",
-        description: errors.join(", "),
-        variant: "destructive",
-        duration: 3000,
-      });
-      return false;
-    }
-
-    return true;
+    return hasName && hasPostalCode && hasPhone && hasCPF && hasItems;
   };
 
   const addItem = () => {
