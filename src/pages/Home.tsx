@@ -66,17 +66,15 @@ const Home = () => {
           {menuItems.map((item) => (
             <Card
               key={item.title}
-              className="cursor-pointer hover:scale-105 transition-transform"
+              className={`cursor-pointer hover:scale-105 transition-transform ${item.color}`}
               onClick={() => navigate(item.route)}
             >
-              <div className="p-6 flex flex-col h-full">
+              <div className="p-6 flex flex-col h-full text-white">
                 <div className="flex-grow flex items-center justify-center">
-                  <div className={`rounded-full p-4 ${item.color}`}>
-                    <item.icon className="h-8 w-8 text-white" />
-                  </div>
+                  <item.icon className="h-12 w-12" />
                 </div>
-                <h2 className="text-lg font-semibold mt-4">{item.title}</h2>
-                <p className="text-sm text-muted-foreground mt-2">
+                <h2 className="text-lg font-semibold mt-4 text-center">{item.title}</h2>
+                <p className="text-sm mt-2 text-center text-white/80">
                   {item.description}
                 </p>
               </div>
