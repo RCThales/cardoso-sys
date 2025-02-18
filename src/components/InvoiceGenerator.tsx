@@ -22,28 +22,27 @@ export const InvoiceGenerator = () => {
     removeItem,
     calculateSubtotal,
     generateInvoice,
+    setItems,
   } = useInvoiceGeneration();
 
   const cartItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
 
   useEffect(() => {
-    // Limpa os itens existentes
-    items.forEach((_, index) => removeItem(index));
-    
-    // Adiciona os itens do carrinho
-    cartItems.forEach((cartItem) => {
+    const newItems = cartItems.map(cartItem => {
       const product = PRODUCTS.find(p => p.id === cartItem.productId);
-      addItem();
-      const lastIndex = items.length;
-      updateItem(lastIndex, "productId", cartItem.productId);
-      updateItem(lastIndex, "description", product?.name || "");
-      updateItem(lastIndex, "quantity", cartItem.quantity.toString());
-      updateItem(lastIndex, "rentalDays", cartItem.days.toString());
-      updateItem(lastIndex, "price", (cartItem.total / cartItem.quantity).toString());
-      updateItem(lastIndex, "total", cartItem.total.toString());
+      return {
+        productId: cartItem.productId,
+        description: product?.name || "",
+        quantity: cartItem.quantity,
+        rentalDays: cartItem.days,
+        price: cartItem.total / cartItem.quantity,
+        total: cartItem.total
+      };
     });
-  }, [cartItems, addItem, items.length, removeItem, updateItem]);
+    
+    setItems(newItems);
+  }, [cartItems, setItems]);
 
   const formatCurrency = (value: number | string | null | undefined): string => {
     if (value === null || value === undefined) return "0.00";

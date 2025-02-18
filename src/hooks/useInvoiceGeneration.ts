@@ -4,7 +4,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
-import type { InvoiceItem } from "@/components/invoice/InvoiceItems";
+import type { InvoiceItem } from "@/components/invoice/types";
 
 interface ClientData {
   name: string;
@@ -63,12 +63,6 @@ export const useInvoiceGeneration = () => {
 
     newItems[index] = item;
     setItems(newItems);
-    
-    console.log("Item atualizado:", {
-      field,
-      value,
-      item: newItems[index]
-    });
   };
 
   const removeItem = (index: number) => {
@@ -82,16 +76,6 @@ export const useInvoiceGeneration = () => {
     }, 0);
     
     const total = itemsTotal + (clientData.deliveryFee || 0);
-    
-    console.log("Calculando total:", {
-      items: items.map(item => ({
-        description: item.description,
-        total: item.total
-      })),
-      itemsTotal,
-      deliveryFee: clientData.deliveryFee,
-      totalCalculado: total
-    });
     
     return total;
   };
@@ -135,7 +119,6 @@ export const useInvoiceGeneration = () => {
       const dueDate = new Date();
       dueDate.setDate(today.getDate() + 30);
 
-      // Criar uma nova array com todos os itens, incluindo o frete
       const allItems = [
         ...items.map(item => ({
           ...item,
@@ -152,11 +135,6 @@ export const useInvoiceGeneration = () => {
           rentalDays: 1
         }
       ] as Json;
-
-      console.log("Enviando para o banco:", {
-        items: allItems,
-        total
-      });
 
       const { error } = await supabase.from("invoices").insert({
         invoice_number: invoiceNumber,
@@ -199,7 +177,7 @@ export const useInvoiceGeneration = () => {
         state: "",
         postalCode: "",
         isPaid: false,
-        deliveryFee: 20,
+        deliveryFee: 0,
       });
     } catch (error) {
       toast({
@@ -212,6 +190,7 @@ export const useInvoiceGeneration = () => {
 
   return {
     items,
+    setItems,
     clientData,
     setClientData,
     addItem,
