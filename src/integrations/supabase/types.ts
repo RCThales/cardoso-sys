@@ -11,7 +11,6 @@ export type Database = {
     Tables: {
       invoices: {
         Row: {
-          balance_due: number
           client_address: string
           client_address_complement: string | null
           client_address_number: string | null
@@ -28,14 +27,12 @@ export type Database = {
           invoice_number: string
           is_paid: boolean
           items: Json
-          payment_received: number | null
           payment_terms: string | null
           subtotal: number
           total: number
           user_id: string
         }
         Insert: {
-          balance_due: number
           client_address: string
           client_address_complement?: string | null
           client_address_number?: string | null
@@ -52,14 +49,12 @@ export type Database = {
           invoice_number: string
           is_paid?: boolean
           items: Json
-          payment_received?: number | null
           payment_terms?: string | null
           subtotal: number
           total: number
           user_id: string
         }
         Update: {
-          balance_due?: number
           client_address?: string
           client_address_complement?: string | null
           client_address_number?: string | null
@@ -76,7 +71,6 @@ export type Database = {
           invoice_number?: string
           is_paid?: boolean
           items?: Json
-          payment_received?: number | null
           payment_terms?: string | null
           subtotal?: number
           total?: number
