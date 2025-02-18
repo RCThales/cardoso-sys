@@ -48,14 +48,16 @@ export const ProductForm = ({
 
           if (error) throw error;
 
-          // Crie a entrada no inventário com quantidade 0
+          // Use upsert em vez de insert para o inventário
           const { error: inventoryError } = await supabase
             .from("inventory")
-            .insert({
+            .upsert({
               product_id: selectedProduct.id,
               size: newSize,
               total_quantity: 0,
               rented_quantity: 0,
+            }, {
+              onConflict: 'product_id,size'
             });
 
           if (inventoryError) throw inventoryError;
