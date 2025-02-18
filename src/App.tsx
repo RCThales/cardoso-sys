@@ -12,6 +12,7 @@ import Products from "@/pages/Products";
 import Clients from "@/pages/Clients";
 import Investments from "@/pages/Investments";
 import FinancialDetails from "./pages/FinancialDetails";
+import Calculator from "./pages/Calculator";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,10 @@ const router = createBrowserRouter([
   {
     path: "/investments",
     element: <Investments />,
+  },
+  {
+    path: "/calc",
+    element: <Calculator />,
   },
 ]);
 
