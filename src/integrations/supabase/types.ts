@@ -13,8 +13,12 @@ export type Database = {
         Row: {
           balance_due: number
           client_address: string
+          client_address_complement: string | null
+          client_address_number: string | null
           client_city: string
+          client_cpf: string
           client_name: string
+          client_phone: string
           client_postal_code: string
           client_state: string
           created_at: string | null
@@ -32,8 +36,12 @@ export type Database = {
         Insert: {
           balance_due: number
           client_address: string
+          client_address_complement?: string | null
+          client_address_number?: string | null
           client_city: string
+          client_cpf: string
           client_name: string
+          client_phone: string
           client_postal_code: string
           client_state: string
           created_at?: string | null
@@ -51,8 +59,12 @@ export type Database = {
         Update: {
           balance_due?: number
           client_address?: string
+          client_address_complement?: string | null
+          client_address_number?: string | null
           client_city?: string
+          client_cpf?: string
           client_name?: string
+          client_phone?: string
           client_postal_code?: string
           client_state?: string
           created_at?: string | null

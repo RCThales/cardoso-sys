@@ -8,7 +8,11 @@ import type { InvoiceItem } from "@/components/invoice/InvoiceItems";
 
 interface ClientData {
   name: string;
+  cpf: string;
+  phone: string;
   address: string;
+  addressNumber: string;
+  addressComplement: string;
   city: string;
   state: string;
   postalCode: string;
@@ -19,7 +23,11 @@ export const useInvoiceGeneration = () => {
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [clientData, setClientData] = useState<ClientData>({
     name: "",
+    cpf: "",
+    phone: "",
     address: "",
+    addressNumber: "",
+    addressComplement: "",
     city: "",
     state: "",
     postalCode: "",
@@ -62,6 +70,15 @@ export const useInvoiceGeneration = () => {
 
   const generateInvoice = async () => {
     try {
+      if (!clientData.cpf || !clientData.phone) {
+        toast({
+          title: "Erro",
+          description: "CPF e telefone são obrigatórios",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -92,7 +109,11 @@ export const useInvoiceGeneration = () => {
       const { error } = await supabase.from("invoices").insert({
         invoice_number: invoiceNumber,
         client_name: clientData.name,
+        client_cpf: clientData.cpf,
+        client_phone: clientData.phone,
         client_address: clientData.address,
+        client_address_number: clientData.addressNumber,
+        client_address_complement: clientData.addressComplement,
         client_city: clientData.city,
         client_state: clientData.state,
         client_postal_code: clientData.postalCode,
@@ -117,7 +138,11 @@ export const useInvoiceGeneration = () => {
       setItems([]);
       setClientData({
         name: "",
+        cpf: "",
+        phone: "",
         address: "",
+        addressNumber: "",
+        addressComplement: "",
         city: "",
         state: "",
         postalCode: "",
