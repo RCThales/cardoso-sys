@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { format } from "date-fns";
@@ -95,7 +94,7 @@ const FinancialDetails = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container py-8">
-        <FinancialHeader monthName={monthName} />
+        <FinancialHeader monthName={monthName} summary={summary} />
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <FinancialCard
@@ -104,8 +103,6 @@ const FinancialDetails = () => {
             description={`${summary.invoiceCount} faturas no período`}
             icon={DollarSign}
             iconColor="text-green-500"
-            summary={summary}
-            monthName={monthName}
           />
           <FinancialCard
             title="Despesas"
@@ -113,8 +110,6 @@ const FinancialDetails = () => {
             description="Inclui descontos e custos operacionais"
             icon={TrendingDown}
             iconColor="text-red-500"
-            summary={summary}
-            monthName={monthName}
           />
           <FinancialCard
             title="Lucro Líquido"
@@ -122,8 +117,6 @@ const FinancialDetails = () => {
             description="Após despesas e investimentos"
             icon={TrendingUp}
             iconColor="text-emerald-500"
-            summary={summary}
-            monthName={monthName}
           />
           <FinancialCard
             title="Investimento Total"
@@ -131,8 +124,6 @@ const FinancialDetails = () => {
             description="Em equipamentos e infraestrutura"
             icon={LineChart}
             iconColor="text-blue-500"
-            summary={summary}
-            monthName={monthName}
           />
           <FinancialCard
             title="Ticket Médio"
@@ -140,8 +131,6 @@ const FinancialDetails = () => {
             description="Valor médio por fatura"
             icon={DollarSign}
             iconColor="text-purple-500"
-            summary={summary}
-            monthName={monthName}
           />
         </div>
       </div>

@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable from "jspdf-autotable";
 import { format } from "date-fns";
@@ -78,33 +77,43 @@ export const generateFinancialPDF = async (
     },
   });
 
-  // Gráfico simples de barras para visualização
+  // Gráfico de pizza para visualização
   const metrics = [
     { label: "Receita", value: summary.grossIncome },
     { label: "Despesas", value: summary.expenses },
     { label: "Lucro", value: summary.netProfit },
   ];
 
-  const maxValue = Math.max(...metrics.map(m => m.value));
-  const startY = 180;
-  const barHeight = 20;
-  const spacing = 30;
-  const maxWidth = 150;
+  const centerX = pageWidth / 2;
+  const centerY = 200;
+  const radius = 40;
+  let startAngle = 0;
+  const total = metrics.reduce((sum, metric) => sum + Math.abs(metric.value), 0);
+
+  // Cores para o gráfico
+  const colors = [[41, 128, 185], [231, 76, 60], [46, 204, 113]];
 
   metrics.forEach((metric, index) => {
-    const y = startY + (spacing * index);
-    const width = (metric.value / maxValue) * maxWidth;
+    const portion = Math.abs(metric.value) / total;
+    const angle = portion * 2 * Math.PI;
     
-    // Rótulo
+    // Desenha o setor
+    doc.setFillColor(...colors[index]);
+    doc.sector(centerX, centerY, radius, startAngle, startAngle + angle, 'F');
+    
+    // Atualiza o ângulo inicial para o próximo setor
+    startAngle += angle;
+    
+    // Adiciona a legenda
+    const legendY = 250 + (index * 15);
+    doc.setFillColor(...colors[index]);
+    doc.rect(20, legendY - 5, 10, 10, 'F');
     doc.setFontSize(10);
-    doc.text(metric.label, 20, y);
-    
-    // Barra
-    doc.setFillColor(41, 128, 185);
-    doc.rect(60, y - 8, width, barHeight, "F");
-    
-    // Valor
-    doc.text(`R$ ${formatCurrency(metric.value)}`, 60 + width + 5, y);
+    doc.text(
+      `${metric.label}: R$ ${formatCurrency(metric.value)} (${(portion * 100).toFixed(1)}%)`,
+      35,
+      legendY
+    );
   });
 
   // Rodapé
