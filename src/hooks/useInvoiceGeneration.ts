@@ -17,6 +17,7 @@ interface ClientData {
   state: string;
   postalCode: string;
   isPaid: boolean;
+  deliveryFee: number;
 }
 
 export const useInvoiceGeneration = () => {
@@ -33,6 +34,7 @@ export const useInvoiceGeneration = () => {
     state: "",
     postalCode: "",
     isPaid: false,
+    deliveryFee: 20, // Valor padrão do frete
   });
 
   const addItem = () => {
@@ -74,16 +76,21 @@ export const useInvoiceGeneration = () => {
   };
 
   const calculateSubtotal = (): number => {
-    const total = items.reduce((sum, item) => {
+    const itemsTotal = items.reduce((sum, item) => {
       const itemTotal = typeof item.total === 'number' ? item.total : 0;
       return sum + itemTotal;
     }, 0);
+    
+    // Adiciona o frete ao total
+    const total = itemsTotal + (clientData.deliveryFee || 0);
     
     console.log("Calculando total:", {
       items: items.map(item => ({
         description: item.description,
         total: item.total
       })),
+      itemsTotal,
+      deliveryFee: clientData.deliveryFee,
       totalCalculado: total
     });
     
@@ -136,6 +143,16 @@ export const useInvoiceGeneration = () => {
         total: Number(item.total) || 0
       })) as Json;
 
+      // Adiciona o frete aos itens
+      itemsForDb.push({
+        description: "Frete",
+        quantity: 1,
+        price: clientData.deliveryFee,
+        total: clientData.deliveryFee,
+        productId: "delivery-fee",
+        rentalDays: 1
+      });
+
       console.log("Enviando para o banco:", {
         items: itemsForDb,
         total
@@ -182,6 +199,7 @@ export const useInvoiceGeneration = () => {
         state: "",
         postalCode: "",
         isPaid: false,
+        deliveryFee: 20, // Mantém o valor padrão do frete
       });
     } catch (error) {
       toast({
