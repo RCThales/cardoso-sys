@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { format, subMonths } from "date-fns";
@@ -31,6 +32,7 @@ const FinancialDetails = () => {
     averageTicket: 0,
   });
   const [previousSummary, setPreviousSummary] = useState<FinancialSummary | null>(null);
+  const [investmentDetails, setInvestmentDetails] = useState<Array<{ name: string; amount: number }>>([]);
 
   const monthName = month 
     ? format(new Date(parseInt(year || ""), parseInt(month) - 1, 1), "MMMM 'de' yyyy", { locale: ptBR }) 
@@ -47,7 +49,7 @@ const FinancialDetails = () => {
     },
   ];
 
-  const getInvestmentDetails = (investments: any[]) => {
+  const getInvestmentDetails = (investments: Array<{ name: string; amount: number }>) => {
     return investments.map(inv => ({
       description: inv.name,
       amount: Number(inv.amount),
@@ -106,6 +108,7 @@ const FinancialDetails = () => {
 
       setSummary(currentSummary);
       setPreviousSummary(previousSummary);
+      setInvestmentDetails(investments || []);
     };
 
     fetchData();
@@ -152,7 +155,7 @@ const FinancialDetails = () => {
             icon={LineChart}
             iconColor="text-blue-500"
             showDetails
-            details={getInvestmentDetails(summary.investments || [])}
+            details={getInvestmentDetails(investmentDetails)}
           />
           <FinancialCard
             title="Ticket Médio"
