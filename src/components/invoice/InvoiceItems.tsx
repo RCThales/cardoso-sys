@@ -28,8 +28,8 @@ interface InvoiceItemsProps {
 export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsProps) => {
   const handleProductChange = (index: number, productId: string) => {
     const item = items[index];
-    const rentalDays = item.rentalDays || 1;
-    const quantity = item.quantity || 1;
+    const rentalDays = Number(item.rentalDays) || 1;
+    const quantity = Number(item.quantity) || 1;
     const total = calculateTotalPrice(rentalDays, productId) * quantity;
     
     onUpdateItem(index, "productId", productId);
@@ -41,8 +41,8 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
   const handleDaysChange = (index: number, days: string) => {
     const item = items[index];
     if (item.productId) {
-      const rentalDays = Number(days);
-      const quantity = item.quantity || 1;
+      const rentalDays = Number(days) || 1;
+      const quantity = Number(item.quantity) || 1;
       const total = calculateTotalPrice(rentalDays, item.productId) * quantity;
       
       onUpdateItem(index, "rentalDays", days);
@@ -54,11 +54,19 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
   const handleQuantityChange = (index: number, quantity: string) => {
     const item = items[index];
     if (item.productId && item.rentalDays) {
-      const total = calculateTotalPrice(item.rentalDays, item.productId) * Number(quantity);
+      const quantityNum = Number(quantity) || 1;
+      const rentalDays = Number(item.rentalDays) || 1;
+      const total = calculateTotalPrice(rentalDays, item.productId) * quantityNum;
       
       onUpdateItem(index, "quantity", quantity);
       onUpdateItem(index, "total", total.toString());
     }
+  };
+
+  const formatCurrency = (value: number | string | null | undefined): string => {
+    if (value === null || value === undefined) return "0.00";
+    const numValue = typeof value === 'string' ? parseFloat(value) : value;
+    return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
 
   return (
@@ -107,7 +115,7 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
           </div>
           <div className="col-span-4">
             <Input
-              value={`R$ ${item.total.toFixed(2)}`}
+              value={`R$ ${formatCurrency(item.total)}`}
               readOnly
               className="bg-muted"
             />
