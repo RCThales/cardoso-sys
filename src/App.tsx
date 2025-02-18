@@ -11,7 +11,7 @@ import NotFound from "./pages/NotFound";
 import InvoiceHistory from "./pages/InvoiceHistory";
 import CreateInvoice from "./pages/CreateInvoice";
 import Inventory from "./pages/Inventory";
-import Reviews from "./pages/Reviews";
+import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -26,7 +26,7 @@ const App = () => (
         <Route path="/invoices/create" element={<CreateInvoice />} />
         <Route path="/invoices/history" element={<InvoiceHistory />} />
         <Route path="/inventory" element={<Inventory />} />
-        <Route path="/reviews" element={<Reviews />} />
+        <Route path="/products" element={<Products />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="*" element={<NotFound />} />
       </Routes>

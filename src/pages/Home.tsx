@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
-import { Calculator, LineChart, Package, Star } from "lucide-react";
+import { Calculator, LineChart, Package, ShoppingBag } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -29,10 +29,10 @@ const menuItems = [
     color: "from-green-500 to-emerald-500",
   },
   {
-    title: "Reviews",
-    description: "Avaliações do Google",
-    icon: Star,
-    route: "/reviews",
+    title: "Produtos",
+    description: "Gerenciamento de produtos",
+    icon: ShoppingBag,
+    route: "/products",
     color: "from-orange-500 to-yellow-500",
   },
 ] as const;

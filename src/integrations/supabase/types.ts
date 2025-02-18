@@ -99,6 +99,27 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          base_price: number
+          constants: Json
+          id: string
+          name: string
+        }
+        Insert: {
+          base_price: number
+          constants?: Json
+          id: string
+          name: string
+        }
+        Update: {
+          base_price?: number
+          constants?: Json
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
