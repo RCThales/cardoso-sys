@@ -31,6 +31,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Switch } from "./ui/switch";
 
 declare module 'jspdf' {
   interface jsPDF {
@@ -138,6 +139,27 @@ export const InvoiceHistory = () => {
       fetchInvoices();
     }
     setDeleteInvoiceId(null);
+  };
+
+  const handleTogglePaid = async (invoiceId: number, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("invoices")
+      .update({ is_paid: !currentStatus })
+      .eq("id", invoiceId);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status da fatura",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso",
+        description: "Status da fatura atualizado com sucesso",
+      });
+      fetchInvoices();
+    }
   };
 
   const formatCurrency = (value: number | string | null | undefined): string => {
@@ -270,7 +292,10 @@ export const InvoiceHistory = () => {
                 R$ {formatCurrency(invoice.total)}
               </TableCell>
               <TableCell>
-                {invoice.is_paid ? "Pago" : "Pendente"}
+                <Switch
+                  checked={invoice.is_paid}
+                  onCheckedChange={() => handleTogglePaid(invoice.id, invoice.is_paid)}
+                />
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button

@@ -15,8 +15,8 @@ export interface InvoiceItem {
   quantity: number;
   price: number;
   total: number;
-  productId?: string;
-  rentalDays?: number;
+  productId: string;
+  rentalDays: number;
 }
 
 interface InvoiceItemsProps {
