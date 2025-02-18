@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { fetchProducts } from "@/utils/priceCalculator";
@@ -141,31 +142,75 @@ export const InventoryTable = () => {
             const product = products.find((p) => p.id === productId);
             if (!product) return null;
 
-            return items.map(item => (
-              <TableRow key={`${productId}-${item.size || 'default'}`}>
+            const hasSizes = items.some(item => item.size);
+            
+            if (!hasSizes) {
+              const item = items[0];
+              return (
+                <TableRow key={productId}>
+                  <TableCell className="font-medium">{product.product_code}</TableCell>
+                  <TableCell>
+                    <div className="font-medium">{product.name}</div>
+                  </TableCell>
+                  <TableCell className="text-right">{item.total_quantity}</TableCell>
+                  <TableCell className="text-right">{item.rented_quantity}</TableCell>
+                  <TableCell className="text-right">{item.total_quantity - item.rented_quantity}</TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedItem({ item, product })}
+                      className="w-[140px]"
+                    >
+                      <ArrowUpDown className="h-4 w-4 mr-2" />
+                      Ajustar Total
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              );
+            }
+
+            return (
+              <TableRow key={productId} className="[&_td]:border-b-0">
                 <TableCell className="font-medium">{product.product_code}</TableCell>
                 <TableCell>
-                  <div className="font-medium">
-                    {product.name}
-                    {item.size && <span className="ml-2 text-muted-foreground">Tamanho {item.size}</span>}
+                  <div className="font-medium">{product.name}</div>
+                  <div className="mt-2 space-y-1">
+                    {items.map(item => (
+                      <div key={item.id} className="flex justify-between text-sm text-muted-foreground">
+                        <span>Tamanho {item.size}</span>
+                        <span className="ml-4">{item.total_quantity - item.rented_quantity} disponíveis</span>
+                      </div>
+                    ))}
                   </div>
                 </TableCell>
-                <TableCell className="text-right">{item.total_quantity}</TableCell>
-                <TableCell className="text-right">{item.rented_quantity}</TableCell>
-                <TableCell className="text-right">{item.total_quantity - item.rented_quantity}</TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedItem({ item, product })}
-                    className="w-[140px]"
-                  >
-                    <ArrowUpDown className="h-4 w-4 mr-2" />
-                    Ajustar Total
-                  </Button>
+                  {items.reduce((sum, item) => sum + item.total_quantity, 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {items.reduce((sum, item) => sum + item.rented_quantity, 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {items.reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="space-y-2">
+                    {items.map(item => (
+                      <Button
+                        key={item.id}
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedItem({ item, product })}
+                        className="w-[140px]"
+                      >
+                        <ArrowUpDown className="h-4 w-4 mr-2" />
+                        {item.size}
+                      </Button>
+                    ))}
+                  </div>
                 </TableCell>
               </TableRow>
-            ));
+            );
           })}
         </TableBody>
       </Table>
