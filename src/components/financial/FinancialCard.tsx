@@ -30,7 +30,11 @@ export const FinancialCard = ({
 
   const getPercentageChange = () => {
     if (previousValue === null || previousValue === undefined) {
-      return { icon: Circle, color: "text-gray-400", value: "0%" };
+      return { 
+        icon: Circle, 
+        color: "text-gray-400", 
+        value: "0%" 
+      };
     }
 
     if (previousValue === 0 && value === 0) {
@@ -41,11 +45,11 @@ export const FinancialCard = ({
       };
     }
 
-    if (previousValue === 0 && value > 0) {
+    if (previousValue === 0) {
       return { 
-        icon: ArrowUp, 
-        color: "text-green-500", 
-        value: "100%" 
+        icon: Circle, 
+        color: "text-gray-400", 
+        value: "0%" 
       };
     }
 

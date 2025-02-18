@@ -14,9 +14,16 @@ interface FinancialSummary {
   averageTicket: number;
 }
 
+interface ExpenseDetail {
+  description: string;
+  amount: number;
+}
+
 export const generateFinancialPDF = async (
   summary: FinancialSummary,
-  monthName: string
+  monthName: string,
+  expenseDetails: ExpenseDetail[],
+  investmentDetails: ExpenseDetail[]
 ): Promise<Blob> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -78,59 +85,58 @@ export const generateFinancialPDF = async (
     },
   });
 
-  // Gráfico de pizza para visualização
-  const metrics = [
-    { label: "Receita", value: summary.grossIncome },
-    { label: "Despesas", value: summary.expenses },
-    { label: "Lucro", value: summary.netProfit },
-  ];
+  // Detalhamento das Despesas
+  let currentY = (doc as any).lastAutoTable.finalY + 20;
+  
+  doc.setFontSize(14);
+  doc.text("Detalhamento das Despesas", 20, currentY);
+  
+  currentY += 10;
+  
+  autoTable(doc, {
+    startY: currentY,
+    head: [["Descrição", "Valor"]],
+    body: expenseDetails.map(detail => [
+      detail.description,
+      `R$ ${formatCurrency(detail.amount)}`
+    ]),
+    theme: "grid",
+    headStyles: { 
+      fillColor: [231, 76, 60],
+      textColor: [255, 255, 255],
+      fontSize: 12,
+      fontStyle: "bold",
+    },
+    bodyStyles: {
+      fontSize: 11,
+    },
+  });
 
-  const centerX = pageWidth / 2;
-  const centerY = 200;
-  const radius = 40;
-  let startAngle = 0;
-  const total = metrics.reduce((sum, metric) => sum + Math.abs(metric.value), 0);
-
-  // Cores para o gráfico
-  const colors = [
-    { r: 41, g: 128, b: 185 },
-    { r: 231, g: 76, b: 60 },
-    { r: 46, g: 204, b: 113 }
-  ];
-
-  metrics.forEach((metric, index) => {
-    const portion = Math.abs(metric.value) / total;
-    const angle = portion * 2 * Math.PI;
-    const { r, g, b } = colors[index];
-    
-    // Desenha arcos para simular um gráfico de pizza
-    doc.setFillColor(r, g, b);
-    const x1 = centerX + radius * Math.cos(startAngle);
-    const y1 = centerY + radius * Math.sin(startAngle);
-    const x2 = centerX + radius * Math.cos(startAngle + angle);
-    const y2 = centerY + radius * Math.sin(startAngle + angle);
-    
-    // Desenha triângulos para formar o gráfico de pizza
-    doc.triangle(
-      centerX, centerY,
-      x1, y1,
-      x2, y2,
-      'F'
-    );
-    
-    // Atualiza o ângulo inicial para o próximo setor
-    startAngle += angle;
-    
-    // Adiciona a legenda
-    const legendY = 250 + (index * 15);
-    doc.setFillColor(r, g, b);
-    doc.rect(20, legendY - 5, 10, 10, 'F');
-    doc.setFontSize(10);
-    doc.text(
-      `${metric.label}: R$ ${formatCurrency(metric.value)} (${(portion * 100).toFixed(1)}%)`,
-      35,
-      legendY
-    );
+  // Detalhamento dos Investimentos
+  currentY = (doc as any).lastAutoTable.finalY + 20;
+  
+  doc.setFontSize(14);
+  doc.text("Detalhamento dos Investimentos", 20, currentY);
+  
+  currentY += 10;
+  
+  autoTable(doc, {
+    startY: currentY,
+    head: [["Descrição", "Valor"]],
+    body: investmentDetails.map(detail => [
+      detail.description,
+      `R$ ${formatCurrency(detail.amount)}`
+    ]),
+    theme: "grid",
+    headStyles: { 
+      fillColor: [52, 152, 219],
+      textColor: [255, 255, 255],
+      fontSize: 12,
+      fontStyle: "bold",
+    },
+    bodyStyles: {
+      fontSize: 11,
+    },
   });
 
   // Rodapé

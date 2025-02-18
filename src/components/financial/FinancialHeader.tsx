@@ -17,14 +17,16 @@ interface FinancialHeaderProps {
     invoiceCount: number;
     averageTicket: number;
   };
+  expenseDetails: Array<{ description: string; amount: number }>;
+  investmentDetails: Array<{ description: string; amount: number }>;
 }
 
-export const FinancialHeader = ({ monthName, summary }: FinancialHeaderProps) => {
+export const FinancialHeader = ({ monthName, summary, expenseDetails, investmentDetails }: FinancialHeaderProps) => {
   const navigate = useNavigate();
 
   const handleDownloadPDF = async () => {
     try {
-      const pdfBlob = await generateFinancialPDF(summary, monthName);
+      const pdfBlob = await generateFinancialPDF(summary, monthName, expenseDetails, investmentDetails);
       const fileName = `relatorio-financeiro-${format(new Date(), "MMMM-yyyy", {
         locale: ptBR,
       })}.pdf`;
