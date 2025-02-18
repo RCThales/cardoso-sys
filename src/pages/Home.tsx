@@ -71,7 +71,9 @@ const Home = () => {
             >
               <div className="p-6 flex flex-col h-full">
                 <div className="flex-grow flex items-center justify-center">
-                  <item.icon className={`h-8 w-8 text-white rounded-full p-1 ${item.color}`} />
+                  <div className={`rounded-full p-4 ${item.color}`}>
+                    <item.icon className="h-8 w-8 text-white" />
+                  </div>
                 </div>
                 <h2 className="text-lg font-semibold mt-4">{item.title}</h2>
                 <p className="text-sm text-muted-foreground mt-2">
