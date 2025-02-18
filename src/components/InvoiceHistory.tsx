@@ -1,17 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
-<<<<<<< HEAD
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
-=======
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
 import { supabase } from "@/integrations/supabase/client";
 import { LoaderCircle, Search } from "lucide-react";
 import { useToast } from "./ui/use-toast";
@@ -61,20 +51,6 @@ export const InvoiceHistory = () => {
       if (data) {
         const formattedInvoices: Invoice[] = data.map((invoice) => ({
           ...invoice,
-<<<<<<< HEAD
-          items: Array.isArray(invoice.items)
-            ? (invoice.items as any[]).map((item) => ({
-                description: String(item.description || ""),
-                quantity: parseFloat(item.quantity) || 0,
-                price: parseFloat(item.price) || 0,
-                total: parseFloat(item.total) || 0,
-                productId: item.productId ? String(item.productId) : undefined,
-                rentalDays: item.rentalDays
-                  ? parseFloat(item.rentalDays)
-                  : undefined,
-              }))
-            : [],
-=======
           items: Array.isArray(invoice.items) ? (invoice.items as any[]).map(item => ({
             description: String(item.description || ''),
             quantity: parseFloat(item.quantity) || 0,
@@ -83,14 +59,9 @@ export const InvoiceHistory = () => {
             productId: item.productId ? String(item.productId) : '',
             rentalDays: item.rentalDays ? parseFloat(item.rentalDays) : 1
           })) : [],
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
           created_at: invoice.created_at || new Date().toISOString(),
           total: parseFloat(String(invoice.total)) || 0,
-<<<<<<< HEAD
-          balance_due: parseFloat(String(invoice.balance_due)) || 0,
-=======
           is_paid: !!invoice.is_paid
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
         }));
         setInvoices(formattedInvoices);
       }
@@ -129,11 +100,6 @@ export const InvoiceHistory = () => {
     setDeleteInvoiceId(null);
   };
 
-<<<<<<< HEAD
-  const formatCurrency = (
-    value: number | string | null | undefined
-  ): string => {
-=======
   const handleTogglePaid = async (invoiceId: number, currentStatus: boolean) => {
     const { error } = await supabase
       .from("invoices")
@@ -156,7 +122,6 @@ export const InvoiceHistory = () => {
   };
 
   const formatCurrency = (value: number | string | null | undefined): string => {
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
     if (value === null || value === undefined) return "0.00";
     const numValue = typeof value === "string" ? parseFloat(value) : value;
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
@@ -167,11 +132,7 @@ export const InvoiceHistory = () => {
 
     const img = new Image();
     img.src = "/lovable-uploads/e9185795-25bc-4086-a973-5a5ff9e3c108.png";
-<<<<<<< HEAD
-    doc.addImage(img, "PNG", 18, 18, 20, 10); // Ajustado o tamanho da logo
-=======
     doc.addImage(img, "PNG", 15, 15, 30, 10);
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
 
     doc.setFontSize(10);
     doc.text("Cardoso Aluguel de Muletas e Produtos Ortopédicos", 15, 35);
@@ -223,12 +184,7 @@ export const InvoiceHistory = () => {
     const tableData = invoice.items.map((item) => [
       item.description,
       item.quantity,
-<<<<<<< HEAD
-      `R$ ${formatCurrency(item.price)}`,
-      `R$ ${formatCurrency(item.total)}`,
-=======
       `R$ ${formatCurrency(item.total)}`
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
     ]);
 
     doc.autoTable({
@@ -238,22 +194,7 @@ export const InvoiceHistory = () => {
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
-<<<<<<< HEAD
-    doc.text(`Subtotal: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
-    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY + 5);
-    doc.text(
-      `Pago: R$ ${formatCurrency(invoice.payment_received)}`,
-      150,
-      finalY + 10
-    );
-    doc.text(
-      `Saldo Devido: R$ ${formatCurrency(invoice.balance_due)}`,
-      150,
-      finalY + 15
-    );
-=======
     doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
 
     doc.setFontSize(8);
     doc.text(
@@ -319,128 +260,6 @@ export const InvoiceHistory = () => {
         formatCurrency={formatCurrency}
       />
 
-<<<<<<< HEAD
-      <Dialog
-        open={!!deleteInvoiceId}
-        onOpenChange={() => setDeleteInvoiceId(null)}
-      >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir esta fatura? Esta ação não pode ser
-              desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteInvoiceId(null)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog
-        open={!!previewInvoice}
-        onOpenChange={() => setPreviewInvoice(null)}
-      >
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Visualizar Fatura</DialogTitle>
-          </DialogHeader>
-          {previewInvoice && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold">Cliente</h3>
-                  <p>{previewInvoice.client_name}</p>
-                  <p>CPF: {previewInvoice.client_cpf}</p>
-                  <p>Tel: {previewInvoice.client_phone}</p>
-                  <p>
-                    {previewInvoice.client_address}
-                    {previewInvoice.client_address_number
-                      ? `, ${previewInvoice.client_address_number}`
-                      : ""}
-                  </p>
-                  {previewInvoice.client_address_complement && (
-                    <p>{previewInvoice.client_address_complement}</p>
-                  )}
-                  <p>
-                    {previewInvoice.client_city} - {previewInvoice.client_state}
-                  </p>
-                  <p>{previewInvoice.client_postal_code}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Detalhes da Fatura</h3>
-                  <p>Nº: {previewInvoice.invoice_number}</p>
-                  <p>
-                    Data:{" "}
-                    {format(
-                      parseISO(previewInvoice.invoice_date),
-                      "dd/MM/yyyy"
-                    )}
-                  </p>
-                  <p>
-                    Vencimento:{" "}
-                    {format(parseISO(previewInvoice.due_date), "dd/MM/yyyy")}
-                  </p>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Itens</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Quantidade</TableHead>
-                      <TableHead>Preço</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {previewInvoice.items.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.description}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>R$ {formatCurrency(item.price)}</TableCell>
-                        <TableCell className="text-right">
-                          R$ {formatCurrency(item.total)}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="text-right space-y-1">
-                <p>Subtotal: R$ {formatCurrency(previewInvoice.total)}</p>
-                <p>Total: R$ {formatCurrency(previewInvoice.total)}</p>
-                <p>
-                  Pago: R$ {formatCurrency(previewInvoice.payment_received)}
-                </p>
-                <p className="font-semibold">
-                  Saldo Devido: R$ {formatCurrency(previewInvoice.balance_due)}
-                </p>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPreviewInvoice(null)}>
-              Fechar
-            </Button>
-            {previewInvoice && (
-              <Button onClick={() => generatePDF(previewInvoice)}>
-                Baixar PDF
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-=======
       <DeleteInvoiceDialog
         open={!!deleteInvoiceId}
         onOpenChange={() => setDeleteInvoiceId(null)}
@@ -454,7 +273,6 @@ export const InvoiceHistory = () => {
         onDownload={generatePDF}
         formatCurrency={formatCurrency}
       />
->>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
     </Card>
   );
 };
