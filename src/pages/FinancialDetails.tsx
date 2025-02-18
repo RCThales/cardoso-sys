@@ -29,28 +29,41 @@ const FinancialDetails = () => {
     grossIncome: 0,
     expenses: 0,
     netProfit: 0,
-    totalInvestment: 50000,
+    totalInvestment: 0,
     invoiceCount: 0,
     averageTicket: 0,
   });
 
   useEffect(() => {
-    const fetchMonthData = async () => {
+    const fetchData = async () => {
       if (!year || !month) return;
 
       const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const endDate = new Date(parseInt(year), parseInt(month), 0);
 
-      const { data: invoices, error } = await supabase
+      // Fetch invoices
+      const { data: invoices, error: invoicesError } = await supabase
         .from("invoices")
         .select("*")
         .gte("invoice_date", startDate.toISOString())
         .lte("invoice_date", endDate.toISOString());
 
-      if (error) {
-        console.error("Error fetching monthly data:", error);
+      if (invoicesError) {
+        console.error("Error fetching monthly data:", invoicesError);
         return;
       }
+
+      // Fetch investments
+      const { data: investments, error: investmentsError } = await supabase
+        .from("investments")
+        .select("amount");
+
+      if (investmentsError) {
+        console.error("Error fetching investments:", investmentsError);
+        return;
+      }
+
+      const totalInvestment = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
 
       const financialSummary = invoices.reduce(
         (acc: FinancialSummary, invoice: InvoiceRow) => {
@@ -65,7 +78,7 @@ const FinancialDetails = () => {
           grossIncome: 0,
           expenses: 0,
           netProfit: 0,
-          totalInvestment: 50000,
+          totalInvestment,
           invoiceCount: 0,
           averageTicket: 0,
         }
@@ -79,7 +92,7 @@ const FinancialDetails = () => {
       setSummary(financialSummary);
     };
 
-    fetchMonthData();
+    fetchData();
   }, [year, month]);
 
   const monthName = month ? format(new Date(parseInt(year || ""), parseInt(month) - 1, 1), "MMMM 'de' yyyy", { locale: ptBR }) : "";
