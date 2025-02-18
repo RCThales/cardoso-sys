@@ -1,12 +1,19 @@
 
 import { jsPDF } from "jspdf";
-import autoTable from "jspdf-autotable";
+import autoTable, { RowInput } from "jspdf-autotable";
 import { Invoice, InvoiceExtension } from "@/components/invoice/types";
 import { format, parseISO } from "date-fns";
 import { formatCurrency } from "./formatters";
 
+// Extend jsPDF type to include lastAutoTable
+interface ExtendedJsPDF extends jsPDF {
+  lastAutoTable?: {
+    finalY: number;
+  };
+}
+
 export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
-  const doc = new jsPDF();
+  const doc = new jsPDF() as ExtendedJsPDF;
   const pageWidth = doc.internal.pageSize.getWidth();
 
   // Cabeçalho
@@ -60,10 +67,12 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
       `R$ ${formatCurrency(ext.additionalCost)}`,
     ]);
 
+    const finalY = doc.lastAutoTable?.finalY || 85;
+
     autoTable(doc, {
       head: [['Data da Extensão', 'Dias Adicionais', 'Custo Adicional']],
       body: extensionsTableData,
-      startY: doc.lastAutoTable.finalY + 10,
+      startY: finalY + 10,
       theme: 'grid',
       headStyles: { fillColor: [41, 128, 185] },
     });
@@ -72,10 +81,11 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Total
   doc.setFontSize(12);
   doc.setFont(undefined, 'bold');
+  const finalY = doc.lastAutoTable?.finalY || 85;
   doc.text(
     `Total: R$ ${formatCurrency(invoice.total)}`,
     pageWidth - 15,
-    doc.lastAutoTable.finalY + 20,
+    finalY + 20,
     { align: "right" }
   );
 
