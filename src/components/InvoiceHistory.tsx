@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import {
@@ -76,14 +77,16 @@ export const InvoiceHistory = () => {
         ...invoice,
         items: (invoice.items as any[]).map(item => ({
           description: item.description as string,
-          quantity: Number(item.quantity),
-          price: Number(item.price),
-          total: Number(item.total),
+          quantity: Number(item.quantity) || 0,
+          price: Number(item.price) || 0,
+          total: Number(item.total) || 0,
           productId: item.productId as string | undefined,
           rentalDays: item.rentalDays ? Number(item.rentalDays) : undefined
         })),
         created_at: invoice.created_at || new Date().toISOString(),
-        payment_received: invoice.payment_received || 0
+        payment_received: Number(invoice.payment_received) || 0,
+        total: Number(invoice.total) || 0,
+        balance_due: Number(invoice.balance_due) || 0
       }));
       setInvoices(formattedInvoices);
     }
@@ -111,6 +114,11 @@ export const InvoiceHistory = () => {
       fetchInvoices();
     }
     setDeleteInvoiceId(null);
+  };
+
+  const formatCurrency = (value: number) => {
+    const safeNumber = Number(value) || 0;
+    return safeNumber.toFixed(2);
   };
 
   const generatePDF = (invoice: Invoice) => {
@@ -145,8 +153,8 @@ export const InvoiceHistory = () => {
     const tableData = invoice.items.map((item: InvoiceItem) => [
       item.description,
       item.quantity,
-      `R$ ${item.price.toFixed(2)}`,
-      `R$ ${item.total.toFixed(2)}`
+      `R$ ${formatCurrency(item.price)}`,
+      `R$ ${formatCurrency(item.total)}`
     ]);
 
     doc.autoTable({
@@ -156,10 +164,10 @@ export const InvoiceHistory = () => {
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.text(`Subtotal: R$ ${invoice.total.toFixed(2)}`, 150, finalY);
-    doc.text(`Total: R$ ${invoice.total.toFixed(2)}`, 150, finalY + 5);
-    doc.text(`Pago: R$ ${invoice.payment_received.toFixed(2)}`, 150, finalY + 10);
-    doc.text(`Saldo Devido: R$ ${invoice.balance_due.toFixed(2)}`, 150, finalY + 15);
+    doc.text(`Subtotal: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
+    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY + 5);
+    doc.text(`Pago: R$ ${formatCurrency(invoice.payment_received)}`, 150, finalY + 10);
+    doc.text(`Saldo Devido: R$ ${formatCurrency(invoice.balance_due)}`, 150, finalY + 15);
 
     doc.setFontSize(8);
     doc.text("Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços,", 15, 270);
@@ -191,13 +199,13 @@ export const InvoiceHistory = () => {
               </TableCell>
               <TableCell>{invoice.client_name}</TableCell>
               <TableCell className="text-right">
-                R$ {invoice.total.toFixed(2)}
+                R$ {formatCurrency(invoice.total)}
               </TableCell>
               <TableCell className="text-right">
-                R$ {invoice.payment_received.toFixed(2)}
+                R$ {formatCurrency(invoice.payment_received)}
               </TableCell>
               <TableCell className="text-right">
-                R$ {invoice.balance_due.toFixed(2)}
+                R$ {formatCurrency(invoice.balance_due)}
               </TableCell>
               <TableCell className="text-right space-x-2">
                 <Button
