@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import type { Product } from "@/utils/priceCalculator";
 import { X } from "lucide-react";
 import { Badge } from "../ui/badge";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 interface ProductFormProps {
   onSubmit: (e: React.FormEvent, quantities: Record<string, number>) => Promise<void>;
@@ -29,20 +31,86 @@ export const ProductForm = ({
 }: ProductFormProps) => {
   const [newSize, setNewSize] = useState("");
   const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const { toast } = useToast();
 
-  const handleAddSize = () => {
+  const handleAddSize = async () => {
     if (newSize && !sizes.includes(newSize)) {
-      setSizes([...sizes, newSize]);
-      setQuantities(prev => ({ ...prev, [newSize]: 0 }));
-      setNewSize("");
+      try {
+        // Se estivermos editando um produto existente, atualize os tamanhos no banco
+        if (selectedProduct) {
+          const updatedSizes = [...sizes, newSize].map(size => ({ size }));
+          const { error } = await supabase
+            .from("products")
+            .update({
+              sizes: updatedSizes,
+            })
+            .eq("id", selectedProduct.id);
+
+          if (error) throw error;
+
+          // Crie a entrada no inventário com quantidade 0
+          const { error: inventoryError } = await supabase
+            .from("inventory")
+            .insert({
+              product_id: selectedProduct.id,
+              size: newSize,
+              total_quantity: 0,
+              rented_quantity: 0,
+            });
+
+          if (inventoryError) throw inventoryError;
+        }
+
+        setSizes([...sizes, newSize]);
+        setQuantities(prev => ({ ...prev, [newSize]: 0 }));
+        setNewSize("");
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao adicionar tamanho",
+          variant: "destructive",
+        });
+      }
     }
   };
 
-  const handleRemoveSize = (sizeToRemove: string) => {
-    setSizes(sizes.filter(size => size !== sizeToRemove));
-    const newQuantities = { ...quantities };
-    delete newQuantities[sizeToRemove];
-    setQuantities(newQuantities);
+  const handleRemoveSize = async (sizeToRemove: string) => {
+    try {
+      if (selectedProduct) {
+        const updatedSizes = sizes
+          .filter(size => size !== sizeToRemove)
+          .map(size => ({ size }));
+
+        const { error } = await supabase
+          .from("products")
+          .update({
+            sizes: updatedSizes,
+          })
+          .eq("id", selectedProduct.id);
+
+        if (error) throw error;
+
+        // Remove a entrada do inventário
+        const { error: inventoryError } = await supabase
+          .from("inventory")
+          .delete()
+          .eq("product_id", selectedProduct.id)
+          .eq("size", sizeToRemove);
+
+        if (inventoryError) throw inventoryError;
+      }
+
+      setSizes(sizes.filter(size => size !== sizeToRemove));
+      const newQuantities = { ...quantities };
+      delete newQuantities[sizeToRemove];
+      setQuantities(newQuantities);
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao remover tamanho",
+        variant: "destructive",
+      });
+    }
   };
 
   const handleQuantityChange = (size: string, value: string) => {
