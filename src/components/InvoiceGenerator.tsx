@@ -13,6 +13,7 @@ export const InvoiceGenerator = () => {
     setClientData,
     addItem,
     updateItem,
+    removeItem,
     calculateSubtotal,
     generateInvoice,
   } = useInvoiceGeneration();
@@ -35,6 +36,7 @@ export const InvoiceGenerator = () => {
           items={items}
           onAddItem={addItem}
           onUpdateItem={updateItem}
+          onRemoveItem={removeItem}
         />
 
         <div className="flex justify-end space-x-4 items-center">

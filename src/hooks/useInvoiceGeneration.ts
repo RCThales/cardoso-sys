@@ -63,6 +63,10 @@ export const useInvoiceGeneration = () => {
     setItems(newItems);
   };
 
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
+  };
+
   const calculateSubtotal = (): number => {
     return items.reduce((sum, item) => {
       const itemTotal = typeof item.total === 'number' ? item.total : 0;
@@ -174,6 +178,7 @@ export const useInvoiceGeneration = () => {
     setClientData,
     addItem,
     updateItem,
+    removeItem,
     calculateSubtotal,
     generateInvoice,
   };
