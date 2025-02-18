@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -24,6 +23,8 @@ const Investments = () => {
   const { toast } = useToast();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [investmentToDelete, setInvestmentToDelete] = useState<Investment | null>(null);
   const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
   const [formData, setFormData] = useState({
     name: "",
@@ -105,11 +106,18 @@ const Investments = () => {
     setIsDialogOpen(true);
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDeleteClick = (investment: Investment) => {
+    setInvestmentToDelete(investment);
+    setIsDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!investmentToDelete) return;
+
     const { error } = await supabase
       .from("investments")
       .delete()
-      .eq("id", id);
+      .eq("id", investmentToDelete.id);
 
     if (error) {
       toast({
@@ -125,6 +133,8 @@ const Investments = () => {
       description: "O investimento foi removido com sucesso",
     });
 
+    setIsDeleteDialogOpen(false);
+    setInvestmentToDelete(null);
     fetchInvestments();
   };
 
@@ -240,7 +250,7 @@ const Investments = () => {
                     <Button
                       variant="outline"
                       size="icon"
-                      onClick={() => handleDelete(investment.id)}
+                      onClick={() => handleDeleteClick(investment)}
                     >
                       <Trash className="h-4 w-4" />
                     </Button>
@@ -260,6 +270,28 @@ const Investments = () => {
             </Card>
           ))}
         </div>
+
+        <Dialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+        >
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirmar exclusão</DialogTitle>
+              <DialogDescription>
+                Tem certeza que deseja excluir o investimento {investmentToDelete?.name}? Esta ação não pode ser desfeita.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+                Cancelar
+              </Button>
+              <Button variant="destructive" onClick={handleConfirmDelete}>
+                Excluir
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
