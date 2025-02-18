@@ -6,6 +6,7 @@ import { Button } from "./ui/button";
 import { useToast } from "./ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
+import type { Json } from "@/integrations/supabase/types";
 
 interface InvoiceItem {
   description: string;
@@ -40,7 +41,7 @@ export const InvoiceGenerator = () => {
       item[field] = Number(value);
       item.total = item.quantity * item.price;
     } else {
-      item[field] = value as string;
+      (item as any)[field] = value;
     }
 
     newItems[index] = item;
@@ -73,6 +74,14 @@ export const InvoiceGenerator = () => {
       const dueDate = new Date();
       dueDate.setDate(today.getDate() + 30);
 
+      // Convertendo items para um formato compatível com Json
+      const itemsForDb = items.map(item => ({
+        ...item,
+        quantity: Number(item.quantity),
+        price: Number(item.price),
+        total: Number(item.total)
+      })) as Json;
+
       const { error } = await supabase.from("invoices").insert({
         invoice_number: invoiceNumber,
         client_name: clientData.name,
@@ -83,7 +92,7 @@ export const InvoiceGenerator = () => {
         invoice_date: format(today, "yyyy-MM-dd"),
         due_date: format(dueDate, "yyyy-MM-dd"),
         payment_terms: "30 dias",
-        items,
+        items: itemsForDb,
         subtotal,
         total,
         balance_due: total,
