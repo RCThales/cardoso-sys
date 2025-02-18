@@ -29,15 +29,14 @@ import { Input } from "./ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/store/cartStore";
-import { useNavigate } from "react-router-dom";
 import { useToast } from "./ui/use-toast";
+import { CartDrawer } from "./cart/CartDrawer";
 
 export const RentalCalculator = () => {
   const [days, setDays] = useState(1);
   const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState("muletas-axilares");
-  const navigate = useNavigate();
   const { toast } = useToast();
   const { addItem } = useCartStore();
 
@@ -107,10 +106,6 @@ export const RentalCalculator = () => {
     });
   };
 
-  const handleFinishRental = () => {
-    navigate("/temp1");
-  };
-
   const specialRates = Object.entries(constants.SPECIAL_RATES).map(
     ([days, price]) => ({
       days: parseInt(days, 10),
@@ -119,7 +114,10 @@ export const RentalCalculator = () => {
   );
 
   return (
-    <>
+    <div className="relative">
+      <div className="fixed top-4 right-4 z-50">
+        <CartDrawer />
+      </div>
       <Card className="w-full max-w-lg mx-auto p-8 shadow-lg animate-fade-in">
         <div className="space-y-8">
           <div className="text-center space-y-2">
@@ -209,14 +207,9 @@ export const RentalCalculator = () => {
               </div>
             </motion.div>
 
-            <div className="space-y-2">
-              <Button onClick={handleAddToCart} className="w-full">
-                <ShoppingCart className="mr-2 h-4 w-4" /> Adicionar ao Carrinho
-              </Button>
-              <Button onClick={handleFinishRental} variant="outline" className="w-full">
-                Finalizar Aluguel
-              </Button>
-            </div>
+            <Button onClick={handleAddToCart} className="w-full">
+              <ShoppingCart className="mr-2 h-4 w-4" /> Adicionar ao Carrinho
+            </Button>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
               {specialRates.map(
@@ -268,6 +261,6 @@ export const RentalCalculator = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 };
