@@ -9,8 +9,10 @@ import { Input } from "./ui/input";
 import { useCartStore } from "@/store/cartStore";
 import { useEffect } from "react";
 import { PRODUCTS } from "@/utils/priceCalculator";
+import { useNavigate } from "react-router-dom";
 
 export const InvoiceGenerator = () => {
+  const navigate = useNavigate();
   const {
     items,
     clientData,
@@ -65,6 +67,10 @@ export const InvoiceGenerator = () => {
     clearCart();
   };
 
+  const handleCancel = () => {
+    navigate("/calc");
+  };
+
   return (
     <Card className="p-6">
       <CompanyHeader />
@@ -113,9 +119,12 @@ export const InvoiceGenerator = () => {
           </div>
         </div>
 
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-4">
+          <Button variant="outline" onClick={handleCancel}>
+            Cancelar Pedido
+          </Button>
           <Button onClick={handleGenerateInvoice} className="w-full md:w-auto">
-            Gerar Fatura
+            Gerar Fatura e Finalizar
           </Button>
         </div>
       </div>
