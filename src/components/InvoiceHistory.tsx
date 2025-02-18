@@ -25,6 +25,23 @@ import { useToast } from "./ui/use-toast";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 
+// Extendendo o tipo jsPDF para incluir autoTable
+declare module 'jspdf' {
+  interface jsPDF {
+    autoTable: (options: any) => void;
+  }
+}
+
+// Atualizando a interface Invoice para usar Json do Supabase
+interface InvoiceItem {
+  description: string;
+  quantity: number;
+  price: number;
+  total: number;
+  productId?: string;
+  rentalDays?: number;
+}
+
 interface Invoice {
   id: number;
   invoice_number: string;
@@ -37,7 +54,7 @@ interface Invoice {
   client_city: string;
   client_state: string;
   client_postal_code: string;
-  items: any[];
+  items: InvoiceItem[];
   invoice_date: string;
   due_date: string;
 }
@@ -58,7 +75,14 @@ export const InvoiceHistory = () => {
       .order("created_at", { ascending: false });
 
     if (data) {
-      setInvoices(data);
+      // Convertendo os dados para o tipo Invoice[]
+      const formattedInvoices: Invoice[] = data.map(invoice => ({
+        ...invoice,
+        items: invoice.items as InvoiceItem[],
+        created_at: invoice.created_at || new Date().toISOString(),
+        payment_received: invoice.payment_received || 0
+      }));
+      setInvoices(formattedInvoices);
     }
   };
 
@@ -121,7 +145,7 @@ export const InvoiceHistory = () => {
     doc.text(`Vencimento: ${format(new Date(invoice.due_date), "dd/MM/yyyy")}`, 150, 85);
 
     // Items table
-    const tableData = invoice.items.map((item: any) => [
+    const tableData = invoice.items.map((item: InvoiceItem) => [
       item.description,
       item.quantity,
       `R$ ${item.price.toFixed(2)}`,
