@@ -26,6 +26,9 @@ export const useInventory = () => {
       if (error) throw error;
       return data;
     },
+    // Adiciona refetch automático a cada 1 segundo quando a página está visível
+    refetchInterval: 1000,
+    refetchIntervalInBackground: false,
   });
 
   const { data: products } = useQuery({
