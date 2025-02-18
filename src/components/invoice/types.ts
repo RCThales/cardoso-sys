@@ -1,4 +1,3 @@
-
 export interface InvoiceItem {
   description: string;
   quantity: number;
@@ -6,6 +5,7 @@ export interface InvoiceItem {
   total: number;
   productId: string;
   rentalDays: number;
+  size?: string;
 }
 
 export interface InvoiceExtension {
