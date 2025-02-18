@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import {
   calculateTotalPrice,
@@ -23,17 +24,42 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Info } from "lucide-react";
-import React from "react";
+import { Info, ShoppingCart } from "lucide-react";
+import { Input } from "./ui/input";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useCartStore } from "@/store/cartStore";
+import { useNavigate } from "react-router-dom";
+import { useToast } from "./ui/use-toast";
 
 export const RentalCalculator = () => {
   const [days, setDays] = useState(1);
+  const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState("muletas-axilares");
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const { addItem } = useCartStore();
+
+  const { data: inventory } = useQuery({
+    queryKey: ["inventory"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("inventory")
+        .select("*");
+      if (error) throw error;
+      return data;
+    },
+  });
 
   useEffect(() => {
     setPrice(calculateTotalPrice(days, selectedProduct));
   }, [days, selectedProduct]);
+
+  const getAvailableQuantity = (productId: string) => {
+    const item = inventory?.find((i) => i.product_id === productId);
+    return item ? item.total_quantity - item.rented_quantity : 0;
+  };
 
   const handleDaysChange = (value: number[]) => {
     setDays(value[0]);
@@ -46,7 +72,44 @@ export const RentalCalculator = () => {
     }
   };
 
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuantity = parseInt(e.target.value, 10);
+    const availableQuantity = getAvailableQuantity(selectedProduct);
+    
+    if (newQuantity >= 1 && newQuantity <= availableQuantity) {
+      setQuantity(newQuantity);
+    }
+  };
+
   const constants = getProductConstants(selectedProduct);
+  const availableQuantity = getAvailableQuantity(selectedProduct);
+
+  const handleAddToCart = () => {
+    if (quantity > availableQuantity) {
+      toast({
+        title: "Erro",
+        description: "Quantidade indisponível em estoque",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    addItem({
+      productId: selectedProduct,
+      quantity,
+      days,
+      total: price * quantity,
+    });
+
+    toast({
+      title: "Sucesso",
+      description: "Produto adicionado ao carrinho",
+    });
+  };
+
+  const handleFinishRental = () => {
+    navigate("/temp1");
+  };
 
   const specialRates = Object.entries(constants.SPECIAL_RATES).map(
     ([days, price]) => ({
@@ -82,11 +145,23 @@ export const RentalCalculator = () => {
                   <SelectContent>
                     {PRODUCTS.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.name}
+                        {product.name} ({getAvailableQuantity(product.id)} disponíveis)
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="flex justify-between items-center">
+                <span className="text-sm font-medium">Quantidade</span>
+                <Input
+                  type="number"
+                  value={quantity}
+                  onChange={handleQuantityChange}
+                  min={1}
+                  max={availableQuantity}
+                  className="w-20 text-center"
+                />
               </div>
 
               <div className="flex justify-between items-center">
@@ -126,13 +201,22 @@ export const RentalCalculator = () => {
                   Preço Total
                 </span>
                 <div className="text-5xl font-semibold tracking-tight">
-                  R${price.toFixed(2)}
+                  R${(price * quantity).toFixed(2)}
                 </div>
                 <div className="text-sm text-muted-foreground">
                   {price / days <= 2 && "Melhor valor!"}
                 </div>
               </div>
             </motion.div>
+
+            <div className="space-y-2">
+              <Button onClick={handleAddToCart} className="w-full">
+                <ShoppingCart className="mr-2 h-4 w-4" /> Adicionar ao Carrinho
+              </Button>
+              <Button onClick={handleFinishRental} variant="outline" className="w-full">
+                Finalizar Aluguel
+              </Button>
+            </div>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
               {specialRates.map(

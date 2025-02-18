@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import {
   Calculator,
   LineChart,
-  Building2,
+  Package,
   FileSpreadsheet,
 } from "lucide-react";
 import { useEffect } from "react";
@@ -26,9 +26,9 @@ const menuItems = [
     color: "from-blue-500 to-cyan-500",
   },
   {
-    title: "Cardoso TEMP II",
-    description: "Em desenvolvimento",
-    icon: Building2,
+    title: "Estoque",
+    description: "Controle de estoque",
+    icon: Package,
     route: "/temp2",
     color: "from-green-500 to-emerald-500",
   },
