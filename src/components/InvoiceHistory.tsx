@@ -1,8 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
 import { useToast } from "./ui/use-toast";
-import { Invoice, convertDatabaseInvoice } from "./invoice/types";
+import { Invoice, convertDatabaseInvoice, InvoiceExtension } from "./invoice/types";
 import { formatCurrency } from "@/utils/formatters";
 import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
 import { saveAs } from "file-saver";
@@ -78,6 +79,47 @@ export const InvoiceHistory = () => {
     await fetchInvoices();
   };
 
+  const handleExtendConfirm = async (days: number, additionalCost: number) => {
+    if (selectedInvoice) {
+      const extension: InvoiceExtension = {
+        date: new Date().toISOString(),
+        days,
+        additionalCost,
+      };
+
+      const newTotal = selectedInvoice.total + additionalCost;
+      const currentExtensions = selectedInvoice.extensions || [];
+      const extensions = [...currentExtensions, extension];
+
+      const { error } = await supabase
+        .from("invoices")
+        .update({ 
+          extensions: extensions as Json[],
+          total: newTotal,
+          is_paid: false
+        })
+        .eq("id", selectedInvoice.id);
+
+      if (error) {
+        toast({
+          title: "Erro ao estender aluguel",
+          description: error.message,
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setExtendDialogOpen(false);
+      setSelectedInvoice(null);
+      await fetchInvoices();
+      
+      toast({
+        title: "Sucesso",
+        description: "Aluguel estendido com sucesso",
+      });
+    }
+  };
+
   const handlePreview = (invoice: Invoice) => {
     setPreviewInvoice(invoice);
     setPreviewOpen(true);
@@ -118,46 +160,6 @@ export const InvoiceHistory = () => {
     });
   };
 
-  const handleExtendConfirm = async (days: number, additionalCost: number) => {
-    if (selectedInvoice) {
-      const extension = {
-        date: new Date().toISOString(),
-        days,
-        additionalCost,
-      };
-
-      const newTotal = selectedInvoice.total + additionalCost;
-      const extensions = [...(selectedInvoice.extensions || []), extension];
-
-      const { error } = await supabase
-        .from("invoices")
-        .update({ 
-          extensions,
-          total: newTotal,
-          is_paid: false // Reset payment status
-        })
-        .eq("id", selectedInvoice.id);
-
-      if (error) {
-        toast({
-          title: "Erro ao estender aluguel",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      setExtendDialogOpen(false);
-      setSelectedInvoice(null);
-      await fetchInvoices();
-      
-      toast({
-        title: "Sucesso",
-        description: "Aluguel estendido com sucesso",
-      });
-    }
-  };
-
   return (
     <>
       <InvoiceTable
@@ -177,12 +179,6 @@ export const InvoiceHistory = () => {
         onDownload={handleDownload}
         formatCurrency={formatCurrency}
       />
-
-      {extendDialogOpen && (
-        <div>
-          {/* Extend dialog content */}
-        </div>
-      )}
     </>
   );
 };

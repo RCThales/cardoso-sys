@@ -9,6 +9,7 @@ export interface InvoiceItem {
 }
 
 export interface InvoiceExtension {
+  [key: string]: string | number;
   date: string;
   days: number;
   additionalCost: number;
