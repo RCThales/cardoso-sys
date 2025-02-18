@@ -28,7 +28,14 @@ export const useInvoiceGeneration = () => {
   const addItem = () => {
     setItems([
       ...items,
-      { description: "", quantity: 1, price: 0, total: 0 },
+      { 
+        description: "", 
+        quantity: 1, 
+        price: 0, 
+        total: 0,
+        productId: "",
+        rentalDays: 1
+      },
     ]);
   };
 
@@ -36,9 +43,8 @@ export const useInvoiceGeneration = () => {
     const newItems = [...items];
     const item = { ...newItems[index] };
 
-    if (field === "quantity" || field === "price") {
+    if (field === "quantity" || field === "price" || field === "rentalDays") {
       item[field] = Number(value);
-      item.total = item.quantity * item.price;
     } else {
       (item as any)[field] = value;
     }
