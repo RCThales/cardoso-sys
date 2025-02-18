@@ -30,6 +30,7 @@ const Calculator = () => {
       if (error) throw error;
       return data.map(item => ({
         ...item,
+        sizes: item.sizes ? (item.sizes as unknown as ProductSize[]) : undefined,
         constants: item.constants as ProductConstants
       })) as Product[];
     },
