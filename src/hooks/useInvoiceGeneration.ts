@@ -34,7 +34,7 @@ export const useInvoiceGeneration = () => {
     state: "",
     postalCode: "",
     isPaid: false,
-    deliveryFee: 20,
+    deliveryFee: 0,
   });
 
   const addItem = () => {

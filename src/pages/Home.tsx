@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -22,7 +23,7 @@ const menuItems = [
     title: "Faturas",
     description: "Gerenciamento de faturas",
     icon: LineChart,
-    route: "/temp1",
+    route: "/invoices",
     color: "from-blue-500 to-cyan-500",
   },
   {

@@ -47,10 +47,10 @@ export const InvoiceItems = ({
           <tbody>
             {items.map((item, index) => (
               <tr key={index} className="border-t">
-                <td className="px-4 py-3">{item.description || ''}</td>
-                <td className="px-4 py-3">{item.rentalDays || 1}</td>
-                <td className="px-4 py-3">{item.quantity || 1}</td>
-                <td className="px-4 py-3 text-right">R$ {formatCurrency(item.total)}</td>
+                <td className="px-4 py-3 align-middle">{PRODUCTS.find(p => p.id === item.productId)?.name || item.description || ''}</td>
+                <td className="px-4 py-3 align-middle">{item.rentalDays || 1}</td>
+                <td className="px-4 py-3 align-middle">{item.quantity || 1}</td>
+                <td className="px-4 py-3 text-right align-middle">R$ {formatCurrency(item.total)}</td>
               </tr>
             ))}
           </tbody>
