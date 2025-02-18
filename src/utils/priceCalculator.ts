@@ -1,6 +1,7 @@
 type ProductConstants = {
   CONSTANTE_VALOR_ALUGUEL_A: number;
   CONSTANTE_VALOR_ALUGUEL_B: number;
+  REGRESSION_DISCOUNT: number; // Cada produto tem seu próprio desconto
   SPECIAL_RATES: Record<number, number>;
 };
 
@@ -8,6 +9,7 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
   "muletas-axilares": {
     CONSTANTE_VALOR_ALUGUEL_A: 3.72,
     CONSTANTE_VALOR_ALUGUEL_B: 1.89,
+    REGRESSION_DISCOUNT: 0.0608, // Valor específico
     SPECIAL_RATES: {
       7: 30,
       10: 40,
@@ -18,6 +20,7 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
   "muletas-canadenses": {
     CONSTANTE_VALOR_ALUGUEL_A: 4.2,
     CONSTANTE_VALOR_ALUGUEL_B: 2.1,
+    REGRESSION_DISCOUNT: 0.055, // Valor específico
     SPECIAL_RATES: {
       7: 35,
       10: 45,
@@ -26,10 +29,11 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
     },
   },
   "botas-ortopedicas": {
-    CONSTANTE_VALOR_ALUGUEL_A: 5.15,
-    CONSTANTE_VALOR_ALUGUEL_B: 2.45,
+    CONSTANTE_VALOR_ALUGUEL_A: 4.5,
+    CONSTANTE_VALOR_ALUGUEL_B: 2.5,
+    REGRESSION_DISCOUNT: 0.0608, // Valor específico
     SPECIAL_RATES: {
-      7: 35,
+      7: 40,
       10: 50,
       15: 60,
       30: 90,
@@ -38,6 +42,7 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
   "sandalias-baruk": {
     CONSTANTE_VALOR_ALUGUEL_A: 3.95,
     CONSTANTE_VALOR_ALUGUEL_B: 1.75,
+    REGRESSION_DISCOUNT: 0.062, // Valor específico
     SPECIAL_RATES: {
       7: 35,
       10: 35,
@@ -48,6 +53,7 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
   "cadeira-de-rodas": {
     CONSTANTE_VALOR_ALUGUEL_A: 6.8,
     CONSTANTE_VALOR_ALUGUEL_B: 3.2,
+    REGRESSION_DISCOUNT: 0.045, // Valor específico
     SPECIAL_RATES: {
       7: 35,
       10: 55,
@@ -58,6 +64,7 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
   tipoias: {
     CONSTANTE_VALOR_ALUGUEL_A: 3.5,
     CONSTANTE_VALOR_ALUGUEL_B: 1.65,
+    REGRESSION_DISCOUNT: 0.065, // Valor específico
     SPECIAL_RATES: {
       7: 35,
       10: 30,
@@ -69,11 +76,10 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
 
 export function calculateDailyRate(rentalDays: number, productId: string) {
   const constants = PRODUCT_CONSTANTS[productId];
-  const REGRESSION_DISCOUNT = 0.0608;
 
   return (
     constants.CONSTANTE_VALOR_ALUGUEL_A *
-      Math.exp(-REGRESSION_DISCOUNT * rentalDays) +
+      Math.exp(-constants.REGRESSION_DISCOUNT * rentalDays) +
     constants.CONSTANTE_VALOR_ALUGUEL_B
   );
 }
@@ -86,9 +92,11 @@ export function calculateTotalPrice(rentalDays: number, productId: string) {
   const constants = PRODUCT_CONSTANTS[productId];
   const days = Math.max(1, Math.min(365, rentalDays));
 
+  /*
   if (constants.SPECIAL_RATES[days] !== undefined) {
     return constants.SPECIAL_RATES[days];
   }
+  */
 
   const totalPrice = calculateDailyRate(days, productId) * days;
   return roundToNearestHalf(totalPrice);

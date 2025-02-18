@@ -1,8 +1,12 @@
-
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
-import { Calculator, LineChart, Building2, FileSpreadsheet } from "lucide-react";
+import {
+  Calculator,
+  LineChart,
+  Building2,
+  FileSpreadsheet,
+} from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -15,8 +19,8 @@ const menuItems = [
     color: "from-purple-500 to-pink-500",
   },
   {
-    title: "Cardoso TEMP I",
-    description: "Em desenvolvimento",
+    title: "Faturas",
+    description: "Gerenciamento de faturas",
     icon: LineChart,
     route: "/temp1",
     color: "from-blue-500 to-cyan-500",
