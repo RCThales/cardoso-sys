@@ -137,7 +137,7 @@ export const InvoiceItems = ({
             <Input
               type="number"
               placeholder="Dias"
-              value={item.rentalDays}
+              value={item.rentalDays.toString()}
               onChange={(e) => handleDaysChange(index, e.target.value)}
               min={1}
             />
@@ -149,7 +149,7 @@ export const InvoiceItems = ({
             <Input
               type="number"
               placeholder="Qtd"
-              value={item.quantity}
+              value={item.quantity.toString()}
               onChange={(e) => handleQuantityChange(index, e.target.value)}
               min={1}
             />
