@@ -125,6 +125,7 @@ export const useInvoiceGeneration = () => {
         items: itemsForDb,
         subtotal,
         total,
+        balance_due: total, // Mantendo balance_due igual ao total
         is_paid: clientData.isPaid,
         user_id: user.id,
       });
