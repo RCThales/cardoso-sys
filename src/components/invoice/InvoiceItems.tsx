@@ -1,6 +1,7 @@
 
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
+import { Trash2 } from "lucide-react";
 import { 
   Select,
   SelectContent,
@@ -23,9 +24,10 @@ interface InvoiceItemsProps {
   items: InvoiceItem[];
   onAddItem: () => void;
   onUpdateItem: (index: number, field: keyof InvoiceItem, value: string) => void;
+  onRemoveItem: (index: number) => void;
 }
 
-export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsProps) => {
+export const InvoiceItems = ({ items, onAddItem, onUpdateItem, onRemoveItem }: InvoiceItemsProps) => {
   const handleProductChange = (index: number, productId: string) => {
     const selectedProduct = PRODUCTS.find(p => p.id === productId);
     const item = items[index];
@@ -87,10 +89,8 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
               value={item.productId || ""}
               onValueChange={(value) => handleProductChange(index, value)}
             >
-              <SelectTrigger>
-                <SelectValue placeholder="Selecione um produto">
-                  {PRODUCTS.find(p => p.id === item.productId)?.name || "Selecione um produto"}
-                </SelectValue>
+              <SelectTrigger className="h-10">
+                <SelectValue placeholder="Selecione um produto" />
               </SelectTrigger>
               <SelectContent>
                 {PRODUCTS.map((product) => (
@@ -125,7 +125,7 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
               min={1}
             />
           </div>
-          <div className="col-span-4">
+          <div className="col-span-3">
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Total
             </label>
@@ -134,6 +134,16 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
               readOnly
               className="bg-muted"
             />
+          </div>
+          <div className="col-span-1 flex items-end">
+            <Button 
+              variant="destructive" 
+              size="icon"
+              onClick={() => onRemoveItem(index)}
+              className="h-10 w-10"
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
           </div>
         </div>
       ))}

@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -8,7 +7,7 @@ import { useToast } from "./ui/use-toast";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Input } from "./ui/input";
-import { format } from "date-fns"; // Adicionando a importação necessária
+import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -164,19 +163,17 @@ export const InvoiceHistory = () => {
     const tableData = invoice.items.map((item) => [
       item.description,
       item.quantity,
-      `R$ ${formatCurrency(item.price)}`,
       `R$ ${formatCurrency(item.total)}`
     ]);
 
     doc.autoTable({
       startY: 115,
-      head: [["Descrição", "Quantidade", "Preço", "Total"]],
+      head: [["Descrição", "Quantidade", "Total"]],
       body: tableData,
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.text(`Subtotal: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
-    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY + 5);
+    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
 
     doc.setFontSize(8);
     doc.text("Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços,", 15, 270);
