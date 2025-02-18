@@ -47,6 +47,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string
           is_paid: boolean
+          is_returned: boolean
           items: Json
           payment_terms: string | null
           subtotal: number
@@ -69,6 +70,7 @@ export type Database = {
           invoice_date: string
           invoice_number: string
           is_paid?: boolean
+          is_returned?: boolean
           items: Json
           payment_terms?: string | null
           subtotal: number
@@ -91,6 +93,7 @@ export type Database = {
           invoice_date?: string
           invoice_number?: string
           is_paid?: boolean
+          is_returned?: boolean
           items?: Json
           payment_terms?: string | null
           subtotal?: number
@@ -105,18 +108,21 @@ export type Database = {
           constants: Json
           id: string
           name: string
+          product_code: string
         }
         Insert: {
           base_price: number
           constants?: Json
           id: string
           name: string
+          product_code: string
         }
         Update: {
           base_price?: number
           constants?: Json
           id?: string
           name?: string
+          product_code?: string
         }
         Relationships: []
       }

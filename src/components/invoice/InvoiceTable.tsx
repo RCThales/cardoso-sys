@@ -12,10 +12,12 @@ import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
 import { Download, Eye, Trash2 } from "lucide-react";
 import { Invoice } from "./types";
+import { cn } from "@/lib/utils";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
   onTogglePaid: (invoiceId: number, currentStatus: boolean) => void;
+  onToggleReturned: (invoiceId: number, currentStatus: boolean) => void;
   onDownload: (invoice: Invoice) => void;
   onPreview: (invoice: Invoice) => void;
   onDelete: (invoiceId: number) => void;
@@ -25,6 +27,7 @@ interface InvoiceTableProps {
 export const InvoiceTable = ({
   invoices,
   onTogglePaid,
+  onToggleReturned,
   onDownload,
   onPreview,
   onDelete,
@@ -39,6 +42,7 @@ export const InvoiceTable = ({
           <TableHead>Cliente</TableHead>
           <TableHead className="text-right">Total</TableHead>
           <TableHead>Pago</TableHead>
+          <TableHead>Devolvido</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -46,7 +50,11 @@ export const InvoiceTable = ({
         {invoices.map((invoice) => (
           <TableRow 
             key={invoice.id}
-            className={invoice.is_paid ? "bg-green-50 hover:bg-green-100" : "bg-yellow-50 hover:bg-yellow-100"}
+            className={cn({
+              "bg-green-50 hover:bg-green-100": invoice.is_paid && invoice.is_returned,
+              "bg-yellow-50 hover:bg-yellow-100": invoice.is_paid && !invoice.is_returned,
+              "bg-red-50 hover:bg-red-100": !invoice.is_paid && !invoice.is_returned,
+            })}
           >
             <TableCell>{invoice.invoice_number}</TableCell>
             <TableCell>
@@ -60,6 +68,12 @@ export const InvoiceTable = ({
               <Switch
                 checked={invoice.is_paid}
                 onCheckedChange={() => onTogglePaid(invoice.id, invoice.is_paid)}
+              />
+            </TableCell>
+            <TableCell>
+              <Switch
+                checked={invoice.is_returned}
+                onCheckedChange={() => onToggleReturned(invoice.id, invoice.is_returned)}
               />
             </TableCell>
             <TableCell className="text-right space-x-2">

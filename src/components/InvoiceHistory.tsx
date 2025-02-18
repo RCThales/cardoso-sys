@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
@@ -118,6 +117,48 @@ export const InvoiceHistory = () => {
         description: "Status da fatura atualizado com sucesso",
       });
       fetchInvoices();
+    }
+  };
+
+  const handleToggleReturned = async (invoiceId: number, currentStatus: boolean) => {
+    try {
+      const invoice = invoices.find(inv => inv.id === invoiceId);
+      if (!invoice) return;
+
+      const { error: updateError } = await supabase
+        .from("invoices")
+        .update({ is_returned: !currentStatus })
+        .eq("id", invoiceId);
+
+      if (updateError) throw updateError;
+
+      if (!currentStatus) {
+        for (const item of invoice.items) {
+          if (typeof item.productId === 'string') {
+            const { error: inventoryError } = await supabase
+              .from("inventory")
+              .update({
+                rented_quantity: supabase.sql`rented_quantity - ${item.quantity}`,
+              })
+              .eq("product_id", item.productId);
+
+            if (inventoryError) throw inventoryError;
+          }
+        }
+      }
+
+      toast({
+        title: "Sucesso",
+        description: "Status de devolução atualizado com sucesso",
+      });
+      
+      fetchInvoices();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status de devolução",
+        variant: "destructive",
+      });
     }
   };
 
@@ -254,6 +295,7 @@ export const InvoiceHistory = () => {
       <InvoiceTable
         invoices={filteredInvoices}
         onTogglePaid={handleTogglePaid}
+        onToggleReturned={handleToggleReturned}
         onDownload={generatePDF}
         onPreview={setPreviewInvoice}
         onDelete={setDeleteInvoiceId}

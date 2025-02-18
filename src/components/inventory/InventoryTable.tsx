@@ -11,12 +11,25 @@ import {
 import { fetchProducts } from "@/utils/priceCalculator";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "../ui/button";
-import { Plus, Minus } from "lucide-react";
+import { Plus, Minus, Search } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 import { useState } from "react";
+import { Input } from "../ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
+import { Switch } from "../ui/switch";
 
 export const InventoryTable = () => {
   const [isUpdating, setIsUpdating] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [showRented, setShowRented] = useState(false);
+  const [showAvailable, setShowAvailable] = useState(false);
   const { toast } = useToast();
 
   const { data: inventory, isLoading, refetch } = useQuery({
@@ -73,52 +86,118 @@ export const InventoryTable = () => {
     return <div className="text-center">Carregando...</div>;
   }
 
+  const filteredInventory = inventory
+    ?.filter(item => {
+      const product = products.find(p => p.id === item.product_id);
+      const matchesSearch = product?.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const hasRented = item.rented_quantity > 0;
+      const hasAvailable = (item.total_quantity - item.rented_quantity) > 0;
+      
+      if (showRented && !hasRented) return false;
+      if (showAvailable && !hasAvailable) return false;
+      
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      if (sortOrder === "asc") {
+        return a.total_quantity - b.total_quantity;
+      }
+      return b.total_quantity - a.total_quantity;
+    });
+
   return (
-    <Table>
-      <TableHeader>
-        <TableRow>
-          <TableHead>Produto</TableHead>
-          <TableHead className="text-right">Quantidade Total</TableHead>
-          <TableHead className="text-right">Quantidade Alugada</TableHead>
-          <TableHead className="text-right">Quantidade Disponível</TableHead>
-          <TableHead className="text-right">Ações</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {inventory?.map((item) => {
-          const product = products.find((p) => p.id === item.product_id);
-          const availableQuantity = item.total_quantity - item.rented_quantity;
-          
-          return (
-            <TableRow key={item.id}>
-              <TableCell>{product?.name || item.product_id}</TableCell>
-              <TableCell className="text-right">{item.total_quantity}</TableCell>
-              <TableCell className="text-right">{item.rented_quantity}</TableCell>
-              <TableCell className="text-right">{availableQuantity}</TableCell>
-              <TableCell className="text-right">
-                <div className="flex justify-end gap-2">
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleUpdateQuantity(item.id, -1)}
-                    disabled={isUpdating || item.total_quantity <= item.rented_quantity}
-                  >
-                    <Minus className="h-4 w-4" />
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="icon"
-                    onClick={() => handleUpdateQuantity(item.id, 1)}
-                    disabled={isUpdating}
-                  >
-                    <Plus className="h-4 w-4" />
-                  </Button>
-                </div>
-              </TableCell>
-            </TableRow>
-          );
-        })}
-      </TableBody>
-    </Table>
+    <div className="space-y-4">
+      <div className="flex flex-col md:flex-row gap-4">
+        <div className="flex-1">
+          <div className="relative">
+            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por nome do produto"
+              className="pl-8"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+        </div>
+        <Select
+          value={sortOrder}
+          onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
+        >
+          <SelectTrigger className="w-[220px]">
+            <SelectValue placeholder="Ordenar por quantidade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="asc">Quantidade (menor primeiro)</SelectItem>
+            <SelectItem value="desc">Quantidade (maior primeiro)</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="flex gap-4">
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={showRented}
+            onCheckedChange={setShowRented}
+          />
+          <span className="text-sm">Mostrar apenas com itens alugados</span>
+        </div>
+        <div className="flex items-center space-x-2">
+          <Switch
+            checked={showAvailable}
+            onCheckedChange={setShowAvailable}
+          />
+          <span className="text-sm">Mostrar apenas com itens disponíveis</span>
+        </div>
+      </div>
+
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Código</TableHead>
+            <TableHead>Produto</TableHead>
+            <TableHead className="text-right">Quantidade Total</TableHead>
+            <TableHead className="text-right">Quantidade Alugada</TableHead>
+            <TableHead className="text-right">Quantidade Disponível</TableHead>
+            <TableHead className="text-right">Ações</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {filteredInventory?.map((item) => {
+            const product = products.find((p) => p.id === item.product_id);
+            const availableQuantity = item.total_quantity - item.rented_quantity;
+            
+            return (
+              <TableRow key={item.id}>
+                <TableCell>{product?.product_code}</TableCell>
+                <TableCell>{product?.name}</TableCell>
+                <TableCell className="text-right">{item.total_quantity}</TableCell>
+                <TableCell className="text-right">{item.rented_quantity}</TableCell>
+                <TableCell className="text-right">{availableQuantity}</TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleUpdateQuantity(item.id, -1)}
+                      disabled={isUpdating || item.total_quantity <= item.rented_quantity}
+                    >
+                      <Minus className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="icon"
+                      onClick={() => handleUpdateQuantity(item.id, 1)}
+                      disabled={isUpdating}
+                    >
+                      <Plus className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </TableCell>
+              </TableRow>
+            );
+          })}
+        </TableBody>
+      </Table>
+    </div>
   );
 };
