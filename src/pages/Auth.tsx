@@ -1,10 +1,9 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Calculator } from "lucide-react";
+import { Accessibility } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
@@ -18,7 +17,7 @@ const Auth = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
+
     try {
       const { error } = await supabase.auth.signInWithPassword({
         email,
@@ -26,7 +25,7 @@ const Auth = () => {
       });
 
       if (error) throw error;
-      
+
       navigate("/");
     } catch (error: any) {
       toast({
@@ -44,9 +43,9 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <Calculator className="h-12 w-12" />
+            <Accessibility className="h-12 w-12" />
           </div>
-          <h2 className="text-2xl font-bold">Cardoso Calc</h2>
+          <h2 className="text-2xl font-bold">Cardoso SYS</h2>
           <p className="text-muted-foreground">
             Entre com suas credenciais para acessar
           </p>
@@ -71,11 +70,7 @@ const Auth = () => {
                 required
               />
             </div>
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={loading}
-            >
+            <Button type="submit" className="w-full" disabled={loading}>
               {loading ? "Entrando..." : "Entrar"}
             </Button>
           </form>

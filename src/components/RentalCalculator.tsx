@@ -61,14 +61,11 @@ export const RentalCalculator = () => {
         <div className="space-y-8">
           <div className="text-center space-y-2">
             <Badge variant="secondary" className="mb-2">
-              <>Calculadora de Aluguel</>
+              <>Cardoso Calc</>
             </Badge>
             <h1 className="text-4xl font-semibold tracking-tight">
-              Calcule seu Aluguel
+              Calcule o valor do aluguel
             </h1>
-            <p className="text-muted-foreground">
-              Ajuste o controle deslizante para ver o preço do aluguel
-            </p>
           </div>
 
           <div className="space-y-6">
