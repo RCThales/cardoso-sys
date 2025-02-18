@@ -1,86 +1,31 @@
-import { useQuery } from "@tanstack/react-query";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
-import { fetchProducts } from "@/utils/priceCalculator";
-import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "../ui/use-toast";
-import { useState } from "react";
+
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "../ui/table";
 import { InventorySearch } from "./InventorySearch";
 import { InventoryFilters } from "./InventoryFilters";
-import { Button } from "../ui/button";
-import { ArrowUpDown } from "lucide-react";
 import { InventoryAdjustModal } from "./InventoryAdjustModal";
+import { SingleSizeInventoryRow } from "./SingleSizeInventoryRow";
+import { MultiSizeInventoryRow } from "./MultiSizeInventoryRow";
+import { useInventory } from "./useInventory";
 
 export const InventoryTable = () => {
-  const [isUpdating, setIsUpdating] = useState(false);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
-  const [showRented, setShowRented] = useState(false);
-  const [showAvailable, setShowAvailable] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<{
-    item: any;
-    product: any;
-  } | null>(null);
-  const { toast } = useToast();
-
-  const { data: inventory, isLoading, refetch } = useQuery({
-    queryKey: ["inventory"],
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inventory")
-        .select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
-
-  const { data: products } = useQuery({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
-  });
-
-  const handleUpdateQuantity = async (itemId: number, change: number, adjustValue: number) => {
-    if (isUpdating) return;
-
-    try {
-      setIsUpdating(true);
-      const item = inventory?.find(i => i.id === itemId);
-      if (!item) return;
-
-      const newQuantity = Math.max(0, item.total_quantity + (change * adjustValue));
-      
-      const { error } = await supabase
-        .from('inventory')
-        .update({ total_quantity: newQuantity })
-        .eq('id', itemId);
-
-      if (error) throw error;
-
-      await refetch();
-      
-      toast({
-        title: "Sucesso",
-        description: "Quantidade atualizada com sucesso",
-      });
-      
-      setSelectedItem(null);
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar quantidade",
-        variant: "destructive",
-      });
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
-  const sortSizes = (items: any[]) => {
-    const sizeOrder = ['P', 'M', 'G'];
-    return [...items].sort((a, b) => {
-      if (!a.size || !b.size) return 0;
-      return sizeOrder.indexOf(a.size) - sizeOrder.indexOf(b.size);
-    });
-  };
+  const {
+    inventory,
+    products,
+    isLoading,
+    searchTerm,
+    setSearchTerm,
+    sortOrder,
+    setSortOrder,
+    showRented,
+    setShowRented,
+    showAvailable,
+    setShowAvailable,
+    selectedItem,
+    setSelectedItem,
+    handleUpdateQuantity,
+    isUpdating,
+    sortSizes
+  } = useInventory();
 
   if (isLoading || !products) {
     return <div className="text-center">Carregando...</div>;
@@ -154,73 +99,23 @@ export const InventoryTable = () => {
             if (!hasSizes) {
               const item = items[0];
               return (
-                <TableRow key={productId}>
-                  <TableCell className="font-medium">{product.product_code}</TableCell>
-                  <TableCell>
-                    <div className="font-medium">{product.name}</div>
-                  </TableCell>
-                  <TableCell className="text-right">{item.total_quantity}</TableCell>
-                  <TableCell className="text-right">{item.rented_quantity}</TableCell>
-                  <TableCell className="text-right">{item.total_quantity - item.rented_quantity}</TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex flex-col space-y-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedItem({ item, product })}
-                        className="w-[140px]"
-                      >
-                        <ArrowUpDown className="h-4 w-4 mr-2" />
-                        Ajustar Total
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
+                <SingleSizeInventoryRow
+                  key={productId}
+                  product={product}
+                  item={item}
+                  onAdjust={() => setSelectedItem({ item, product })}
+                />
               );
             }
 
             const sortedItems = sortSizes(items);
-
             return (
-              <TableRow key={productId}>
-                <TableCell className="font-medium">{product.product_code}</TableCell>
-                <TableCell>
-                  <div className="font-medium">{product.name}</div>
-                  <div className="mt-2 space-y-1">
-                    {sortedItems.map(item => item.size && (
-                      <div key={item.id} className="flex justify-between text-sm text-muted-foreground">
-                        <span>{item.size}</span>
-                        <span className="ml-4">{item.total_quantity - item.rented_quantity} disponíveis</span>
-                      </div>
-                    ))}
-                  </div>
-                </TableCell>
-                <TableCell className="text-right">
-                  {sortedItems.filter(item => item.size).reduce((sum, item) => sum + item.total_quantity, 0)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {sortedItems.filter(item => item.size).reduce((sum, item) => sum + item.rented_quantity, 0)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {sortedItems.filter(item => item.size).reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
-                </TableCell>
-                <TableCell className="text-right">
-                  <div className="flex flex-col space-y-2">
-                    {sortedItems.map(item => item.size && (
-                      <Button
-                        key={item.id}
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedItem({ item, product })}
-                        className="w-[140px]"
-                      >
-                        <ArrowUpDown className="h-4 w-4 mr-2" />
-                        {item.size}
-                      </Button>
-                    ))}
-                  </div>
-                </TableCell>
-              </TableRow>
+              <MultiSizeInventoryRow
+                key={productId}
+                product={product}
+                items={sortedItems}
+                onAdjust={(item) => setSelectedItem({ item, product })}
+              />
             );
           })}
         </TableBody>
