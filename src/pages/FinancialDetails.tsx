@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { format, subMonths } from "date-fns";
@@ -96,17 +97,17 @@ const FinancialDetails = () => {
         averageTicket: currentInvoices?.length ? currentGrossIncome / currentInvoices.length : 0,
       };
 
-      const previousSummary = {
+      // Só define previousSummary se houver dados do mês anterior
+      setPreviousSummary(previousInvoices && previousInvoices.length > 0 ? {
         grossIncome: previousGrossIncome,
         expenses: previousExpenses,
         netProfit: previousGrossIncome - previousExpenses - totalInvestment,
         totalInvestment,
-        invoiceCount: previousInvoices?.length || 0,
-        averageTicket: previousInvoices?.length ? previousGrossIncome / previousInvoices.length : 0,
-      };
+        invoiceCount: previousInvoices.length,
+        averageTicket: previousInvoices.length ? previousGrossIncome / previousInvoices.length : 0,
+      } : null);
 
       setSummary(currentSummary);
-      setPreviousSummary(previousSummary);
       setInvestmentDetails(investments || []);
     };
 
@@ -119,7 +120,7 @@ const FinancialDetails = () => {
       <div className="container py-8">
         <FinancialHeader 
           monthName={monthName} 
-          summary={summary} 
+          summary={summary}
           expenseDetails={calculateExpenseDetails(summary.grossIncome)}
           investmentDetails={getInvestmentDetails(investmentDetails)}
         />
