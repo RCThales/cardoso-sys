@@ -32,16 +32,18 @@ import { useCartStore } from "@/store/cartStore";
 import { useToast } from "./ui/use-toast";
 import { CartDrawer } from "./cart/CartDrawer";
 
+interface ProductConstants {
+  CONSTANTE_VALOR_ALUGUEL_A: number;
+  CONSTANTE_VALOR_ALUGUEL_B: number;
+  REGRESSION_DISCOUNT: number;
+  SPECIAL_RATES: Record<number, number>;
+}
+
 interface Product {
   id: string;
   name: string;
   base_price: number;
-  constants: {
-    CONSTANTE_VALOR_ALUGUEL_A: number;
-    CONSTANTE_VALOR_ALUGUEL_B: number;
-    REGRESSION_DISCOUNT: number;
-    SPECIAL_RATES: Record<number, number>;
-  };
+  constants: ProductConstants;
 }
 
 export const RentalCalculator = () => {
@@ -52,7 +54,7 @@ export const RentalCalculator = () => {
   const { toast } = useToast();
   const { addItem } = useCartStore();
 
-  const { data: products } = useQuery({
+  const { data: products } = useQuery<Product[]>({
     queryKey: ["products"],
     queryFn: fetchProducts,
   });
@@ -103,7 +105,8 @@ export const RentalCalculator = () => {
     }
   };
 
-  const constants = products?.find(p => p.id === selectedProduct)?.constants;
+  const selectedProductData = products?.find(p => p.id === selectedProduct);
+  const constants = selectedProductData?.constants;
   const availableQuantity = getAvailableQuantity(selectedProduct);
 
   const handleAddToCart = () => {
@@ -151,7 +154,7 @@ export const RentalCalculator = () => {
         <div className="space-y-8">
           <div className="text-center space-y-2">
             <Badge variant="secondary" className="mb-2">
-              <>Cardoso Calc</>
+              Cardoso Calc
             </Badge>
             <h1 className="text-4xl font-semibold tracking-tight">
               Calcule o valor do aluguel
