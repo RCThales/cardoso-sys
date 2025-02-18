@@ -13,14 +13,7 @@ import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCPF } from "@/utils/formatters";
-
-interface ClientSummary {
-  cpf: string;
-  name: string;
-  totalSpent: number;
-  orderCount: number;
-  lastOrderDate: string;
-}
+import type { ClientSummary } from "@/types/client";
 
 const Clients = () => {
   const [search, setSearch] = useState("");

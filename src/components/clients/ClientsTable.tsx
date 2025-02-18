@@ -10,7 +10,7 @@ import {
 import { formatCPF } from "@/utils/formatters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import type { ClientSummary } from "@/pages/Clients";
+import type { ClientSummary } from "@/types/client";
 
 interface ClientsTableProps {
   clients: ClientSummary[];
