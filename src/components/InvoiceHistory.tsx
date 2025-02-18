@@ -3,30 +3,56 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
 import { useToast } from "./ui/use-toast";
-import { Invoice, convertDatabaseInvoice, InvoiceExtension } from "./invoice/types";
+import { Invoice, convertDatabaseInvoice } from "./invoice/types";
 import { formatCurrency } from "@/utils/formatters";
 import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
 import { saveAs } from "file-saver";
 import { generatePDF } from "@/utils/pdfGenerator";
-import { Json } from "@/integrations/supabase/types";
 
-export const InvoiceHistory = () => {
+interface InvoiceHistoryProps {
+  search: string;
+  sortOrder: "asc" | "desc";
+  filterStatus: "all" | "paid" | "unpaid" | "returned" | "not-returned";
+}
+
+export const InvoiceHistory = ({ search, sortOrder, filterStatus }: InvoiceHistoryProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
-  const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
-  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     fetchInvoices();
-  }, []);
+  }, [search, sortOrder, filterStatus]);
 
   const fetchInvoices = async () => {
-    const { data: invoicesData, error } = await supabase
+    let query = supabase
       .from("invoices")
       .select("*")
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: sortOrder === "asc" });
+
+    // Aplicar filtros de status
+    switch (filterStatus) {
+      case "paid":
+        query = query.eq("is_paid", true);
+        break;
+      case "unpaid":
+        query = query.eq("is_paid", false);
+        break;
+      case "returned":
+        query = query.eq("is_returned", true);
+        break;
+      case "not-returned":
+        query = query.eq("is_returned", false);
+        break;
+    }
+
+    // Aplicar busca
+    if (search) {
+      query = query.or(`client_name.ilike.%${search}%,client_cpf.ilike.%${search}%,invoice_number.ilike.%${search}%`);
+    }
+
+    const { data: invoicesData, error } = await query;
 
     if (error) {
       toast({
@@ -78,57 +104,6 @@ export const InvoiceHistory = () => {
     }
 
     await fetchInvoices();
-  };
-
-  const handleExtendConfirm = async (days: number, additionalCost: number) => {
-    if (selectedInvoice) {
-      const extension: InvoiceExtension = {
-        date: new Date().toISOString(),
-        days,
-        additionalCost,
-      };
-
-      // Cálculo do novo total
-      const newTotal = selectedInvoice.total + additionalCost;
-      const currentExtensions = selectedInvoice.extensions || [];
-      const extensions = [...currentExtensions, extension];
-
-      console.log('Extending invoice:', {
-        currentTotal: selectedInvoice.total,
-        additionalCost,
-        newTotal,
-        extension
-      });
-
-      // Atualiza a fatura com a extensão
-      const { error } = await supabase
-        .from("invoices")
-        .update({ 
-          extensions: extensions,
-          total: newTotal,
-          is_paid: false // Reseta o status de pagamento
-        })
-        .eq("id", selectedInvoice.id);
-
-      if (error) {
-        toast({
-          title: "Erro ao estender aluguel",
-          description: error.message,
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // Limpa os estados e recarrega os dados
-      setExtendDialogOpen(false);
-      setSelectedInvoice(null);
-      await fetchInvoices();
-      
-      toast({
-        title: "Sucesso",
-        description: "Aluguel estendido com sucesso",
-      });
-    }
   };
 
   const handlePreview = (invoice: Invoice) => {

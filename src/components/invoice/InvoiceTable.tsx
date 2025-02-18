@@ -1,3 +1,4 @@
+
 import { format, parseISO } from "date-fns";
 import {
   Table,
@@ -9,17 +10,16 @@ import {
 } from "../ui/table";
 import { Button } from "../ui/button";
 import { Switch } from "../ui/switch";
-import { Check, Download, Eye, Trash2, Clock } from "lucide-react";
+import { Check, Download, Eye, Trash2 } from "lucide-react";
 import { Invoice, InvoiceExtension } from "./types";
 import { cn } from "@/lib/utils";
 import { useToast } from "../ui/use-toast";
 import { useState } from "react";
 import { ReturnConfirmDialog } from "./ReturnConfirmDialog";
 import { PaymentMethodDialog } from "./PaymentMethodDialog";
-import { ExtendRentalDialog } from "./ExtendRentalDialog";
+import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
 import ReactConfetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
-import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -43,7 +43,6 @@ export const InvoiceTable = ({
   const { toast } = useToast();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -85,50 +84,6 @@ export const InvoiceTable = ({
       onDelete(selectedInvoice.id);
       setDeleteDialogOpen(false);
       setSelectedInvoice(null);
-    }
-  };
-
-  const handleExtendRental = (invoice: Invoice) => {
-    if (invoice.is_returned) {
-      toast({
-        title: "Ação não permitida",
-        description: "Não é possível estender um aluguel já devolvido",
-        variant: "destructive",
-      });
-      return;
-    }
-    setSelectedInvoice(invoice);
-    setExtendDialogOpen(true);
-  };
-
-  const calculateAdditionalCost = (days: number) => {
-    if (!selectedInvoice) return 0;
-    
-    const rentalItems = selectedInvoice.items.filter(item => item.productId !== 'delivery-fee');
-    
-    const dailyRate = rentalItems.reduce((sum, item) => {
-      const itemDailyRate = item.total / item.rentalDays;
-      return sum + (itemDailyRate * item.quantity);
-    }, 0);
-    
-    return dailyRate * days;
-  };
-
-  const handleExtendConfirm = async (days: number, additionalCost: number) => {
-    if (selectedInvoice) {
-      const extension = {
-        date: new Date().toISOString(),
-        days,
-        additionalCost,
-      };
-      
-      setExtendDialogOpen(false);
-      setSelectedInvoice(null);
-      
-      toast({
-        title: "Sucesso",
-        description: "Aluguel estendido com sucesso",
-      });
     }
   };
 
@@ -232,15 +187,6 @@ export const InvoiceTable = ({
                 <Button
                   variant="outline"
                   size="icon"
-                  onClick={() => handleExtendRental(invoice)}
-                  disabled={invoice.is_returned}
-                  title="Estender aluguel"
-                >
-                  <Clock className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
                   onClick={() => onDownload(invoice)}
                   title="Baixar PDF"
                 >
@@ -280,13 +226,6 @@ export const InvoiceTable = ({
         onOpenChange={setPaymentDialogOpen}
         onConfirm={handlePaymentConfirm}
         total={selectedInvoice?.total || 0}
-      />
-
-      <ExtendRentalDialog
-        open={extendDialogOpen}
-        onOpenChange={setExtendDialogOpen}
-        onConfirm={handleExtendConfirm}
-        calculateAdditionalCost={calculateAdditionalCost}
       />
 
       <DeleteInvoiceDialog

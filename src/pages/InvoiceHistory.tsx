@@ -1,8 +1,15 @@
 
+import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceHistory as InvoiceHistoryComponent } from "@/components/InvoiceHistory";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const InvoiceHistory = () => {
+  const [search, setSearch] = useState("");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid" | "returned" | "not-returned">("all");
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
@@ -13,7 +20,46 @@ const InvoiceHistory = () => {
             Visualize todas as faturas geradas
           </p>
         </div>
-        <InvoiceHistoryComponent />
+
+        <div className="space-y-4 mb-6">
+          <Input
+            placeholder="Buscar por nome, CPF ou número da fatura"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-md"
+          />
+          
+          <div className="flex gap-4">
+            <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Ordenar por data" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">Mais recentes primeiro</SelectItem>
+                <SelectItem value="asc">Mais antigas primeiro</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <Select value={filterStatus} onValueChange={(value) => setFilterStatus(value as any)}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas as faturas</SelectItem>
+                <SelectItem value="paid">Somente pagas</SelectItem>
+                <SelectItem value="unpaid">Somente não pagas</SelectItem>
+                <SelectItem value="returned">Somente devolvidas</SelectItem>
+                <SelectItem value="not-returned">Somente não devolvidas</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        <InvoiceHistoryComponent
+          search={search}
+          sortOrder={sortOrder}
+          filterStatus={filterStatus}
+        />
       </div>
     </div>
   );

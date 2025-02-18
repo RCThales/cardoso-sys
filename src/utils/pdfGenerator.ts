@@ -145,13 +145,13 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     },
   });
 
-  // Adiciona o texto legal no rodapé
-  currentY = doc.lastAutoTable?.finalY || currentY;
+  // Move o texto legal para o rodapé da página
+  const pageHeight = doc.internal.pageSize.getHeight();
   doc.setFontSize(8);
   doc.text(
     "Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços, conforme lei complementar 116/2003.",
     pageWidth / 2,
-    currentY + 20,
+    pageHeight - 10,
     { align: "center", maxWidth: pageWidth - 20 }
   );
 
