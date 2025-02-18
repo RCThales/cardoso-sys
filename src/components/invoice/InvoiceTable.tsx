@@ -10,6 +10,7 @@ import ReactConfetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
 import { InvoiceTableRow } from "./table/InvoiceTableRow";
+import { returnToInventory } from "@/services/inventoryService";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -90,13 +91,22 @@ export const InvoiceTable = ({
     setReturnDialogOpen(true);
   };
 
-  const handleConfirmReturn = () => {
+  const handleConfirmReturn = async () => {
     if (selectedInvoice) {
-      onToggleReturned(selectedInvoice.id, selectedInvoice.is_returned);
-      setReturnDialogOpen(false);
-      setSelectedInvoice(null);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000);
+      try {
+        await returnToInventory(selectedInvoice.items);
+        await onToggleReturned(selectedInvoice.id, selectedInvoice.is_returned);
+        setReturnDialogOpen(false);
+        setSelectedInvoice(null);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 5000);
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao atualizar o estoque",
+          variant: "destructive",
+        });
+      }
     }
   };
 
