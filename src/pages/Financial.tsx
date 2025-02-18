@@ -7,7 +7,9 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice } from "@/components/invoice/types";
+import type { Database } from "@/integrations/supabase/types";
+
+type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 
 interface MonthData {
   month: number;
@@ -37,7 +39,7 @@ const Financial = () => {
       const monthsData: Record<number, Record<number, MonthData>> = {};
       const yearsSet = new Set<number>();
 
-      invoices.forEach((invoice: Invoice) => {
+      invoices.forEach((invoice: InvoiceRow) => {
         const date = parseISO(invoice.invoice_date);
         const year = date.getFullYear();
         const month = date.getMonth();

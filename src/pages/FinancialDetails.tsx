@@ -8,8 +8,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { ArrowLeft, TrendingDown, TrendingUp, DollarSign, LineChart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import { Invoice } from "@/components/invoice/types";
+import type { Database } from "@/integrations/supabase/types";
 import { formatCurrency } from "@/utils/formatters";
+
+type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 
 interface FinancialSummary {
   grossIncome: number;
@@ -27,7 +29,7 @@ const FinancialDetails = () => {
     grossIncome: 0,
     expenses: 0,
     netProfit: 0,
-    totalInvestment: 0,
+    totalInvestment: 50000,
     invoiceCount: 0,
     averageTicket: 0,
   });
@@ -51,12 +53,11 @@ const FinancialDetails = () => {
       }
 
       const financialSummary = invoices.reduce(
-        (acc, invoice: Invoice) => {
-          acc.grossIncome += invoice.total;
-          // Por enquanto, vamos considerar 20% como despesas
-          const expenses = invoice.total * 0.2;
+        (acc: FinancialSummary, invoice: InvoiceRow) => {
+          acc.grossIncome += Number(invoice.total);
+          const expenses = Number(invoice.total) * 0.2;
           acc.expenses += expenses;
-          acc.netProfit += invoice.total - expenses;
+          acc.netProfit += Number(invoice.total) - expenses;
           acc.invoiceCount++;
           return acc;
         },
@@ -64,7 +65,7 @@ const FinancialDetails = () => {
           grossIncome: 0,
           expenses: 0,
           netProfit: 0,
-          totalInvestment: 50000, // Valor fixo para exemplo
+          totalInvestment: 50000,
           invoiceCount: 0,
           averageTicket: 0,
         }
@@ -192,4 +193,4 @@ const FinancialDetails = () => {
   );
 };
 
-export default Financial;
+export default FinancialDetails;
