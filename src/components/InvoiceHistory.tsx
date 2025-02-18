@@ -134,22 +134,26 @@ export const InvoiceHistory = () => {
 
       if (!currentStatus) {
         for (const item of invoice.items) {
+          if (item.productId === 'delivery-fee') continue;
+          
           if (typeof item.productId === 'string') {
-            const { data: inventoryItem } = await supabase
+            const { data: inventoryItems, error: inventoryError } = await supabase
               .from("inventory")
               .select("rented_quantity")
-              .eq("product_id", item.productId)
-              .single();
+              .eq("product_id", item.productId);
 
-            if (inventoryItem) {
+            if (inventoryError) throw inventoryError;
+            
+            if (inventoryItems && inventoryItems.length > 0) {
+              const inventoryItem = inventoryItems[0];
               const newQuantity = Math.max(0, inventoryItem.rented_quantity - item.quantity);
               
-              const { error: inventoryError } = await supabase
+              const { error: updateInventoryError } = await supabase
                 .from("inventory")
                 .update({ rented_quantity: newQuantity })
                 .eq("product_id", item.productId);
 
-              if (inventoryError) throw inventoryError;
+              if (updateInventoryError) throw updateInventoryError;
             }
           }
         }
@@ -162,6 +166,7 @@ export const InvoiceHistory = () => {
       
       fetchInvoices();
     } catch (error) {
+      console.error('Error updating return status:', error);
       toast({
         title: "Erro",
         description: "Erro ao atualizar status de devolução",
