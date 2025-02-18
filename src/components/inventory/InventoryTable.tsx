@@ -78,23 +78,36 @@ export const InventoryTable = () => {
     return <div className="text-center">Carregando...</div>;
   }
 
-  const filteredInventory = inventory
-    ?.filter(item => {
-      const product = products.find(p => p.id === item.product_id);
-      const matchesSearch = product?.name.toLowerCase().includes(searchTerm.toLowerCase());
-      const hasRented = item.rented_quantity > 0;
-      const hasAvailable = (item.total_quantity - item.rented_quantity) > 0;
+  // Agrupar itens do inventário por produto
+  const groupedInventory = inventory?.reduce((acc, item) => {
+    if (!acc[item.product_id]) {
+      acc[item.product_id] = [];
+    }
+    acc[item.product_id].push(item);
+    return acc;
+  }, {} as Record<string, typeof inventory>);
+
+  const filteredAndGroupedInventory = Object.entries(groupedInventory || {})
+    .filter(([productId]) => {
+      const product = products.find(p => p.id === productId);
+      if (!product) return false;
+      
+      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+      if (!matchesSearch) return false;
+
+      const items = groupedInventory[productId];
+      const hasRented = items.some(item => item.rented_quantity > 0);
+      const hasAvailable = items.some(item => (item.total_quantity - item.rented_quantity) > 0);
       
       if (showRented && !hasRented) return false;
       if (showAvailable && !hasAvailable) return false;
       
-      return matchesSearch;
+      return true;
     })
-    .sort((a, b) => {
-      if (sortOrder === "asc") {
-        return a.total_quantity - b.total_quantity;
-      }
-      return b.total_quantity - a.total_quantity;
+    .sort(([productIdA], [productIdB]) => {
+      const totalA = groupedInventory[productIdA].reduce((sum, item) => sum + item.total_quantity, 0);
+      const totalB = groupedInventory[productIdB].reduce((sum, item) => sum + item.total_quantity, 0);
+      return sortOrder === "asc" ? totalA - totalB : totalB - totalA;
     });
 
   return (
@@ -125,16 +138,49 @@ export const InventoryTable = () => {
           </TableRow>
         </TableHeader>
         <TableBody>
-          {filteredInventory?.map((item) => {
-            const product = products.find((p) => p.id === item.product_id);
-            
+          {filteredAndGroupedInventory.map(([productId, items]) => {
+            const product = products.find((p) => p.id === productId);
+            if (!product) return null;
+
             return (
-              <InventoryTableRow
-                key={item.id}
-                item={item}
-                product={product}
-                onAdjustClick={() => setSelectedItem({ item, product })}
-              />
+              <TableRow key={productId} className="group">
+                <TableCell className="font-medium">{product.product_code}</TableCell>
+                <TableCell>
+                  <div className="space-y-2">
+                    <div className="font-medium">{product.name}</div>
+                    <div className="text-sm text-muted-foreground space-y-1">
+                      {items.map(item => (
+                        <div key={item.id} className="pl-4 border-l-2 border-primary/20">
+                          {item.size && <span className="font-medium">Tamanho {item.size}:</span>} 
+                          <span className="ml-2">
+                            {item.total_quantity - item.rented_quantity} disponíveis 
+                            ({item.rented_quantity} alugados)
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TableCell>
+                <TableCell className="text-right">
+                  {items.reduce((sum, item) => sum + item.total_quantity, 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {items.reduce((sum, item) => sum + item.rented_quantity, 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {items.reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
+                </TableCell>
+                <TableCell className="text-right">
+                  {items.map(item => (
+                    <InventoryTableRow
+                      key={item.id}
+                      item={item}
+                      product={product}
+                      onAdjustClick={() => setSelectedItem({ item, product })}
+                    />
+                  ))}
+                </TableCell>
+              </TableRow>
             );
           })}
         </TableBody>

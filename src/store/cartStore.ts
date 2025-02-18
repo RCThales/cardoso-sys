@@ -6,12 +6,13 @@ export interface CartItem {
   quantity: number;
   days: number;
   total: number;
+  size?: string;
 }
 
 interface CartStore {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string) => void;
+  removeItem: (productId: string, size?: string) => void;
   clearCart: () => void;
 }
 
@@ -19,31 +20,33 @@ export const useCartStore = create<CartStore>((set) => ({
   items: [],
   addItem: (item) =>
     set((state) => {
-      const existingItem = state.items.find((i) => i.productId === item.productId);
+      const existingItem = state.items.find((i) => 
+        i.productId === item.productId && i.size === item.size
+      );
       
       if (existingItem) {
-        // Se o item já existe, atualiza somando a quantidade
         return {
           items: state.items.map((i) =>
-            i.productId === item.productId
+            i.productId === item.productId && i.size === item.size
               ? {
                   ...i,
-                  quantity: i.quantity + item.quantity,
-                  total: i.total + item.total,
+                  quantity: item.quantity,
+                  total: item.total,
                 }
               : i
           ),
         };
       }
       
-      // Se o item não existe, adiciona normalmente
       return {
         items: [...state.items, item],
       };
     }),
-  removeItem: (productId) =>
+  removeItem: (productId, size) =>
     set((state) => ({
-      items: state.items.filter((item) => item.productId !== productId),
+      items: state.items.filter((item) => 
+        !(item.productId === productId && item.size === size)
+      ),
     })),
   clearCart: () => set({ items: [] }),
 }));

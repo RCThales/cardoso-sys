@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   calculateTotalPrice,
@@ -39,6 +38,7 @@ export const RentalCalculator = () => {
   const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState("");
+  const [selectedSize, setSelectedSize] = useState<string>("");
   const { toast } = useToast();
   const { addItem } = useCartStore();
 
@@ -60,6 +60,9 @@ export const RentalCalculator = () => {
     if (products && products.length > 0) {
       if (!selectedProduct) {
         setSelectedProduct(products[0].id);
+        if (products[0].sizes && products[0].sizes.length > 0) {
+          setSelectedSize(products[0].sizes[0].size);
+        }
       }
       const constants = getProductConstants(products, selectedProduct);
       if (constants) {
@@ -68,9 +71,28 @@ export const RentalCalculator = () => {
     }
   }, [days, selectedProduct, products]);
 
-  const getAvailableQuantity = (productId: string) => {
-    const item = inventory?.find((i) => i.product_id === productId);
+  const handleProductChange = (productId: string) => {
+    setSelectedProduct(productId);
+    const product = products?.find(p => p.id === productId);
+    if (product?.sizes && product.sizes.length > 0) {
+      setSelectedSize(product.sizes[0].size);
+    } else {
+      setSelectedSize("");
+    }
+  };
+
+  const getAvailableQuantity = (productId: string, size?: string) => {
+    const item = inventory?.find((i) => i.product_id === productId && i.size === size);
     return item ? item.total_quantity - item.rented_quantity : 0;
+  };
+
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newQuantity = parseInt(e.target.value, 10);
+    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
+
+    if (newQuantity >= 1 && newQuantity <= availableQuantity) {
+      setQuantity(newQuantity);
+    }
   };
 
   const handleDaysChange = (value: number[]) => {
@@ -86,7 +108,7 @@ export const RentalCalculator = () => {
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuantity = parseInt(e.target.value, 10);
-    const availableQuantity = getAvailableQuantity(selectedProduct);
+    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
 
     if (newQuantity >= 1 && newQuantity <= availableQuantity) {
       setQuantity(newQuantity);
@@ -95,10 +117,12 @@ export const RentalCalculator = () => {
 
   const selectedProductData = products?.find(p => p.id === selectedProduct);
   const constants = selectedProductData?.constants;
-  const availableQuantity = getAvailableQuantity(selectedProduct);
+  const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
 
   const handleAddToCart = () => {
     if (!products) return;
+    
+    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
     
     if (quantity > availableQuantity) {
       toast({
@@ -114,6 +138,7 @@ export const RentalCalculator = () => {
       quantity,
       days,
       total: price * quantity,
+      size: selectedSize || undefined
     });
 
     toast({
@@ -155,7 +180,7 @@ export const RentalCalculator = () => {
                 <span className="text-sm font-medium">Produto</span>
                 <Select
                   value={selectedProduct}
-                  onValueChange={setSelectedProduct}
+                  onValueChange={handleProductChange}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -163,13 +188,33 @@ export const RentalCalculator = () => {
                   <SelectContent>
                     {products.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.name} ({getAvailableQuantity(product.id)}{" "}
-                        disponíveis)
+                        {product.name}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
+
+              {selectedProductData?.sizes && selectedProductData.sizes.length > 0 && (
+                <div className="space-y-2">
+                  <span className="text-sm font-medium">Tamanho</span>
+                  <Select
+                    value={selectedSize}
+                    onValueChange={setSelectedSize}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {selectedProductData.sizes.map((size) => (
+                        <SelectItem key={size.size} value={size.size}>
+                          {size.size} ({getAvailableQuantity(selectedProduct, size.size)} disponíveis)
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Quantidade</span>
