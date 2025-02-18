@@ -1,4 +1,3 @@
-
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -19,7 +18,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-export const InvoiceGenerator = () => {
+interface InvoiceGeneratorProps {
+  onInvoiceCreated?: () => void;
+}
+
+export const InvoiceGenerator = ({ onInvoiceCreated }: InvoiceGeneratorProps) => {
   const navigate = useNavigate();
   const {
     items,
@@ -95,6 +98,7 @@ export const InvoiceGenerator = () => {
     if (!validateRequiredFields()) return;
     await generateInvoice();
     clearCart();
+    onInvoiceCreated?.();
     navigate("/invoices");
   };
 
