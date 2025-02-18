@@ -17,6 +17,10 @@ export const InvoiceGenerator = () => {
     generateInvoice,
   } = useInvoiceGeneration();
 
+  const formatCurrency = (value: number): string => {
+    return (value || 0).toFixed(2);
+  };
+
   return (
     <Card className="p-6">
       <CompanyHeader />
@@ -36,7 +40,7 @@ export const InvoiceGenerator = () => {
         <div className="flex justify-end space-x-4 items-center">
           <span className="font-medium">Total:</span>
           <span className="text-xl">
-            R$ {calculateSubtotal().toFixed(2)}
+            R$ {formatCurrency(calculateSubtotal())}
           </span>
         </div>
 

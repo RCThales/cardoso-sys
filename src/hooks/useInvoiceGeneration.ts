@@ -44,7 +44,7 @@ export const useInvoiceGeneration = () => {
     const item = { ...newItems[index] };
 
     if (field === "quantity" || field === "price" || field === "rentalDays") {
-      item[field] = Number(value);
+      item[field] = Number(value) || 0;
     } else {
       (item as any)[field] = value;
     }
@@ -53,8 +53,11 @@ export const useInvoiceGeneration = () => {
     setItems(newItems);
   };
 
-  const calculateSubtotal = () => {
-    return items.reduce((sum, item) => sum + item.total, 0);
+  const calculateSubtotal = (): number => {
+    return items.reduce((sum, item) => {
+      const itemTotal = typeof item.total === 'number' ? item.total : 0;
+      return sum + itemTotal;
+    }, 0);
   };
 
   const generateInvoice = async () => {
@@ -81,9 +84,9 @@ export const useInvoiceGeneration = () => {
 
       const itemsForDb = items.map(item => ({
         ...item,
-        quantity: Number(item.quantity),
-        price: Number(item.price),
-        total: Number(item.total)
+        quantity: Number(item.quantity) || 0,
+        price: Number(item.price) || 0,
+        total: Number(item.total) || 0
       })) as Json;
 
       const { error } = await supabase.from("invoices").insert({
