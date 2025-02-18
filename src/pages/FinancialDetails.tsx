@@ -32,6 +32,10 @@ const FinancialDetails = () => {
     averageTicket: 0,
   });
 
+  const monthName = month 
+    ? format(new Date(parseInt(year || ""), parseInt(month) - 1, 1), "MMMM 'de' yyyy", { locale: ptBR }) 
+    : "";
+
   useEffect(() => {
     const fetchData = async () => {
       if (!year || !month) return;
@@ -87,10 +91,6 @@ const FinancialDetails = () => {
     fetchData();
   }, [year, month]);
 
-  const monthName = month 
-    ? format(new Date(parseInt(year || ""), parseInt(month) - 1, 1), "MMMM 'de' yyyy", { locale: ptBR }) 
-    : "";
-
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -104,6 +104,8 @@ const FinancialDetails = () => {
             description={`${summary.invoiceCount} faturas no período`}
             icon={DollarSign}
             iconColor="text-green-500"
+            summary={summary}
+            monthName={monthName}
           />
           <FinancialCard
             title="Despesas"
@@ -111,6 +113,8 @@ const FinancialDetails = () => {
             description="Inclui descontos e custos operacionais"
             icon={TrendingDown}
             iconColor="text-red-500"
+            summary={summary}
+            monthName={monthName}
           />
           <FinancialCard
             title="Lucro Líquido"
@@ -118,6 +122,8 @@ const FinancialDetails = () => {
             description="Após despesas e investimentos"
             icon={TrendingUp}
             iconColor="text-emerald-500"
+            summary={summary}
+            monthName={monthName}
           />
           <FinancialCard
             title="Investimento Total"
@@ -125,6 +131,8 @@ const FinancialDetails = () => {
             description="Em equipamentos e infraestrutura"
             icon={LineChart}
             iconColor="text-blue-500"
+            summary={summary}
+            monthName={monthName}
           />
           <FinancialCard
             title="Ticket Médio"
@@ -132,6 +140,8 @@ const FinancialDetails = () => {
             description="Valor médio por fatura"
             icon={DollarSign}
             iconColor="text-purple-500"
+            summary={summary}
+            monthName={monthName}
           />
         </div>
       </div>
