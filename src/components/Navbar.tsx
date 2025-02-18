@@ -9,9 +9,6 @@ export function Navbar() {
         CARDOSO SYS
       </Link>
       <div className="flex items-center gap-4">
-        <Link to="/clients">
-          <Button variant="ghost">Clientes</Button>
-        </Link>
       </div>
     </div>
   );

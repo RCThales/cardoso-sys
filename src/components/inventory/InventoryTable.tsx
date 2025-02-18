@@ -24,7 +24,6 @@ export const InventoryTable = () => {
     setSelectedItem,
     handleUpdateQuantity,
     isUpdating,
-    sortSizes
   } = useInventory();
 
   if (isLoading || !products) {
@@ -108,7 +107,14 @@ export const InventoryTable = () => {
               );
             }
 
-            const sortedItems = sortSizes(items);
+            // Ordenar os items baseado na ordem dos tamanhos do produto
+            const sortedItems = items.sort((a, b) => {
+              if (!a.size || !b.size) return 0;
+              const sizeOrderA = product.sizes?.findIndex(s => s.size === a.size) ?? -1;
+              const sizeOrderB = product.sizes?.findIndex(s => s.size === b.size) ?? -1;
+              return sizeOrderA - sizeOrderB;
+            });
+
             return (
               <MultiSizeInventoryRow
                 key={productId}
