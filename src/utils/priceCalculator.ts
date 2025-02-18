@@ -79,14 +79,14 @@ const PRODUCT_CONSTANTS: Record<string, ProductConstants> = {
     },
   },
   "cadeira-de-banho": {
-    CONSTANTE_VALOR_ALUGUEL_A: 3.5,
-    CONSTANTE_VALOR_ALUGUEL_B: 1.65,
-    REGRESSION_DISCOUNT: 0.065, // Valor específico
+    CONSTANTE_VALOR_ALUGUEL_A: 11.43,
+    CONSTANTE_VALOR_ALUGUEL_B: 3.7,
+    REGRESSION_DISCOUNT: 0.119, // Valor específico
     SPECIAL_RATES: {
-      7: 35,
-      10: 30,
-      15: 40,
-      30: 60,
+      7: 60,
+      15: 85,
+      30: 120,
+      60: 222,
     },
   },
 };

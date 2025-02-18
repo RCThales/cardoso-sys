@@ -1,13 +1,7 @@
-
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
-import {
-  Calculator,
-  LineChart,
-  Package,
-  FileSpreadsheet,
-} from "lucide-react";
+import { Calculator, LineChart, Package, FileSpreadsheet } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -23,14 +17,14 @@ const menuItems = [
     title: "Faturas",
     description: "Gerenciamento de faturas",
     icon: LineChart,
-    route: "/invoices",
+    route: "/invoices/history",
     color: "from-blue-500 to-cyan-500",
   },
   {
     title: "Estoque",
     description: "Controle de estoque",
     icon: Package,
-    route: "/temp2",
+    route: "/inventory",
     color: "from-green-500 to-emerald-500",
   },
   {

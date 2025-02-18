@@ -23,12 +23,11 @@ export const Navbar = () => {
           <span className="font-semibold">CARDOSO SYS</span>
         </div>
         <div className="flex-1" />
-        <LocaleToggle />
         <Button
           variant="ghost"
           size="sm"
           onClick={handleLogout}
-          className="ml-4"
+          className="mr-6"
         >
           Sair
         </Button>

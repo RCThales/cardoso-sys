@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import {
   calculateTotalPrice,
@@ -43,9 +42,7 @@ export const RentalCalculator = () => {
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inventory")
-        .select("*");
+      const { data, error } = await supabase.from("inventory").select("*");
       if (error) throw error;
       return data;
     },
@@ -74,7 +71,7 @@ export const RentalCalculator = () => {
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuantity = parseInt(e.target.value, 10);
     const availableQuantity = getAvailableQuantity(selectedProduct);
-    
+
     if (newQuantity >= 1 && newQuantity <= availableQuantity) {
       setQuantity(newQuantity);
     }
@@ -115,7 +112,7 @@ export const RentalCalculator = () => {
 
   return (
     <div className="relative">
-      <div className="fixed top-4 right-4 z-50">
+      <div className="fixed top-2 right-4 z-50">
         <CartDrawer />
       </div>
       <Card className="w-full max-w-lg mx-auto p-8 shadow-lg animate-fade-in">
@@ -143,7 +140,8 @@ export const RentalCalculator = () => {
                   <SelectContent>
                     {PRODUCTS.map((product) => (
                       <SelectItem key={product.id} value={product.id}>
-                        {product.name} ({getAvailableQuantity(product.id)} disponíveis)
+                        {product.name} ({getAvailableQuantity(product.id)}{" "}
+                        disponíveis)
                       </SelectItem>
                     ))}
                   </SelectContent>
