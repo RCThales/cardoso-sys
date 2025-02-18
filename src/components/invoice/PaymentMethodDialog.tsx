@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -24,7 +23,7 @@ export const PaymentMethodDialog = ({
   const [cashReceived, setCashReceived] = useState<string>("");
   const [qrCode, setQrCode] = useState<string>("");
   const [rawPix, setRawPix] = useState<string>("");
-  
+
   const handleConfirm = () => {
     onConfirm(method);
     onOpenChange(false);
@@ -38,12 +37,12 @@ export const PaymentMethodDialog = ({
   useEffect(() => {
     async function generateDynamicPix() {
       const qrCodePix = QrCodePix({
-        version: '01',
-        key: '61981988450',
-        name: 'Fernando Rodrigues Cardoso',
-        city: 'Brasília',
-        transactionId: 'MULETAS_' + Date.now().toString().slice(-8),
-        message: 'Cardoso Aluguel de Muletas',
+        version: "01",
+        key: "61981988450",
+        name: "57684914 FERNANDO",
+        city: "Brasília",
+        transactionId: "MULETAS" + Date.now().toString().slice(-6),
+        message: "Cardoso Aluguel de Muletas",
         value: total,
       });
 
@@ -54,7 +53,7 @@ export const PaymentMethodDialog = ({
       setQrCode(qrCodeBase64);
     }
 
-    if (method === 'pix' && open) {
+    if (method === "pix" && open) {
       void generateDynamicPix();
     }
   }, [method, total, open]);
@@ -80,7 +79,7 @@ export const PaymentMethodDialog = ({
               PIX
             </TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="card" className="mt-4">
             <p className="text-sm text-muted-foreground mb-4">
               Total a pagar: R$ {formatCurrency(total)}
@@ -115,8 +114,8 @@ export const PaymentMethodDialog = ({
                 <span>R$ {formatCurrency(getChange())}</span>
               </div>
             </div>
-            <Button 
-              onClick={handleConfirm} 
+            <Button
+              onClick={handleConfirm}
               className="w-full"
               disabled={!cashReceived || parseFloat(cashReceived) < total}
             >
@@ -126,7 +125,9 @@ export const PaymentMethodDialog = ({
 
           <TabsContent value="pix" className="mt-4">
             <div className="flex flex-col items-center space-y-4">
-              {qrCode && <img src={qrCode} alt="QR Code PIX" className="w-48 h-48" />}
+              {qrCode && (
+                <img src={qrCode} alt="QR Code PIX" className="w-48 h-48" />
+              )}
               <p className="text-sm text-muted-foreground">
                 Total a pagar: R$ {formatCurrency(total)}
               </p>
