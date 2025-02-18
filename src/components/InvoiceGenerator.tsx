@@ -19,8 +19,10 @@ export const InvoiceGenerator = () => {
     generateInvoice,
   } = useInvoiceGeneration();
 
-  const formatCurrency = (value: number): string => {
-    return (value || 0).toFixed(2);
+  const formatCurrency = (value: number | string | null | undefined): string => {
+    if (value === null || value === undefined) return "0.00";
+    const numValue = typeof value === "string" ? parseFloat(value) : value;
+    return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
 
   const handleDeliveryFeeChange = (value: string) => {
@@ -30,7 +32,10 @@ export const InvoiceGenerator = () => {
     });
   };
 
-  const itemsSubtotal = items.reduce((sum, item) => sum + (item.total || 0), 0);
+  const itemsSubtotal = items.reduce((sum, item) => {
+    const itemTotal = typeof item.total === 'number' ? item.total : 0;
+    return sum + itemTotal;
+  }, 0);
 
   return (
     <Card className="p-6">
