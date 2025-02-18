@@ -81,6 +81,15 @@ export const useInvoiceGeneration = () => {
         return;
       }
 
+      if (items.length === 0) {
+        toast({
+          title: "Erro",
+          description: "Adicione pelo menos um item à fatura",
+          variant: "destructive",
+        });
+        return;
+      }
+
       const {
         data: { user },
       } = await supabase.auth.getUser();
