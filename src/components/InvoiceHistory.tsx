@@ -8,6 +8,7 @@ import { useToast } from "./ui/use-toast";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Input } from "./ui/input";
+import { format } from "date-fns"; // Adicionando a importação necessária
 import {
   Select,
   SelectContent,
