@@ -27,7 +27,7 @@ export async function fetchProducts(): Promise<Product[]> {
   
   return data.map(item => ({
     ...item,
-    sizes: item.sizes ? (item.sizes as ProductSize[]) : undefined,
+    sizes: item.sizes ? (item.sizes as unknown as ProductSize[]) : undefined,
     constants: item.constants as ProductConstants
   }));
 }

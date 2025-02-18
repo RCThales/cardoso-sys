@@ -106,15 +106,6 @@ export const RentalCalculator = () => {
     }
   };
 
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = parseInt(e.target.value, 10);
-    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
-
-    if (newQuantity >= 1 && newQuantity <= availableQuantity) {
-      setQuantity(newQuantity);
-    }
-  };
-
   const selectedProductData = products?.find(p => p.id === selectedProduct);
   const constants = selectedProductData?.constants;
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);

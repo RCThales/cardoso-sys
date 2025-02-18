@@ -1,6 +1,6 @@
 
 import { useQuery } from "@tanstack/react-query";
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "../ui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../ui/use-toast";
