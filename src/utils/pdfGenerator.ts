@@ -19,8 +19,18 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   doc.setFontSize(20);
   doc.text("FATURA", pageWidth / 2, 20, { align: "center" });
   
+  // Informações da empresa
+  doc.setFontSize(10);
+  doc.text([
+    "Cardoso Aluguel de Muletas",
+    "Quadra 207, Lote 4, Residencial Imprensa IV, Águas Claras",
+    "Brasília - Distrito Federal - 71926250",
+    "CNPJ: 57.684.914/0001-36",
+    "cardosoalugueldemuletas@gmail.com"
+  ], pageWidth / 2, 30, { align: "center" });
+  
   doc.setFontSize(12);
-  doc.text(`Nº: ${invoice.invoice_number}`, pageWidth / 2, 30, { align: "center" });
+  doc.text(`Nº: ${invoice.invoice_number}`, pageWidth / 2, 60, { align: "center" });
   
   // Informações do Cliente
   doc.setFontSize(10);
@@ -32,7 +42,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     invoice.client_address_complement ? `Complemento: ${invoice.client_address_complement}` : '',
     `${invoice.client_city} - ${invoice.client_state}`,
     `CEP: ${invoice.client_postal_code}`,
-  ], 15, 45);
+  ], 15, 75);
 
   // Informações da Fatura
   doc.text([
@@ -40,7 +50,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     `Vencimento: ${format(parseISO(invoice.due_date), "dd/MM/yyyy")}`,
     `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
     invoice.payment_method ? `Forma de Pagamento: ${invoice.payment_method}` : '',
-  ], pageWidth - 60, 45);
+  ], pageWidth - 60, 75);
 
   // Tabela de Itens
   const itemsTableData: string[][] = [];
@@ -71,12 +81,12 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   autoTable(doc, {
     head: [['Descrição', 'Dias', 'Quantidade', 'Total']],
     body: itemsTableData,
-    startY: 85,
+    startY: 105,
     theme: 'grid',
     headStyles: { fillColor: [41, 128, 185] },
   });
 
-  let currentY = doc.lastAutoTable?.finalY || 85;
+  let currentY = doc.lastAutoTable?.finalY || 105;
 
   // Extensões (se houver)
   if (invoice.extensions && invoice.extensions.length > 0) {
