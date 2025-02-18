@@ -1,25 +1,9 @@
+
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
 import { Button } from "./ui/button";
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "./ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO } from "date-fns";
-import { Download, Eye, Search, Trash2, LoaderCircle } from "lucide-react";
+import { LoaderCircle, Search } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
@@ -31,41 +15,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
-import { Switch } from "./ui/switch";
+import { Invoice } from "./invoice/types";
+import { DeleteInvoiceDialog } from "./invoice/DeleteInvoiceDialog";
+import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
+import { InvoiceTable } from "./invoice/InvoiceTable";
 
 declare module 'jspdf' {
   interface jsPDF {
     autoTable: (options: any) => void;
   }
-}
-
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  price: number;
-  total: number;
-  productId?: string;
-  rentalDays?: number;
-}
-
-interface Invoice {
-  id: number;
-  invoice_number: string;
-  created_at: string;
-  client_name: string;
-  client_cpf: string;
-  client_phone: string;
-  total: number;
-  is_paid: boolean;
-  client_address: string;
-  client_address_number: string;
-  client_address_complement: string;
-  client_city: string;
-  client_state: string;
-  client_postal_code: string;
-  items: InvoiceItem[];
-  invoice_date: string;
-  due_date: string;
 }
 
 export const InvoiceHistory = () => {
@@ -97,8 +55,8 @@ export const InvoiceHistory = () => {
             quantity: parseFloat(item.quantity) || 0,
             price: parseFloat(item.price) || 0,
             total: parseFloat(item.total) || 0,
-            productId: item.productId ? String(item.productId) : undefined,
-            rentalDays: item.rentalDays ? parseFloat(item.rentalDays) : undefined
+            productId: item.productId ? String(item.productId) : '',
+            rentalDays: item.rentalDays ? parseFloat(item.rentalDays) : 1
           })) : [],
           created_at: invoice.created_at || new Date().toISOString(),
           total: parseFloat(String(invoice.total)) || 0,
@@ -173,7 +131,7 @@ export const InvoiceHistory = () => {
     
     const img = new Image();
     img.src = "/lovable-uploads/e9185795-25bc-4086-a973-5a5ff9e3c108.png";
-    doc.addImage(img, "PNG", 15, 15, 30, 10); // Ajustado o tamanho da logo
+    doc.addImage(img, "PNG", 15, 15, 30, 10);
 
     doc.setFontSize(10);
     doc.text("Cardoso Aluguel de Muletas e Produtos Ortopédicos", 15, 35);
@@ -202,7 +160,7 @@ export const InvoiceHistory = () => {
     doc.text(`Data da Fatura: ${format(new Date(invoice.invoice_date), "dd/MM/yyyy")}`, 150, 70);
     doc.text(`Vencimento: ${format(new Date(invoice.due_date), "dd/MM/yyyy")}`, 150, 75);
 
-    const tableData = invoice.items.map((item: InvoiceItem) => [
+    const tableData = invoice.items.map((item) => [
       item.description,
       item.quantity,
       `R$ ${formatCurrency(item.price)}`,
@@ -266,157 +224,28 @@ export const InvoiceHistory = () => {
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nº Fatura</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-            <TableHead>Status</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredInvoices.map((invoice) => (
-            <TableRow 
-              key={invoice.id}
-              className={invoice.is_paid ? "bg-green-50" : "bg-yellow-50"}
-            >
-              <TableCell>{invoice.invoice_number}</TableCell>
-              <TableCell>
-                {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
-              </TableCell>
-              <TableCell>{invoice.client_name}</TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.total)}
-              </TableCell>
-              <TableCell>
-                <Switch
-                  checked={invoice.is_paid}
-                  onCheckedChange={() => handleTogglePaid(invoice.id, invoice.is_paid)}
-                />
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => generatePDF(invoice)}
-                  title="Baixar PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setPreviewInvoice(invoice)}
-                  title="Visualizar fatura"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => setDeleteInvoiceId(invoice.id)}
-                  title="Deletar fatura"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <InvoiceTable
+        invoices={filteredInvoices}
+        onTogglePaid={handleTogglePaid}
+        onDownload={generatePDF}
+        onPreview={setPreviewInvoice}
+        onDelete={setDeleteInvoiceId}
+        formatCurrency={formatCurrency}
+      />
 
-      <Dialog open={!!deleteInvoiceId} onOpenChange={() => setDeleteInvoiceId(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar exclusão</DialogTitle>
-            <DialogDescription>
-              Tem certeza que deseja excluir esta fatura? Esta ação não pode ser desfeita.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteInvoiceId(null)}>
-              Cancelar
-            </Button>
-            <Button variant="destructive" onClick={handleDelete}>
-              Excluir
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <DeleteInvoiceDialog
+        open={!!deleteInvoiceId}
+        onOpenChange={() => setDeleteInvoiceId(null)}
+        onConfirm={handleDelete}
+      />
 
-      <Dialog open={!!previewInvoice} onOpenChange={() => setPreviewInvoice(null)}>
-        <DialogContent className="max-w-3xl">
-          <DialogHeader>
-            <DialogTitle>Visualizar Fatura</DialogTitle>
-          </DialogHeader>
-          {previewInvoice && (
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="font-semibold">Cliente</h3>
-                  <p>{previewInvoice.client_name}</p>
-                  <p>CPF: {previewInvoice.client_cpf}</p>
-                  <p>Tel: {previewInvoice.client_phone}</p>
-                  <p>{previewInvoice.client_address}{previewInvoice.client_address_number ? `, ${previewInvoice.client_address_number}` : ''}</p>
-                  {previewInvoice.client_address_complement && (
-                    <p>{previewInvoice.client_address_complement}</p>
-                  )}
-                  <p>{previewInvoice.client_city} - {previewInvoice.client_state}</p>
-                  <p>{previewInvoice.client_postal_code}</p>
-                </div>
-                <div>
-                  <h3 className="font-semibold">Detalhes da Fatura</h3>
-                  <p>Nº: {previewInvoice.invoice_number}</p>
-                  <p>Data: {format(parseISO(previewInvoice.invoice_date), "dd/MM/yyyy")}</p>
-                  <p>Vencimento: {format(parseISO(previewInvoice.due_date), "dd/MM/yyyy")}</p>
-                  <p>Status: {previewInvoice.is_paid ? "Pago" : "Pendente"}</p>
-                </div>
-              </div>
-
-              <div>
-                <h3 className="font-semibold mb-2">Itens</h3>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Descrição</TableHead>
-                      <TableHead>Quantidade</TableHead>
-                      <TableHead>Preço</TableHead>
-                      <TableHead className="text-right">Total</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {previewInvoice.items.map((item, index) => (
-                      <TableRow key={index}>
-                        <TableCell>{item.description}</TableCell>
-                        <TableCell>{item.quantity}</TableCell>
-                        <TableCell>R$ {formatCurrency(item.price)}</TableCell>
-                        <TableCell className="text-right">R$ {formatCurrency(item.total)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-
-              <div className="text-right space-y-1">
-                <p className="font-semibold">Total: R$ {formatCurrency(previewInvoice.total)}</p>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setPreviewInvoice(null)}>
-              Fechar
-            </Button>
-            {previewInvoice && (
-              <Button onClick={() => generatePDF(previewInvoice)}>
-                Baixar PDF
-              </Button>
-            )}
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <PreviewInvoiceDialog
+        invoice={previewInvoice}
+        open={!!previewInvoice}
+        onOpenChange={() => setPreviewInvoice(null)}
+        onDownload={generatePDF}
+        formatCurrency={formatCurrency}
+      />
     </Card>
   );
 };
