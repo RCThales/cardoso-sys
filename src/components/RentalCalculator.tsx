@@ -114,6 +114,7 @@ export const RentalCalculator = () => {
   };
 
   const selectedProductData = products?.find(p => p.id === selectedProduct);
+  const constants = selectedProductData?.constants;
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
 
   const handleAddToCart = () => {
@@ -148,10 +149,10 @@ export const RentalCalculator = () => {
     return <div>Carregando...</div>;
   }
 
-  const specialRates = constants ? Object.entries(constants.SPECIAL_RATES).map(
+  const specialRates = constants ? Object.entries(constants.SPECIAL_RATES || {}).map(
     ([days, price]) => ({
       days: parseInt(days, 10),
-      price,
+      price: price as number,
     })
   ) : [];
 
