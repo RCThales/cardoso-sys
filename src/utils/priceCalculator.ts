@@ -8,12 +8,17 @@ export type ProductConstants = {
   SPECIAL_RATES: Record<number, number>;
 };
 
+export interface ProductSize {
+  size: string;
+}
+
 export interface Product {
   id: string;
   name: string;
   base_price: number;
   constants: ProductConstants;
   product_code: string;
+  sizes?: ProductSize[];
 }
 
 export async function fetchProducts(): Promise<Product[]> {
