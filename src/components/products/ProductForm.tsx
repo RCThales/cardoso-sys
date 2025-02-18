@@ -54,11 +54,9 @@ export const ProductForm = ({
             .select()
             .eq("product_id", selectedProduct.id)
             .eq("size", newSize)
-            .single();
+            .maybeSingle();
 
-          if (checkError && checkError.code !== "PGRST116") {
-            throw checkError;
-          }
+          if (checkError) throw checkError;
 
           if (!existingInventory) {
             // Se não existir, faça a inserção
