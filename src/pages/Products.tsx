@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Pencil } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -29,43 +29,72 @@ const Products = () => {
     },
   });
 
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setName(product.name);
+    setBasePrice(product.base_price.toString());
+    setIsOpen(true);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const productCode = '#' + Math.random().toString(36).substring(2, 8).toUpperCase();
-      const { error } = await supabase.from("products").insert({
-        id: name.toLowerCase().replace(/\s+/g, "-"),
-        name,
-        base_price: parseFloat(basePrice),
-        product_code: productCode,
-        constants: {
-          CONSTANTE_VALOR_ALUGUEL_A: 3.72,
-          CONSTANTE_VALOR_ALUGUEL_B: 1.89,
-          REGRESSION_DISCOUNT: 0.0608,
-          SPECIAL_RATES: {
-            "7": 30,
-            "10": 40,
-            "15": 50,
-            "30": 75
+      if (selectedProduct) {
+        // Editar produto existente
+        const { error } = await supabase
+          .from("products")
+          .update({
+            name,
+            base_price: parseFloat(basePrice),
+          })
+          .eq("id", selectedProduct.id);
+
+        if (error) throw error;
+
+        toast({
+          title: "Sucesso",
+          description: "Produto atualizado com sucesso",
+        });
+      } else {
+        // Criar novo produto
+        const productCode = '#' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        const { error } = await supabase.from("products").insert({
+          id: name.toLowerCase().replace(/\s+/g, "-"),
+          name,
+          base_price: parseFloat(basePrice),
+          product_code: productCode,
+          constants: {
+            CONSTANTE_VALOR_ALUGUEL_A: 3.72,
+            CONSTANTE_VALOR_ALUGUEL_B: 1.89,
+            REGRESSION_DISCOUNT: 0.0608,
+            SPECIAL_RATES: {
+              "7": 30,
+              "10": 40,
+              "15": 50,
+              "30": 75
+            }
           }
-        }
-      });
+        });
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Sucesso",
-        description: "Produto adicionado com sucesso",
-      });
+        toast({
+          title: "Sucesso",
+          description: "Produto adicionado com sucesso",
+        });
+      }
 
       setIsOpen(false);
+      setSelectedProduct(null);
       setName("");
       setBasePrice("");
       refetch();
     } catch (error) {
       toast({
         title: "Erro",
-        description: "Erro ao adicionar produto",
+        description: selectedProduct 
+          ? "Erro ao atualizar produto"
+          : "Erro ao adicionar produto",
         variant: "destructive",
       });
     }
@@ -99,6 +128,13 @@ const Products = () => {
     }
   };
 
+  const handleCloseDialog = () => {
+    setIsOpen(false);
+    setSelectedProduct(null);
+    setName("");
+    setBasePrice("");
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
@@ -124,26 +160,38 @@ const Products = () => {
                     Código: {product.product_code}
                   </p>
                 </div>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                  onClick={() => {
-                    setSelectedProduct(product);
-                    setIsDeleteDialogOpen(true);
-                  }}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-blue-500 hover:text-blue-500 hover:bg-blue-50"
+                    onClick={() => handleEdit(product)}
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                    onClick={() => {
+                      setSelectedProduct(product);
+                      setIsDeleteDialogOpen(true);
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
               </div>
             </Card>
           ))}
         </div>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <Dialog open={isOpen} onOpenChange={handleCloseDialog}>
           <DialogContent>
             <DialogHeader>
-              <DialogTitle>Novo Produto</DialogTitle>
+              <DialogTitle>
+                {selectedProduct ? "Editar Produto" : "Novo Produto"}
+              </DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -165,7 +213,7 @@ const Products = () => {
                 />
               </div>
               <Button type="submit" className="w-full">
-                Adicionar Produto
+                {selectedProduct ? "Atualizar Produto" : "Adicionar Produto"}
               </Button>
             </form>
           </DialogContent>
