@@ -87,7 +87,8 @@ export const InvoiceTable = ({
     const rentalItems = selectedInvoice.items.filter(item => item.productId !== 'delivery-fee');
     
     const dailyRate = rentalItems.reduce((sum, item) => {
-      return sum + (item.total / item.rentalDays);
+      const itemDailyRate = item.total / item.rentalDays;
+      return sum + (itemDailyRate * item.quantity);
     }, 0);
     
     return dailyRate * days;
@@ -161,13 +162,14 @@ export const InvoiceTable = ({
             >
               <TableCell>
                 {invoice.invoice_number}
-                {invoice.extensions?.length > 0 && (
+                {invoice.extensions && invoice.extensions.length > 0 && (
                   <div className="text-xs text-muted-foreground mt-1">
-                    Extensões: {invoice.extensions.map((ext: InvoiceExtension, idx: number) => (
-                      <span key={idx}>
+                    <span className="font-medium">Extensões:</span>
+                    {invoice.extensions.map((ext: InvoiceExtension, idx: number) => (
+                      <div key={idx} className="ml-2">
                         {format(parseISO(ext.date), "dd/MM/yyyy")} (+{ext.days} dias)
-                        {idx < (invoice.extensions?.length || 0) - 1 ? ", " : ""}
-                      </span>
+                        {ext.additionalCost > 0 && ` - R$ ${formatCurrency(ext.additionalCost)}`}
+                      </div>
                     ))}
                   </div>
                 )}

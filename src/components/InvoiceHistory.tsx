@@ -92,12 +92,19 @@ export const InvoiceHistory = () => {
       const currentExtensions = selectedInvoice.extensions || [];
       const extensions = [...currentExtensions, extension];
 
+      console.log('Extending invoice:', {
+        currentTotal: selectedInvoice.total,
+        additionalCost,
+        newTotal,
+        extension
+      });
+
       const { error } = await supabase
         .from("invoices")
         .update({ 
           extensions: extensions as Json[],
           total: newTotal,
-          is_paid: false
+          is_paid: false // Reseta o status de pagamento
         })
         .eq("id", selectedInvoice.id);
 
@@ -112,7 +119,7 @@ export const InvoiceHistory = () => {
 
       setExtendDialogOpen(false);
       setSelectedInvoice(null);
-      await fetchInvoices();
+      await fetchInvoices(); // Recarrega os dados atualizados
       
       toast({
         title: "Sucesso",
