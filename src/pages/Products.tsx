@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -69,28 +70,24 @@ const Products = () => {
 
         if (error) throw error;
 
-        // Atualizar o estoque para cada tamanho
+        // Atualizar o estoque para cada tamanho usando upsert
         for (const size of sizes) {
           const { error: inventoryError } = await supabase
             .from("inventory")
-            .upsert({
-              product_id: selectedProduct.id,
-              size,
-              total_quantity: quantities[size] || 0,
-              rented_quantity: 0,
-            });
+            .upsert(
+              {
+                product_id: selectedProduct.id,
+                size,
+                total_quantity: quantities[size] || 0,
+                rented_quantity: 0,
+              },
+              {
+                onConflict: 'product_id,size'
+              }
+            );
 
           if (inventoryError) throw inventoryError;
         }
-
-        // Remover entradas de inventário sem tamanho
-        const { error: deleteError } = await supabase
-          .from("inventory")
-          .delete()
-          .eq("product_id", selectedProduct.id)
-          .is("size", null);
-
-        if (deleteError) throw deleteError;
 
         toast({
           title: "Sucesso",
@@ -122,16 +119,21 @@ const Products = () => {
 
         if (error) throw error;
 
-        // Criar entradas no estoque para cada tamanho
+        // Criar entradas no estoque para cada tamanho usando upsert
         for (const size of sizes) {
           const { error: inventoryError } = await supabase
             .from("inventory")
-            .insert({
-              product_id: productId,
-              size,
-              total_quantity: quantities[size] || 0,
-              rented_quantity: 0,
-            });
+            .upsert(
+              {
+                product_id: productId,
+                size,
+                total_quantity: quantities[size] || 0,
+                rented_quantity: 0,
+              },
+              {
+                onConflict: 'product_id,size'
+              }
+            );
 
           if (inventoryError) throw inventoryError;
         }
