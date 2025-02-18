@@ -38,7 +38,7 @@ export const InvoiceTable = ({
           <TableHead>Data</TableHead>
           <TableHead>Cliente</TableHead>
           <TableHead className="text-right">Total</TableHead>
-          <TableHead>Status</TableHead>
+          <TableHead>Pago</TableHead>
           <TableHead className="text-right">Ações</TableHead>
         </TableRow>
       </TableHeader>
@@ -46,7 +46,7 @@ export const InvoiceTable = ({
         {invoices.map((invoice) => (
           <TableRow 
             key={invoice.id}
-            className={invoice.is_paid ? "bg-green-50" : "bg-yellow-50"}
+            className={invoice.is_paid ? "bg-green-50 hover:bg-green-100" : "bg-yellow-50 hover:bg-yellow-100"}
           >
             <TableCell>{invoice.invoice_number}</TableCell>
             <TableCell>

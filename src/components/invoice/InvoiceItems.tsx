@@ -79,6 +79,9 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
       {items.map((item, index) => (
         <div key={index} className="grid grid-cols-12 gap-4">
           <div className="col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Produto
+            </label>
             <Select
               value={item.productId}
               onValueChange={(value) => handleProductChange(index, value)}
@@ -96,6 +99,9 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
             </Select>
           </div>
           <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Dias
+            </label>
             <Input
               type="number"
               placeholder="Dias"
@@ -105,6 +111,9 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
             />
           </div>
           <div className="col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Quantidade
+            </label>
             <Input
               type="number"
               placeholder="Qtd"
@@ -114,6 +123,9 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
             />
           </div>
           <div className="col-span-4">
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Total
+            </label>
             <Input
               value={`R$ ${formatCurrency(item.total)}`}
               readOnly
