@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -14,16 +13,13 @@ export const useInvoiceGeneration = () => {
   const [clientData, setClientData] = useState<ClientData>(DEFAULT_CLIENT_DATA);
 
   const validateRequiredFields = () => {
-    if (!clientData.name || !clientData.postalCode || !clientData.cpf || !clientData.phone) {
-      return false;
-    }
-    if (!validateCPF(clientData.cpf)) {
-      return false;
-    }
-    if (items.length === 0) {
-      return false;
-    }
-    return true;
+    const hasName = !!clientData.name;
+    const hasValidPostalCode = clientData.postalCode.length === 8;
+    const hasValidPhone = clientData.phone.replace(/\D/g, '').length === 11;
+    const hasValidCPF = validateCPF(clientData.cpf);
+    const hasItems = items.length > 0;
+
+    return hasName && hasValidPostalCode && hasValidPhone && hasValidCPF && hasItems;
   };
 
   const addItem = () => {
@@ -73,11 +69,6 @@ export const useInvoiceGeneration = () => {
   const generateInvoice = async () => {
     try {
       if (!validateRequiredFields()) {
-        toast({
-          title: "Erro",
-          description: "Por favor, preencha todos os campos obrigatórios e verifique se o CPF é válido",
-          variant: "destructive",
-        });
         return;
       }
 
@@ -90,6 +81,7 @@ export const useInvoiceGeneration = () => {
           title: "Erro",
           description: "Você precisa estar logado para gerar faturas",
           variant: "destructive",
+          duration: 3000,
         });
         return;
       }
@@ -102,6 +94,7 @@ export const useInvoiceGeneration = () => {
       toast({
         title: "Sucesso!",
         description: "Fatura gerada com sucesso",
+        duration: 3000,
       });
 
       setItems([]);
@@ -111,6 +104,7 @@ export const useInvoiceGeneration = () => {
         title: "Erro",
         description: "Erro ao gerar fatura",
         variant: "destructive",
+        duration: 3000,
       });
       console.error(error);
     }

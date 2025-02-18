@@ -11,6 +11,7 @@ import { ESTADOS_BRASILEIROS, fetchAddressByCep } from "@/utils/brazilianStates"
 import { useState } from "react";
 import { useToast } from "../../ui/use-toast";
 import { ClientData } from "../types/clientForm";
+import { cn } from "@/lib/utils";
 
 interface AddressInfoProps {
   clientData: ClientData;
@@ -20,6 +21,18 @@ interface AddressInfoProps {
 export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [touchedFields, setTouchedFields] = useState({
+    postalCode: false
+  });
+
+  const handleBlur = (field: string) => {
+    setTouchedFields(prev => ({
+      ...prev,
+      [field]: true
+    }));
+  };
+
+  const isCEPValid = clientData.postalCode.length === 8;
 
   const handleCepChange = async (cep: string) => {
     if (cep.length === 8) {
@@ -57,9 +70,16 @@ export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps
             handleCepChange(cep);
             onClientDataChange({ ...clientData, postalCode: cep });
           }}
+          onBlur={() => handleBlur('postalCode')}
           placeholder="Digite o CEP"
           disabled={isLoading}
+          className={cn({
+            "border-red-500": touchedFields.postalCode && !isCEPValid,
+          })}
         />
+        {touchedFields.postalCode && !isCEPValid && (
+          <p className="text-sm text-red-500">CEP inválido</p>
+        )}
       </div>
 
       <div className="space-y-2">

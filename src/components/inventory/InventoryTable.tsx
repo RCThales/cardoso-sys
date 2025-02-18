@@ -1,28 +1,14 @@
 
 import { useQuery } from "@tanstack/react-query";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
+import { Table, TableBody, TableHead, TableHeader, TableRow } from "../ui/table";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { supabase } from "@/integrations/supabase/client";
-import { Button } from "../ui/button";
-import { Plus, Minus, Search } from "lucide-react";
 import { useToast } from "../ui/use-toast";
 import { useState } from "react";
-import { Input } from "../ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "../ui/select";
-import { Switch } from "../ui/switch";
+import { InventorySearch } from "./InventorySearch";
+import { InventoryFilters } from "./InventoryFilters";
+import { InventoryTableRow } from "./InventoryTableRow";
+import { InventoryAdjustModal } from "./InventoryAdjustModal";
 
 export const InventoryTable = () => {
   const [isUpdating, setIsUpdating] = useState(false);
@@ -30,6 +16,10 @@ export const InventoryTable = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [showRented, setShowRented] = useState(false);
   const [showAvailable, setShowAvailable] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<{
+    item: any;
+    product: any;
+  } | null>(null);
   const { toast } = useToast();
 
   const { data: inventory, isLoading, refetch } = useQuery({
@@ -48,7 +38,7 @@ export const InventoryTable = () => {
     queryFn: fetchProducts,
   });
 
-  const handleUpdateQuantity = async (itemId: number, change: number) => {
+  const handleUpdateQuantity = async (itemId: number, change: number, adjustValue: number) => {
     if (isUpdating) return;
 
     try {
@@ -56,7 +46,7 @@ export const InventoryTable = () => {
       const item = inventory?.find(i => i.id === itemId);
       if (!item) return;
 
-      const newQuantity = Math.max(0, item.total_quantity + change);
+      const newQuantity = Math.max(0, item.total_quantity + (change * adjustValue));
       
       const { error } = await supabase
         .from('inventory')
@@ -71,6 +61,8 @@ export const InventoryTable = () => {
         title: "Sucesso",
         description: "Quantidade atualizada com sucesso",
       });
+      
+      setSelectedItem(null);
     } catch (error) {
       toast({
         title: "Erro",
@@ -107,48 +99,19 @@ export const InventoryTable = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex flex-col md:flex-row gap-4">
-        <div className="flex-1">
-          <div className="relative">
-            <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar por nome do produto"
-              className="pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-        </div>
-        <Select
-          value={sortOrder}
-          onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
-        >
-          <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="Ordenar por quantidade" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="asc">Quantidade (menor primeiro)</SelectItem>
-            <SelectItem value="desc">Quantidade (maior primeiro)</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+      <InventorySearch
+        searchTerm={searchTerm}
+        onSearchChange={setSearchTerm}
+        sortOrder={sortOrder}
+        onSortOrderChange={(value: "asc" | "desc") => setSortOrder(value)}
+      />
 
-      <div className="flex gap-4">
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={showRented}
-            onCheckedChange={setShowRented}
-          />
-          <span className="text-sm">Mostrar apenas com itens alugados</span>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Switch
-            checked={showAvailable}
-            onCheckedChange={setShowAvailable}
-          />
-          <span className="text-sm">Mostrar apenas com itens disponíveis</span>
-        </div>
-      </div>
+      <InventoryFilters
+        showRented={showRented}
+        showAvailable={showAvailable}
+        onShowRentedChange={setShowRented}
+        onShowAvailableChange={setShowAvailable}
+      />
 
       <Table>
         <TableHeader>
@@ -164,40 +127,29 @@ export const InventoryTable = () => {
         <TableBody>
           {filteredInventory?.map((item) => {
             const product = products.find((p) => p.id === item.product_id);
-            const availableQuantity = item.total_quantity - item.rented_quantity;
             
             return (
-              <TableRow key={item.id}>
-                <TableCell>{product?.product_code}</TableCell>
-                <TableCell>{product?.name}</TableCell>
-                <TableCell className="text-right">{item.total_quantity}</TableCell>
-                <TableCell className="text-right">{item.rented_quantity}</TableCell>
-                <TableCell className="text-right">{availableQuantity}</TableCell>
-                <TableCell className="text-right">
-                  <div className="flex justify-end gap-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleUpdateQuantity(item.id, -1)}
-                      disabled={isUpdating || item.total_quantity <= item.rented_quantity}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleUpdateQuantity(item.id, 1)}
-                      disabled={isUpdating}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </TableCell>
-              </TableRow>
+              <InventoryTableRow
+                key={item.id}
+                item={item}
+                product={product}
+                onAdjustClick={() => setSelectedItem({ item, product })}
+              />
             );
           })}
         </TableBody>
       </Table>
+
+      {selectedItem && (
+        <InventoryAdjustModal
+          open={!!selectedItem}
+          onOpenChange={(open) => !open && setSelectedItem(null)}
+          item={selectedItem.item}
+          product={selectedItem.product}
+          onUpdateQuantity={handleUpdateQuantity}
+          isUpdating={isUpdating}
+        />
+      )}
     </div>
   );
 };

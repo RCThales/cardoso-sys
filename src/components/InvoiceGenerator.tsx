@@ -7,7 +7,7 @@ import { InvoiceItems } from "./invoice/InvoiceItems";
 import { useInvoiceGeneration } from "@/hooks/useInvoiceGeneration";
 import { Input } from "./ui/input";
 import { useCartStore } from "@/store/cartStore";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +23,7 @@ export const InvoiceGenerator = () => {
   const navigate = useNavigate();
   const {
     items,
+    setItems,
     clientData,
     setClientData,
     addItem,
@@ -30,7 +31,6 @@ export const InvoiceGenerator = () => {
     removeItem,
     calculateSubtotal,
     generateInvoice,
-    setItems,
     validateRequiredFields,
   } = useInvoiceGeneration();
 
@@ -80,10 +80,10 @@ export const InvoiceGenerator = () => {
     });
   };
 
-  const itemsSubtotal = items.reduce((sum, item) => {
+  const itemsSubtotal = useMemo(() => items.reduce((sum, item) => {
     const itemTotal = typeof item.total === 'number' ? item.total : 0;
     return sum + itemTotal;
-  }, 0);
+  }, 0), [items]);
 
   const calculateTotal = () => {
     const subtotal = itemsSubtotal + (clientData.deliveryFee || 0);
@@ -102,9 +102,15 @@ export const InvoiceGenerator = () => {
     navigate("/calc");
   };
 
-  const isFormValid = validateRequiredFields();
-
   const discountOptions = Array.from({ length: 21 }, (_, i) => i * 5);
+
+  const isFormValid = useMemo(() => validateRequiredFields(), [
+    clientData.name,
+    clientData.cpf,
+    clientData.phone,
+    clientData.postalCode,
+    items.length
+  ]);
 
   if (!products) {
     return <div>Carregando...</div>;
@@ -145,6 +151,7 @@ export const InvoiceGenerator = () => {
                 value={clientData.deliveryFee}
                 onChange={(e) => handleDeliveryFeeChange(e.target.value)}
                 min={0}
+                step="0.01"
                 className="text-right"
               />
             </div>
