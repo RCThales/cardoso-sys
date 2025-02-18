@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -21,6 +20,7 @@ const Products = () => {
   const [basePrice, setBasePrice] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
   const { data: products, refetch } = useQuery({
@@ -44,11 +44,32 @@ const Products = () => {
     );
   }, [products, searchTerm]);
 
-  const handleEdit = (product: Product) => {
+  const handleEdit = async (product: Product) => {
     setSelectedProduct(product);
     setName(product.name);
     setBasePrice(product.base_price.toString());
     setSizes((product.sizes || []).map(s => s.size));
+
+    const { data: inventoryData, error } = await supabase
+      .from("inventory")
+      .select("size, total_quantity")
+      .eq("product_id", product.id);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar quantidades do inventário",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const quantities = {};
+    inventoryData.forEach(item => {
+      quantities[item.size] = item.total_quantity;
+    });
+
+    setQuantities(quantities);
     setIsOpen(true);
   };
 
@@ -58,7 +79,6 @@ const Products = () => {
       const sizeObjects = sizes.map(size => ({ size }));
       
       if (selectedProduct) {
-        // Editar produto existente
         const { error } = await supabase
           .from("products")
           .update({
@@ -70,7 +90,6 @@ const Products = () => {
 
         if (error) throw error;
 
-        // Atualizar o estoque para cada tamanho usando upsert
         for (const size of sizes) {
           const { error: inventoryError } = await supabase
             .from("inventory")
@@ -94,7 +113,6 @@ const Products = () => {
           description: "Produto atualizado com sucesso",
         });
       } else {
-        // Criar novo produto
         const productCode = '#' + Math.random().toString(36).substring(2, 8).toUpperCase();
         const productId = name.toLowerCase().replace(/\s+/g, "-");
         
@@ -119,7 +137,6 @@ const Products = () => {
 
         if (error) throw error;
 
-        // Criar entradas no estoque para cada tamanho usando upsert
         for (const size of sizes) {
           const { error: inventoryError } = await supabase
             .from("inventory")
@@ -165,7 +182,6 @@ const Products = () => {
     if (!selectedProduct) return;
 
     try {
-      // Primeiro, excluir registros do inventário
       const { error: inventoryError } = await supabase
         .from("inventory")
         .delete()
@@ -173,7 +189,6 @@ const Products = () => {
 
       if (inventoryError) throw inventoryError;
 
-      // Depois, excluir o produto
       const { error } = await supabase
         .from("products")
         .delete()
@@ -250,6 +265,7 @@ const Products = () => {
               selectedProduct={selectedProduct}
               sizes={sizes}
               setSizes={setSizes}
+              quantities={quantities}
             />
           </DialogContent>
         </Dialog>

@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -8,6 +9,7 @@ import {
   ShoppingBag,
   DollarSign,
   Wallet,
+  Users,
 } from "lucide-react";
 
 const menuItems = [
@@ -52,6 +54,13 @@ const menuItems = [
     icon: ShoppingBag,
     route: "/products",
     color: "bg-gradient-to-br from-purple-500 to-indigo-500",
+  },
+  {
+    title: "Clientes",
+    description: "Gerenciamento de clientes",
+    icon: Users,
+    route: "/clients",
+    color: "bg-gradient-to-br from-teal-500 to-emerald-500",
   },
 ] as const;
 

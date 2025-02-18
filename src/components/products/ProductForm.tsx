@@ -17,6 +17,7 @@ interface ProductFormProps {
   selectedProduct: Product | null;
   sizes: string[];
   setSizes: (sizes: string[]) => void;
+  initialQuantities?: Record<string, number>;
 }
 
 export const ProductForm = ({
@@ -28,9 +29,10 @@ export const ProductForm = ({
   selectedProduct,
   sizes,
   setSizes,
+  initialQuantities = {},
 }: ProductFormProps) => {
   const [newSize, setNewSize] = useState("");
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+  const [quantities, setQuantities] = useState(initialQuantities);
   const { toast } = useToast();
 
   const handleAddSize = async () => {
