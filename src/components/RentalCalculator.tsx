@@ -60,8 +60,9 @@ export const RentalCalculator = () => {
     if (products && products.length > 0) {
       if (!selectedProduct) {
         setSelectedProduct(products[0].id);
-        if (products[0].sizes && products[0].sizes.length > 0) {
-          setSelectedSize(products[0].sizes[0].size);
+        const product = products[0];
+        if (product.sizes && product.sizes.length > 0) {
+          setSelectedSize(product.sizes[0].size);
         }
       }
       const constants = getProductConstants(products, selectedProduct);

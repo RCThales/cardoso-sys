@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "../ui/table";
 import { fetchProducts } from "@/utils/priceCalculator";
@@ -7,7 +6,8 @@ import { useToast } from "../ui/use-toast";
 import { useState } from "react";
 import { InventorySearch } from "./InventorySearch";
 import { InventoryFilters } from "./InventoryFilters";
-import { InventoryTableRow } from "./InventoryTableRow";
+import { Button } from "../ui/button";
+import { ArrowUpDown } from "lucide-react";
 import { InventoryAdjustModal } from "./InventoryAdjustModal";
 
 export const InventoryTable = () => {
@@ -78,7 +78,6 @@ export const InventoryTable = () => {
     return <div className="text-center">Carregando...</div>;
   }
 
-  // Agrupar itens do inventário por produto
   const groupedInventory = inventory?.reduce((acc, item) => {
     if (!acc[item.product_id]) {
       acc[item.product_id] = [];
@@ -142,46 +141,31 @@ export const InventoryTable = () => {
             const product = products.find((p) => p.id === productId);
             if (!product) return null;
 
-            return (
-              <TableRow key={productId} className="group">
+            return items.map(item => (
+              <TableRow key={`${productId}-${item.size || 'default'}`}>
                 <TableCell className="font-medium">{product.product_code}</TableCell>
                 <TableCell>
-                  <div className="space-y-2">
-                    <div className="font-medium">{product.name}</div>
-                    <div className="text-sm text-muted-foreground space-y-1">
-                      {items.map(item => (
-                        <div key={item.id} className="pl-4 border-l-2 border-primary/20">
-                          {item.size && <span className="font-medium">Tamanho {item.size}:</span>} 
-                          <span className="ml-2">
-                            {item.total_quantity - item.rented_quantity} disponíveis 
-                            ({item.rented_quantity} alugados)
-                          </span>
-                        </div>
-                      ))}
-                    </div>
+                  <div className="font-medium">
+                    {product.name}
+                    {item.size && <span className="ml-2 text-muted-foreground">Tamanho {item.size}</span>}
                   </div>
                 </TableCell>
+                <TableCell className="text-right">{item.total_quantity}</TableCell>
+                <TableCell className="text-right">{item.rented_quantity}</TableCell>
+                <TableCell className="text-right">{item.total_quantity - item.rented_quantity}</TableCell>
                 <TableCell className="text-right">
-                  {items.reduce((sum, item) => sum + item.total_quantity, 0)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {items.reduce((sum, item) => sum + item.rented_quantity, 0)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {items.reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
-                </TableCell>
-                <TableCell className="text-right">
-                  {items.map(item => (
-                    <InventoryTableRow
-                      key={item.id}
-                      item={item}
-                      product={product}
-                      onAdjustClick={() => setSelectedItem({ item, product })}
-                    />
-                  ))}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSelectedItem({ item, product })}
+                    className="w-[140px]"
+                  >
+                    <ArrowUpDown className="h-4 w-4 mr-2" />
+                    Ajustar Total
+                  </Button>
                 </TableCell>
               </TableRow>
-            );
+            ));
           })}
         </TableBody>
       </Table>
