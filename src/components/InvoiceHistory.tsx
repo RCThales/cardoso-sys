@@ -88,6 +88,7 @@ export const InvoiceHistory = () => {
         additionalCost,
       };
 
+      // Cálculo do novo total
       const newTotal = selectedInvoice.total + additionalCost;
       const currentExtensions = selectedInvoice.extensions || [];
       const extensions = [...currentExtensions, extension];
@@ -99,10 +100,11 @@ export const InvoiceHistory = () => {
         extension
       });
 
+      // Atualiza a fatura com a extensão
       const { error } = await supabase
         .from("invoices")
         .update({ 
-          extensions: extensions as Json[],
+          extensions: extensions,
           total: newTotal,
           is_paid: false // Reseta o status de pagamento
         })
@@ -117,9 +119,10 @@ export const InvoiceHistory = () => {
         return;
       }
 
+      // Limpa os estados e recarrega os dados
       setExtendDialogOpen(false);
       setSelectedInvoice(null);
-      await fetchInvoices(); // Recarrega os dados atualizados
+      await fetchInvoices();
       
       toast({
         title: "Sucesso",

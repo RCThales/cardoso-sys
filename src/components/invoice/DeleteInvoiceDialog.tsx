@@ -13,12 +13,14 @@ interface DeleteInvoiceDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  invoiceNumber: string;
 }
 
 export const DeleteInvoiceDialog = ({
   open,
   onOpenChange,
   onConfirm,
+  invoiceNumber,
 }: DeleteInvoiceDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -26,7 +28,7 @@ export const DeleteInvoiceDialog = ({
         <DialogHeader>
           <DialogTitle>Confirmar exclusão</DialogTitle>
           <DialogDescription>
-            Tem certeza que deseja excluir esta fatura? Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir a fatura {invoiceNumber}? Esta ação não pode ser desfeita.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

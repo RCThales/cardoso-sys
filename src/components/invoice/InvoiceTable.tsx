@@ -19,6 +19,7 @@ import { PaymentMethodDialog } from "./PaymentMethodDialog";
 import { ExtendRentalDialog } from "./ExtendRentalDialog";
 import ReactConfetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
+import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -43,11 +44,17 @@ export const InvoiceTable = ({
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
 
   const handlePaymentToggle = (invoice: Invoice) => {
+    if (invoice.is_paid) {
+      onTogglePaid(invoice.id, invoice.is_paid);
+      return;
+    }
+
     if (invoice.is_returned) {
       toast({
         title: "Ação não permitida",
@@ -64,6 +71,19 @@ export const InvoiceTable = ({
     if (selectedInvoice) {
       await onTogglePaid(selectedInvoice.id, selectedInvoice.is_paid, method);
       setPaymentDialogOpen(false);
+      setSelectedInvoice(null);
+    }
+  };
+
+  const handleDeleteClick = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = () => {
+    if (selectedInvoice) {
+      onDelete(selectedInvoice.id);
+      setDeleteDialogOpen(false);
       setSelectedInvoice(null);
     }
   };
@@ -237,7 +257,7 @@ export const InvoiceTable = ({
                 <Button
                   variant="destructive"
                   size="icon"
-                  onClick={() => onDelete(invoice.id)}
+                  onClick={() => handleDeleteClick(invoice)}
                   title="Deletar fatura"
                 >
                   <Trash2 className="h-4 w-4" />
@@ -267,6 +287,13 @@ export const InvoiceTable = ({
         onOpenChange={setExtendDialogOpen}
         onConfirm={handleExtendConfirm}
         calculateAdditionalCost={calculateAdditionalCost}
+      />
+
+      <DeleteInvoiceDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        invoiceNumber={selectedInvoice?.invoice_number || ""}
       />
     </>
   );
