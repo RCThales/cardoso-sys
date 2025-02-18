@@ -30,6 +30,33 @@ export type Database = {
         }
         Relationships: []
       }
+      investments: {
+        Row: {
+          amount: number
+          created_at: string | null
+          date: string
+          description: string | null
+          id: number
+          name: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          date: string
+          description?: string | null
+          id?: number
+          name: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          date?: string
+          description?: string | null
+          id?: number
+          name?: string
+        }
+        Relationships: []
+      }
       invoices: {
         Row: {
           client_address: string

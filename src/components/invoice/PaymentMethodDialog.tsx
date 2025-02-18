@@ -3,8 +3,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { CreditCard, Coins, QrCode } from "lucide-react";
-import { useState } from "react";
-import { QRCodeSVG } from "qrcode.react";
+import { useState, useEffect } from "react";
+import { QrCodePix } from "qrcode-pix";
 import { formatCurrency } from "@/utils/formatters";
 
 interface PaymentMethodDialogProps {
@@ -22,6 +22,8 @@ export const PaymentMethodDialog = ({
 }: PaymentMethodDialogProps) => {
   const [method, setMethod] = useState<string>("card");
   const [cashReceived, setCashReceived] = useState<string>("");
+  const [qrCode, setQrCode] = useState<string>("");
+  const [rawPix, setRawPix] = useState<string>("");
   
   const handleConfirm = () => {
     onConfirm(method);
@@ -33,8 +35,29 @@ export const PaymentMethodDialog = ({
     return Math.max(0, received - total);
   };
 
-  const pixKey = "61981988450";
-  const pixQRCodeValue = `00020126580014BR.GOV.BCB.PIX0114${pixKey}5204000053039865802BR5913CARDOSO RENT6009SAO PAULO62070503***6304${total.toFixed(2)}`;
+  useEffect(() => {
+    async function generateDynamicPix() {
+      const qrCodePix = QrCodePix({
+        version: '01',
+        key: '61981988450',
+        name: 'Fernando Rodrigues Cardoso',
+        city: 'Brasília',
+        transactionId: 'MULETAS_' + Date.now().toString().slice(-8),
+        message: 'Cardoso Aluguel de Muletas',
+        value: total,
+      });
+
+      const rawPixStr = qrCodePix.payload();
+      const qrCodeBase64 = await qrCodePix.base64();
+
+      setRawPix(rawPixStr);
+      setQrCode(qrCodeBase64);
+    }
+
+    if (method === 'pix' && open) {
+      void generateDynamicPix();
+    }
+  }, [method, total, open]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -103,10 +126,18 @@ export const PaymentMethodDialog = ({
 
           <TabsContent value="pix" className="mt-4">
             <div className="flex flex-col items-center space-y-4">
-              <QRCodeSVG value={pixQRCodeValue} size={200} />
+              {qrCode && <img src={qrCode} alt="QR Code PIX" className="w-48 h-48" />}
               <p className="text-sm text-muted-foreground">
                 Total a pagar: R$ {formatCurrency(total)}
               </p>
+              {rawPix && (
+                <div className="w-full">
+                  <p className="text-sm font-medium mb-2">Código PIX:</p>
+                  <div className="p-2 bg-muted rounded-md text-xs break-all">
+                    {rawPix}
+                  </div>
+                </div>
+              )}
               <Button onClick={handleConfirm} className="w-full">
                 Confirmar Pagamento
               </Button>

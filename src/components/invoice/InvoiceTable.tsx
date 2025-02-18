@@ -1,25 +1,16 @@
 
-import { format, parseISO } from "date-fns";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../ui/table";
-import { Button } from "../ui/button";
-import { Switch } from "../ui/switch";
-import { Check, Download, Eye, Trash2, Clock } from "lucide-react";
-import { Invoice, InvoiceExtension } from "./types";
-import { cn } from "@/lib/utils";
+import { Table, TableBody } from "../ui/table";
+import { Invoice } from "./types";
 import { useToast } from "../ui/use-toast";
 import { useState } from "react";
 import { ReturnConfirmDialog } from "./ReturnConfirmDialog";
 import { PaymentMethodDialog } from "./PaymentMethodDialog";
-import { ExtendRentalDialog } from "./ExtendRentalDialog";
+import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
 import ReactConfetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
+import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
+import { InvoiceTableRow } from "./table/InvoiceTableRow";
+import { returnToInventory } from "@/services/inventoryService";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -43,12 +34,17 @@ export const InvoiceTable = ({
   const { toast } = useToast();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
-  const [extendDialogOpen, setExtendDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
 
   const handlePaymentToggle = (invoice: Invoice) => {
+    if (invoice.is_paid) {
+      onTogglePaid(invoice.id, invoice.is_paid);
+      return;
+    }
+
     if (invoice.is_returned) {
       toast({
         title: "Ação não permitida",
@@ -69,39 +65,16 @@ export const InvoiceTable = ({
     }
   };
 
-  const handleExtendRental = (invoice: Invoice) => {
-    if (invoice.is_returned) {
-      toast({
-        title: "Ação não permitida",
-        description: "Não é possível estender um aluguel já devolvido",
-        variant: "destructive",
-      });
-      return;
-    }
+  const handleDeleteClick = (invoice: Invoice) => {
     setSelectedInvoice(invoice);
-    setExtendDialogOpen(true);
+    setDeleteDialogOpen(true);
   };
 
-  const calculateAdditionalCost = (days: number) => {
-    if (!selectedInvoice) return 0;
-    return (selectedInvoice.total / selectedInvoice.items[0].rentalDays) * days;
-  };
-
-  const handleExtendConfirm = async (days: number, additionalCost: number) => {
+  const handleDeleteConfirm = () => {
     if (selectedInvoice) {
-      const extension = {
-        date: new Date().toISOString(),
-        days,
-        additionalCost,
-      };
-      
-      setExtendDialogOpen(false);
+      onDelete(selectedInvoice.id);
+      setDeleteDialogOpen(false);
       setSelectedInvoice(null);
-      
-      toast({
-        title: "Sucesso",
-        description: "Aluguel estendido com sucesso",
-      });
     }
   };
 
@@ -118,13 +91,22 @@ export const InvoiceTable = ({
     setReturnDialogOpen(true);
   };
 
-  const handleConfirmReturn = () => {
+  const handleConfirmReturn = async () => {
     if (selectedInvoice) {
-      onToggleReturned(selectedInvoice.id, selectedInvoice.is_returned);
-      setReturnDialogOpen(false);
-      setSelectedInvoice(null);
-      setShowConfetti(true);
-      setTimeout(() => setShowConfetti(false), 5000);
+      try {
+        await returnToInventory(selectedInvoice.items);
+        await onToggleReturned(selectedInvoice.id, selectedInvoice.is_returned);
+        setReturnDialogOpen(false);
+        setSelectedInvoice(null);
+        setShowConfetti(true);
+        setTimeout(() => setShowConfetti(false), 5000);
+      } catch (error) {
+        toast({
+          title: "Erro",
+          description: "Erro ao atualizar o estoque",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -132,110 +114,21 @@ export const InvoiceTable = ({
     <>
       {showConfetti && <ReactConfetti width={width} height={height} recycle={false} />}
       <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nº Fatura</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-            <TableHead>Pago</TableHead>
-            <TableHead>Devolvido</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
+        <InvoiceTableHeader />
         <TableBody>
           {invoices.map((invoice) => (
-            <TableRow 
+            <InvoiceTableRow
               key={invoice.id}
-              className={cn({
-                "bg-green-50 hover:bg-green-100": invoice.is_paid && invoice.is_returned,
-                "bg-yellow-50 hover:bg-yellow-100": invoice.is_paid && !invoice.is_returned,
-                "bg-red-50 hover:bg-red-100": !invoice.is_paid && !invoice.is_returned,
-              })}
-            >
-              <TableCell>
-                {invoice.invoice_number}
-                {invoice.extensions?.length > 0 && (
-                  <div className="text-xs text-muted-foreground mt-1">
-                    Extensões: {invoice.extensions.map((ext: InvoiceExtension, idx: number) => (
-                      <span key={idx}>
-                        {format(parseISO(ext.date), "dd/MM/yyyy")} (+{ext.days} dias)
-                        {idx < (invoice.extensions?.length || 0) - 1 ? ", " : ""}
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
-              </TableCell>
-              <TableCell>{invoice.client_name}</TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.total)}
-              </TableCell>
-              <TableCell>
-                {invoice.is_paid && invoice.is_returned ? (
-                  <div className="flex items-center gap-2">
-                    <Check className="h-4 w-4 text-green-600" />
-                    <span className="text-xs text-muted-foreground">
-                      {invoice.payment_method}
-                    </span>
-                  </div>
-                ) : (
-                  <Switch
-                    checked={invoice.is_paid}
-                    onCheckedChange={() => handlePaymentToggle(invoice)}
-                    disabled={invoice.is_returned}
-                  />
-                )}
-              </TableCell>
-              <TableCell>
-                {invoice.is_returned ? (
-                  <Check className="h-4 w-4 text-green-600" />
-                ) : (
-                  <Switch
-                    checked={invoice.is_returned}
-                    onCheckedChange={() => handleReturnedToggle(invoice)}
-                    disabled={!invoice.is_paid || invoice.is_returned}
-                  />
-                )}
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => handleExtendRental(invoice)}
-                  disabled={invoice.is_returned}
-                  title="Estender aluguel"
-                >
-                  <Clock className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onDownload(invoice)}
-                  title="Baixar PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => onPreview(invoice)}
-                  title="Visualizar fatura"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => onDelete(invoice.id)}
-                  title="Deletar fatura"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
+              invoice={invoice}
+              onTogglePaid={() => handlePaymentToggle(invoice)}
+              onToggleReturned={() => handleReturnedToggle(invoice)}
+              onDownload={() => onDownload(invoice)}
+              onPreview={() => onPreview(invoice)}
+              onDelete={() => handleDeleteClick(invoice)}
+              formatCurrency={formatCurrency}
+              isPaidDisabled={invoice.is_returned}
+              isReturnedDisabled={!invoice.is_paid || invoice.is_returned}
+            />
           ))}
         </TableBody>
       </Table>
@@ -254,11 +147,11 @@ export const InvoiceTable = ({
         total={selectedInvoice?.total || 0}
       />
 
-      <ExtendRentalDialog
-        open={extendDialogOpen}
-        onOpenChange={setExtendDialogOpen}
-        onConfirm={handleExtendConfirm}
-        calculateAdditionalCost={calculateAdditionalCost}
+      <DeleteInvoiceDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleDeleteConfirm}
+        invoiceNumber={selectedInvoice?.invoice_number || ""}
       />
     </>
   );
