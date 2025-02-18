@@ -28,7 +28,10 @@ const Calculator = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("products").select("*");
       if (error) throw error;
-      return data as Product[];
+      return data.map(item => ({
+        ...item,
+        constants: item.constants as ProductConstants
+      })) as Product[];
     },
   });
 
@@ -36,7 +39,7 @@ const Calculator = () => {
     const product = products?.find((p) => p.id === selectedProductId);
     if (!product) return;
 
-    const price = calculateTotalPrice(Number(days), product.constants as ProductConstants);
+    const price = calculateTotalPrice(Number(days), product.constants);
     setTotalPrice(price);
   };
 
