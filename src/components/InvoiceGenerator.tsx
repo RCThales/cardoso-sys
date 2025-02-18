@@ -7,7 +7,7 @@ import { InvoiceItems } from "./invoice/InvoiceItems";
 import { useInvoiceGeneration } from "@/hooks/useInvoiceGeneration";
 import { Input } from "./ui/input";
 import { useCartStore } from "@/store/cartStore";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
@@ -23,6 +23,7 @@ export const InvoiceGenerator = () => {
   const navigate = useNavigate();
   const {
     items,
+    setItems,
     clientData,
     setClientData,
     addItem,
@@ -79,10 +80,10 @@ export const InvoiceGenerator = () => {
     });
   };
 
-  const itemsSubtotal = items.reduce((sum, item) => {
+  const itemsSubtotal = useMemo(() => items.reduce((sum, item) => {
     const itemTotal = typeof item.total === 'number' ? item.total : 0;
     return sum + itemTotal;
-  }, 0);
+  }, 0), [items]);
 
   const calculateTotal = () => {
     const subtotal = itemsSubtotal + (clientData.deliveryFee || 0);
@@ -106,9 +107,6 @@ export const InvoiceGenerator = () => {
   if (!products) {
     return <div>Carregando...</div>;
   }
-
-  // Now we get the validation result only when needed, not on every render
-  const isValid = () => validateRequiredFields();
 
   return (
     <Card className="p-6">
@@ -189,7 +187,7 @@ export const InvoiceGenerator = () => {
           <Button 
             onClick={handleGenerateInvoice} 
             className="w-full md:w-auto"
-            disabled={!isValid()}
+            disabled={!validateRequiredFields()}
           >
             Gerar Fatura e Finalizar
           </Button>
