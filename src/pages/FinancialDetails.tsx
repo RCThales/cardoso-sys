@@ -1,6 +1,7 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { format } from "date-fns";
+import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Navbar } from "@/components/Navbar";
 import { DollarSign, TrendingDown, TrendingUp, LineChart } from "lucide-react";
@@ -30,61 +31,77 @@ const FinancialDetails = () => {
     invoiceCount: 0,
     averageTicket: 0,
   });
+  const [previousSummary, setPreviousSummary] = useState<FinancialSummary | null>(null);
 
   const monthName = month 
     ? format(new Date(parseInt(year || ""), parseInt(month) - 1, 1), "MMMM 'de' yyyy", { locale: ptBR }) 
     : "";
 
+  const fetchSummaryForDate = async (date: Date) => {
+    const startDate = new Date(date.getFullYear(), date.getMonth(), 1);
+    const endDate = new Date(date.getFullYear(), date.getMonth() + 1, 0);
+
+    const { data: invoices, error: invoicesError } = await supabase
+      .from("invoices")
+      .select("*")
+      .gte("invoice_date", startDate.toISOString())
+      .lte("invoice_date", endDate.toISOString());
+
+    if (invoicesError) {
+      console.error("Error fetching monthly data:", invoicesError);
+      return null;
+    }
+
+    const { data: investments, error: investmentsError } = await supabase
+      .from("investments")
+      .select("amount");
+
+    if (investmentsError) {
+      console.error("Error fetching investments:", investmentsError);
+      return null;
+    }
+
+    const totalInvestment = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
+
+    let grossIncome = 0;
+    let expenses = 0;
+    let invoiceCount = 0;
+
+    invoices.forEach((invoice: InvoiceRow) => {
+      grossIncome += Number(invoice.total);
+      expenses += Number(invoice.total) * 0.2;
+      invoiceCount++;
+    });
+
+    const netProfit = grossIncome - expenses - totalInvestment;
+    const averageTicket = invoiceCount > 0 ? grossIncome / invoiceCount : 0;
+
+    return {
+      grossIncome,
+      expenses,
+      netProfit,
+      totalInvestment,
+      invoiceCount,
+      averageTicket,
+    };
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!year || !month) return;
 
-      const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-      const endDate = new Date(parseInt(year), parseInt(month), 0);
+      const currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+      const previousDate = subMonths(currentDate, 1);
 
-      const { data: invoices, error: invoicesError } = await supabase
-        .from("invoices")
-        .select("*")
-        .gte("invoice_date", startDate.toISOString())
-        .lte("invoice_date", endDate.toISOString());
-
-      if (invoicesError) {
-        console.error("Error fetching monthly data:", invoicesError);
-        return;
+      const currentSummary = await fetchSummaryForDate(currentDate);
+      if (currentSummary) {
+        setSummary(currentSummary);
       }
 
-      const { data: investments, error: investmentsError } = await supabase
-        .from("investments")
-        .select("amount");
-
-      if (investmentsError) {
-        console.error("Error fetching investments:", investmentsError);
-        return;
+      const prevSummary = await fetchSummaryForDate(previousDate);
+      if (prevSummary) {
+        setPreviousSummary(prevSummary);
       }
-
-      const totalInvestment = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
-
-      let grossIncome = 0;
-      let expenses = 0;
-      let invoiceCount = 0;
-
-      invoices.forEach((invoice: InvoiceRow) => {
-        grossIncome += Number(invoice.total);
-        expenses += Number(invoice.total) * 0.2;
-        invoiceCount++;
-      });
-
-      const netProfit = grossIncome - expenses - totalInvestment;
-      const averageTicket = invoiceCount > 0 ? grossIncome / invoiceCount : 0;
-
-      setSummary({
-        grossIncome,
-        expenses,
-        netProfit,
-        totalInvestment,
-        invoiceCount,
-        averageTicket,
-      });
     };
 
     fetchData();
@@ -100,6 +117,7 @@ const FinancialDetails = () => {
           <FinancialCard
             title="Receita Bruta"
             value={summary.grossIncome}
+            previousValue={previousSummary?.grossIncome}
             description={`${summary.invoiceCount} faturas no período`}
             icon={DollarSign}
             iconColor="text-green-500"
@@ -107,6 +125,7 @@ const FinancialDetails = () => {
           <FinancialCard
             title="Despesas"
             value={summary.expenses}
+            previousValue={previousSummary?.expenses}
             description="Inclui descontos e custos operacionais"
             icon={TrendingDown}
             iconColor="text-red-500"
@@ -114,6 +133,7 @@ const FinancialDetails = () => {
           <FinancialCard
             title="Lucro Líquido"
             value={summary.netProfit}
+            previousValue={previousSummary?.netProfit}
             description="Após despesas e investimentos"
             icon={TrendingUp}
             iconColor="text-emerald-500"
@@ -121,6 +141,7 @@ const FinancialDetails = () => {
           <FinancialCard
             title="Investimento Total"
             value={summary.totalInvestment}
+            previousValue={previousSummary?.totalInvestment}
             description="Em equipamentos e infraestrutura"
             icon={LineChart}
             iconColor="text-blue-500"
@@ -128,6 +149,7 @@ const FinancialDetails = () => {
           <FinancialCard
             title="Ticket Médio"
             value={summary.averageTicket}
+            previousValue={previousSummary?.averageTicket}
             description="Valor médio por fatura"
             icon={DollarSign}
             iconColor="text-purple-500"
