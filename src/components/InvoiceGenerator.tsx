@@ -1,3 +1,4 @@
+
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -10,7 +11,6 @@ import { useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
-import { validateCPF } from "@/utils/validateCPF";
 import {
   Select,
   SelectContent,
@@ -30,7 +30,6 @@ export const InvoiceGenerator = () => {
     removeItem,
     calculateSubtotal,
     generateInvoice,
-    setItems,
     validateRequiredFields,
   } = useInvoiceGeneration();
 
@@ -102,13 +101,14 @@ export const InvoiceGenerator = () => {
     navigate("/calc");
   };
 
-  const isFormValid = validateRequiredFields();
-
   const discountOptions = Array.from({ length: 21 }, (_, i) => i * 5);
 
   if (!products) {
     return <div>Carregando...</div>;
   }
+
+  // Now we get the validation result only when needed, not on every render
+  const isValid = () => validateRequiredFields();
 
   return (
     <Card className="p-6">
@@ -189,7 +189,7 @@ export const InvoiceGenerator = () => {
           <Button 
             onClick={handleGenerateInvoice} 
             className="w-full md:w-auto"
-            disabled={!isFormValid}
+            disabled={!isValid()}
           >
             Gerar Fatura e Finalizar
           </Button>
