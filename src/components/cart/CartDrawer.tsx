@@ -137,7 +137,7 @@ export const CartDrawer = () => {
               </div>
               <Button
                 className="w-full"
-                onClick={() => navigate("/temp1")}
+                onClick={() => navigate("/invoices/create")}
               >
                 Finalizar Aluguel
               </Button>

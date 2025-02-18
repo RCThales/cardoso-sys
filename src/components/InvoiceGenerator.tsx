@@ -6,6 +6,8 @@ import { ClientForm } from "./invoice/ClientForm";
 import { InvoiceItems } from "./invoice/InvoiceItems";
 import { useInvoiceGeneration } from "@/hooks/useInvoiceGeneration";
 import { Input } from "./ui/input";
+import { useCartStore } from "@/store/cartStore";
+import { useEffect } from "react";
 
 export const InvoiceGenerator = () => {
   const {
@@ -18,6 +20,26 @@ export const InvoiceGenerator = () => {
     calculateSubtotal,
     generateInvoice,
   } = useInvoiceGeneration();
+
+  const cartItems = useCartStore((state) => state.items);
+  const clearCart = useCartStore((state) => state.clearCart);
+
+  useEffect(() => {
+    // Limpa os itens existentes
+    items.forEach((_, index) => removeItem(index));
+    
+    // Adiciona os itens do carrinho
+    cartItems.forEach((cartItem) => {
+      addItem();
+      const lastIndex = items.length;
+      updateItem(lastIndex, "description", PRODUCTS.find(p => p.id === cartItem.productId)?.name || "");
+      updateItem(lastIndex, "quantity", cartItem.quantity.toString());
+      updateItem(lastIndex, "rentalDays", cartItem.days.toString());
+      updateItem(lastIndex, "productId", cartItem.productId);
+      updateItem(lastIndex, "price", (cartItem.total / cartItem.quantity).toString());
+      updateItem(lastIndex, "total", cartItem.total.toString());
+    });
+  }, [cartItems]);
 
   const formatCurrency = (value: number | string | null | undefined): string => {
     if (value === null || value === undefined) return "0.00";
@@ -37,6 +59,11 @@ export const InvoiceGenerator = () => {
     return sum + itemTotal;
   }, 0);
 
+  const handleGenerateInvoice = async () => {
+    await generateInvoice();
+    clearCart();
+  };
+
   return (
     <Card className="p-6">
       <CompanyHeader />
@@ -52,6 +79,7 @@ export const InvoiceGenerator = () => {
           onAddItem={addItem}
           onUpdateItem={updateItem}
           onRemoveItem={removeItem}
+          readOnly
         />
 
         <div className="space-y-4">
@@ -85,7 +113,7 @@ export const InvoiceGenerator = () => {
         </div>
 
         <div className="flex justify-end">
-          <Button onClick={generateInvoice} className="w-full md:w-auto">
+          <Button onClick={handleGenerateInvoice} className="w-full md:w-auto">
             Gerar Fatura
           </Button>
         </div>

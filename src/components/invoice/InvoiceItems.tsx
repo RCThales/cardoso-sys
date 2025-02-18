@@ -25,13 +25,15 @@ interface InvoiceItemsProps {
   onAddItem: () => void;
   onUpdateItem: (index: number, field: keyof InvoiceItem, value: string) => void;
   onRemoveItem: (index: number) => void;
+  readOnly?: boolean;
 }
 
 export const InvoiceItems = ({ 
   items, 
   onAddItem, 
   onUpdateItem, 
-  onRemoveItem 
+  onRemoveItem,
+  readOnly
 }: InvoiceItemsProps) => {
   const handleProductChange = (index: number, productId: string) => {
     const selectedProduct = PRODUCTS.find(p => p.id === productId);
@@ -49,14 +51,6 @@ export const InvoiceItems = ({
       // Depois atualiza o preço e o total
       onUpdateItem(index, "price", dailyPrice.toString());
       onUpdateItem(index, "total", total.toString());
-      
-      console.log("Produto selecionado:", {
-        name: selectedProduct.name,
-        dailyPrice,
-        total,
-        quantity,
-        rentalDays
-      });
     }
   };
 
@@ -93,17 +87,11 @@ export const InvoiceItems = ({
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
 
-  const handleRemoveItem = (index: number) => {
-    if (typeof onRemoveItem === 'function') {
-      onRemoveItem(index);
-    }
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h3 className="text-lg font-medium">Itens</h3>
-        <Button onClick={onAddItem}>Adicionar Item</Button>
+        {!readOnly && <Button onClick={onAddItem}>Adicionar Item</Button>}
       </div>
 
       {items.map((item, index) => (
@@ -112,23 +100,27 @@ export const InvoiceItems = ({
             <label className="block text-sm font-medium text-gray-700 mb-1">
               Produto
             </label>
-            <Select
-              value={item.productId || ""}
-              onValueChange={(value) => handleProductChange(index, value)}
-            >
-              <SelectTrigger className="h-10">
-                <SelectValue placeholder="Selecione um produto">
-                  {item.description || "Selecione um produto"}
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent>
-                {PRODUCTS.map((product) => (
-                  <SelectItem key={product.id} value={product.id}>
-                    {product.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {readOnly ? (
+              <Input value={item.description} readOnly />
+            ) : (
+              <Select
+                value={item.productId || ""}
+                onValueChange={(value) => handleProductChange(index, value)}
+              >
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder="Selecione um produto">
+                    {item.description || "Selecione um produto"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {PRODUCTS.map((product) => (
+                    <SelectItem key={product.id} value={product.id}>
+                      {product.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
           </div>
           <div className="col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -140,6 +132,7 @@ export const InvoiceItems = ({
               value={item.rentalDays.toString()}
               onChange={(e) => handleDaysChange(index, e.target.value)}
               min={1}
+              readOnly={readOnly}
             />
           </div>
           <div className="col-span-2">
@@ -152,6 +145,7 @@ export const InvoiceItems = ({
               value={item.quantity.toString()}
               onChange={(e) => handleQuantityChange(index, e.target.value)}
               min={1}
+              readOnly={readOnly}
             />
           </div>
           <div className="col-span-3">
@@ -165,14 +159,16 @@ export const InvoiceItems = ({
             />
           </div>
           <div className="col-span-1 flex items-end">
-            <Button 
-              variant="destructive" 
-              size="icon"
-              onClick={() => handleRemoveItem(index)}
-              className="h-10 w-10"
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+            {!readOnly && (
+              <Button 
+                variant="destructive" 
+                size="icon"
+                onClick={() => onRemoveItem(index)}
+                className="h-10 w-10"
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
+            )}
           </div>
         </div>
       ))}
