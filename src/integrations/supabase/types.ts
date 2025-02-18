@@ -11,6 +11,7 @@ export type Database = {
     Tables: {
       invoices: {
         Row: {
+<<<<<<< HEAD
           balance_due: number;
           client_address: string;
           client_address_complement: string | null;
@@ -85,6 +86,76 @@ export type Database = {
         Relationships: [];
       };
     };
+=======
+          client_address: string
+          client_address_complement: string | null
+          client_address_number: string | null
+          client_city: string
+          client_cpf: string
+          client_name: string
+          client_phone: string
+          client_postal_code: string
+          client_state: string
+          created_at: string | null
+          due_date: string
+          id: number
+          invoice_date: string
+          invoice_number: string
+          is_paid: boolean
+          items: Json
+          payment_terms: string | null
+          subtotal: number
+          total: number
+          user_id: string
+        }
+        Insert: {
+          client_address: string
+          client_address_complement?: string | null
+          client_address_number?: string | null
+          client_city: string
+          client_cpf: string
+          client_name: string
+          client_phone: string
+          client_postal_code: string
+          client_state: string
+          created_at?: string | null
+          due_date: string
+          id?: number
+          invoice_date: string
+          invoice_number: string
+          is_paid?: boolean
+          items: Json
+          payment_terms?: string | null
+          subtotal: number
+          total: number
+          user_id: string
+        }
+        Update: {
+          client_address?: string
+          client_address_complement?: string | null
+          client_address_number?: string | null
+          client_city?: string
+          client_cpf?: string
+          client_name?: string
+          client_phone?: string
+          client_postal_code?: string
+          client_state?: string
+          created_at?: string | null
+          due_date?: string
+          id?: number
+          invoice_date?: string
+          invoice_number?: string
+          is_paid?: boolean
+          items?: Json
+          payment_terms?: string | null
+          subtotal?: number
+          total?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+    }
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
     Views: {
       [_ in never]: never;
     };

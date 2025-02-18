@@ -1,14 +1,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "./ui/card";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "./ui/table";
 import { Button } from "./ui/button";
+<<<<<<< HEAD
 import {
   Dialog,
   DialogContent,
@@ -17,13 +10,15 @@ import {
   DialogHeader,
   DialogTitle,
 } from "./ui/dialog";
+=======
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
 import { supabase } from "@/integrations/supabase/client";
-import { format, parseISO } from "date-fns";
-import { Download, Eye, Search, Trash2, LoaderCircle } from "lucide-react";
+import { LoaderCircle, Search } from "lucide-react";
 import { useToast } from "./ui/use-toast";
 import jsPDF from "jspdf";
 import "jspdf-autotable";
 import { Input } from "./ui/input";
+import { format } from "date-fns";
 import {
   Select,
   SelectContent,
@@ -31,41 +26,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "./ui/select";
+import { Invoice } from "./invoice/types";
+import { DeleteInvoiceDialog } from "./invoice/DeleteInvoiceDialog";
+import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
+import { InvoiceTable } from "./invoice/InvoiceTable";
 
 declare module "jspdf" {
   interface jsPDF {
     autoTable: (options: any) => void;
   }
-}
-
-interface InvoiceItem {
-  description: string;
-  quantity: number;
-  price: number;
-  total: number;
-  productId?: string;
-  rentalDays?: number;
-}
-
-interface Invoice {
-  id: number;
-  invoice_number: string;
-  created_at: string;
-  client_name: string;
-  client_cpf: string;
-  client_phone: string;
-  total: number;
-  payment_received: number;
-  balance_due: number;
-  client_address: string;
-  client_address_number: string;
-  client_address_complement: string;
-  client_city: string;
-  client_state: string;
-  client_postal_code: string;
-  items: InvoiceItem[];
-  invoice_date: string;
-  due_date: string;
 }
 
 export const InvoiceHistory = () => {
@@ -92,6 +61,7 @@ export const InvoiceHistory = () => {
       if (data) {
         const formattedInvoices: Invoice[] = data.map((invoice) => ({
           ...invoice,
+<<<<<<< HEAD
           items: Array.isArray(invoice.items)
             ? (invoice.items as any[]).map((item) => ({
                 description: String(item.description || ""),
@@ -104,10 +74,23 @@ export const InvoiceHistory = () => {
                   : undefined,
               }))
             : [],
+=======
+          items: Array.isArray(invoice.items) ? (invoice.items as any[]).map(item => ({
+            description: String(item.description || ''),
+            quantity: parseFloat(item.quantity) || 0,
+            price: parseFloat(item.price) || 0,
+            total: parseFloat(item.total) || 0,
+            productId: item.productId ? String(item.productId) : '',
+            rentalDays: item.rentalDays ? parseFloat(item.rentalDays) : 1
+          })) : [],
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
           created_at: invoice.created_at || new Date().toISOString(),
-          payment_received: parseFloat(String(invoice.payment_received)) || 0,
           total: parseFloat(String(invoice.total)) || 0,
+<<<<<<< HEAD
           balance_due: parseFloat(String(invoice.balance_due)) || 0,
+=======
+          is_paid: !!invoice.is_paid
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
         }));
         setInvoices(formattedInvoices);
       }
@@ -146,9 +129,34 @@ export const InvoiceHistory = () => {
     setDeleteInvoiceId(null);
   };
 
+<<<<<<< HEAD
   const formatCurrency = (
     value: number | string | null | undefined
   ): string => {
+=======
+  const handleTogglePaid = async (invoiceId: number, currentStatus: boolean) => {
+    const { error } = await supabase
+      .from("invoices")
+      .update({ is_paid: !currentStatus })
+      .eq("id", invoiceId);
+
+    if (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao atualizar status da fatura",
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Sucesso",
+        description: "Status da fatura atualizado com sucesso",
+      });
+      fetchInvoices();
+    }
+  };
+
+  const formatCurrency = (value: number | string | null | undefined): string => {
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
     if (value === null || value === undefined) return "0.00";
     const numValue = typeof value === "string" ? parseFloat(value) : value;
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
@@ -159,7 +167,11 @@ export const InvoiceHistory = () => {
 
     const img = new Image();
     img.src = "/lovable-uploads/e9185795-25bc-4086-a973-5a5ff9e3c108.png";
+<<<<<<< HEAD
     doc.addImage(img, "PNG", 18, 18, 20, 10); // Ajustado o tamanho da logo
+=======
+    doc.addImage(img, "PNG", 15, 15, 30, 10);
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
 
     doc.setFontSize(10);
     doc.text("Cardoso Aluguel de Muletas e Produtos Ortopédicos", 15, 35);
@@ -208,20 +220,25 @@ export const InvoiceHistory = () => {
       75
     );
 
-    const tableData = invoice.items.map((item: InvoiceItem) => [
+    const tableData = invoice.items.map((item) => [
       item.description,
       item.quantity,
+<<<<<<< HEAD
       `R$ ${formatCurrency(item.price)}`,
       `R$ ${formatCurrency(item.total)}`,
+=======
+      `R$ ${formatCurrency(item.total)}`
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
     ]);
 
     doc.autoTable({
       startY: 115,
-      head: [["Descrição", "Quantidade", "Preço", "Total"]],
+      head: [["Descrição", "Quantidade", "Total"]],
       body: tableData,
     });
 
     const finalY = (doc as any).lastAutoTable.finalY + 10;
+<<<<<<< HEAD
     doc.text(`Subtotal: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
     doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY + 5);
     doc.text(
@@ -234,6 +251,9 @@ export const InvoiceHistory = () => {
       150,
       finalY + 15
     );
+=======
+    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
 
     doc.setFontSize(8);
     doc.text(
@@ -290,66 +310,16 @@ export const InvoiceHistory = () => {
         </div>
       </div>
 
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>Nº Fatura</TableHead>
-            <TableHead>Data</TableHead>
-            <TableHead>Cliente</TableHead>
-            <TableHead className="text-right">Total</TableHead>
-            <TableHead className="text-right">Recebido</TableHead>
-            <TableHead className="text-right">Saldo</TableHead>
-            <TableHead className="text-right">Ações</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {filteredInvoices.map((invoice) => (
-            <TableRow key={invoice.id}>
-              <TableCell>{invoice.invoice_number}</TableCell>
-              <TableCell>
-                {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
-              </TableCell>
-              <TableCell>{invoice.client_name}</TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.total)}
-              </TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.payment_received)}
-              </TableCell>
-              <TableCell className="text-right">
-                R$ {formatCurrency(invoice.balance_due)}
-              </TableCell>
-              <TableCell className="text-right space-x-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => generatePDF(invoice)}
-                  title="Baixar PDF"
-                >
-                  <Download className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={() => setPreviewInvoice(invoice)}
-                  title="Visualizar fatura"
-                >
-                  <Eye className="h-4 w-4" />
-                </Button>
-                <Button
-                  variant="destructive"
-                  size="icon"
-                  onClick={() => setDeleteInvoiceId(invoice.id)}
-                  title="Deletar fatura"
-                >
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+      <InvoiceTable
+        invoices={filteredInvoices}
+        onTogglePaid={handleTogglePaid}
+        onDownload={generatePDF}
+        onPreview={setPreviewInvoice}
+        onDelete={setDeleteInvoiceId}
+        formatCurrency={formatCurrency}
+      />
 
+<<<<<<< HEAD
       <Dialog
         open={!!deleteInvoiceId}
         onOpenChange={() => setDeleteInvoiceId(null)}
@@ -470,6 +440,21 @@ export const InvoiceHistory = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+=======
+      <DeleteInvoiceDialog
+        open={!!deleteInvoiceId}
+        onOpenChange={() => setDeleteInvoiceId(null)}
+        onConfirm={handleDelete}
+      />
+
+      <PreviewInvoiceDialog
+        invoice={previewInvoice}
+        open={!!previewInvoice}
+        onOpenChange={() => setPreviewInvoice(null)}
+        onDownload={generatePDF}
+        formatCurrency={formatCurrency}
+      />
+>>>>>>> eb17c62f798e0ac8e34c4eeb425033daa9ebcab7
     </Card>
   );
 };

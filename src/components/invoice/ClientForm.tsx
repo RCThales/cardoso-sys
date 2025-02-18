@@ -1,4 +1,3 @@
-
 import { Input } from "../ui/input";
 import { 
   Select,
@@ -22,6 +21,7 @@ interface ClientData {
   city: string;
   state: string;
   postalCode: string;
+  isPaid: boolean;
 }
 
 interface ClientFormProps {
@@ -70,8 +70,9 @@ export const ClientForm = ({ clientData, onClientDataChange }: ClientFormProps) 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <label className="text-sm font-medium">Nome do Cliente</label>
+        <label className="text-sm font-medium">Nome do Cliente *</label>
         <Input
+          required
           value={clientData.name}
           onChange={(e) =>
             onClientDataChange({ ...clientData, name: e.target.value })
@@ -80,8 +81,9 @@ export const ClientForm = ({ clientData, onClientDataChange }: ClientFormProps) 
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">CPF</label>
+        <label className="text-sm font-medium">CPF *</label>
         <Input
+          required
           value={clientData.cpf}
           onChange={(e) => handleCPFChange(e.target.value)}
           placeholder="000.000.000-00"
@@ -90,8 +92,9 @@ export const ClientForm = ({ clientData, onClientDataChange }: ClientFormProps) 
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Telefone</label>
+        <label className="text-sm font-medium">Telefone *</label>
         <Input
+          required
           value={clientData.phone}
           onChange={(e) => handlePhoneChange(e.target.value)}
           placeholder="(00) 00000-0000"
@@ -100,8 +103,9 @@ export const ClientForm = ({ clientData, onClientDataChange }: ClientFormProps) 
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">CEP</label>
+        <label className="text-sm font-medium">CEP *</label>
         <Input
+          required
           value={clientData.postalCode}
           onChange={(e) => {
             const cep = e.target.value.replace(/\D/g, '');
@@ -177,6 +181,20 @@ export const ClientForm = ({ clientData, onClientDataChange }: ClientFormProps) 
             ))}
           </SelectContent>
         </Select>
+      </div>
+
+      <div className="space-y-2 col-span-2">
+        <label className="text-sm font-medium flex items-center space-x-2">
+          <Input
+            type="checkbox"
+            className="w-4 h-4"
+            checked={clientData.isPaid}
+            onChange={(e) =>
+              onClientDataChange({ ...clientData, isPaid: e.target.checked })
+            }
+          />
+          <span>Fatura Paga</span>
+        </label>
       </div>
     </div>
   );

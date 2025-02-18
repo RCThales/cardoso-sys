@@ -16,6 +16,7 @@ interface ClientData {
   city: string;
   state: string;
   postalCode: string;
+  isPaid: boolean;
 }
 
 export const useInvoiceGeneration = () => {
@@ -31,6 +32,7 @@ export const useInvoiceGeneration = () => {
     city: "",
     state: "",
     postalCode: "",
+    isPaid: false,
   });
 
   const addItem = () => {
@@ -59,21 +61,50 @@ export const useInvoiceGeneration = () => {
 
     newItems[index] = item;
     setItems(newItems);
+    
+    console.log("Item atualizado:", {
+      field,
+      value,
+      item: newItems[index]
+    });
+  };
+
+  const removeItem = (index: number) => {
+    setItems(items.filter((_, i) => i !== index));
   };
 
   const calculateSubtotal = (): number => {
-    return items.reduce((sum, item) => {
+    const total = items.reduce((sum, item) => {
       const itemTotal = typeof item.total === 'number' ? item.total : 0;
       return sum + itemTotal;
     }, 0);
+    
+    console.log("Calculando total:", {
+      items: items.map(item => ({
+        description: item.description,
+        total: item.total
+      })),
+      totalCalculado: total
+    });
+    
+    return total;
   };
 
   const generateInvoice = async () => {
     try {
-      if (!clientData.cpf || !clientData.phone) {
+      if (!clientData.name || !clientData.postalCode || !clientData.cpf || !clientData.phone) {
         toast({
           title: "Erro",
-          description: "CPF e telefone são obrigatórios",
+          description: "Nome, CEP, CPF e telefone são obrigatórios",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (items.length === 0) {
+        toast({
+          title: "Erro",
+          description: "Adicione pelo menos um item à fatura",
           variant: "destructive",
         });
         return;
@@ -92,8 +123,7 @@ export const useInvoiceGeneration = () => {
         return;
       }
 
-      const subtotal = calculateSubtotal();
-      const total = subtotal;
+      const total = calculateSubtotal();
       const invoiceNumber = `INV-${Date.now()}`;
       const today = new Date();
       const dueDate = new Date();
@@ -105,6 +135,11 @@ export const useInvoiceGeneration = () => {
         price: Number(item.price) || 0,
         total: Number(item.total) || 0
       })) as Json;
+
+      console.log("Enviando para o banco:", {
+        items: itemsForDb,
+        total
+      });
 
       const { error } = await supabase.from("invoices").insert({
         invoice_number: invoiceNumber,
@@ -121,9 +156,9 @@ export const useInvoiceGeneration = () => {
         due_date: format(dueDate, "yyyy-MM-dd"),
         payment_terms: "30 dias",
         items: itemsForDb,
-        subtotal,
+        subtotal: total,
         total,
-        balance_due: total,
+        is_paid: clientData.isPaid,
         user_id: user.id,
       });
 
@@ -146,6 +181,7 @@ export const useInvoiceGeneration = () => {
         city: "",
         state: "",
         postalCode: "",
+        isPaid: false,
       });
     } catch (error) {
       toast({
@@ -162,6 +198,7 @@ export const useInvoiceGeneration = () => {
     setClientData,
     addItem,
     updateItem,
+    removeItem,
     calculateSubtotal,
     generateInvoice,
   };
