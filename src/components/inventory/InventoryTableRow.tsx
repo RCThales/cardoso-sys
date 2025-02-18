@@ -36,10 +36,10 @@ export const InventoryTableRow = ({
           variant="outline"
           size="sm"
           onClick={onAdjustClick}
-          className="w-[180px]"
+          className="w-[140px]"
         >
           <ArrowUpDown className="h-4 w-4 mr-2" />
-          Ajustar Quantidade Total
+          Ajustar Total
         </Button>
       </TableCell>
     </TableRow>

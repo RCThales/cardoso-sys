@@ -43,12 +43,14 @@ export type Database = {
           client_state: string
           created_at: string | null
           due_date: string
+          extensions: Json[] | null
           id: number
           invoice_date: string
           invoice_number: string
           is_paid: boolean
           is_returned: boolean
           items: Json
+          payment_method: string | null
           payment_terms: string | null
           subtotal: number
           total: number
@@ -66,12 +68,14 @@ export type Database = {
           client_state: string
           created_at?: string | null
           due_date: string
+          extensions?: Json[] | null
           id?: number
           invoice_date: string
           invoice_number: string
           is_paid?: boolean
           is_returned?: boolean
           items: Json
+          payment_method?: string | null
           payment_terms?: string | null
           subtotal: number
           total: number
@@ -89,12 +93,14 @@ export type Database = {
           client_state?: string
           created_at?: string | null
           due_date?: string
+          extensions?: Json[] | null
           id?: number
           invoice_date?: string
           invoice_number?: string
           is_paid?: boolean
           is_returned?: boolean
           items?: Json
+          payment_method?: string | null
           payment_terms?: string | null
           subtotal?: number
           total?: number

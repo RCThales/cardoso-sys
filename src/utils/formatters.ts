@@ -16,3 +16,9 @@ export const formatPhone = (value: string): string => {
   }
   return cleaned;
 };
+
+export const formatCurrency = (value: number | string | null | undefined): string => {
+  if (value === null || value === undefined) return "0.00";
+  const numValue = typeof value === "string" ? parseFloat(value) : value;
+  return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
+};

@@ -8,6 +8,12 @@ export interface InvoiceItem {
   rentalDays: number;
 }
 
+export interface InvoiceExtension {
+  date: string;
+  days: number;
+  additionalCost: number;
+}
+
 export interface Invoice {
   id: number;
   invoice_number: string;
@@ -27,4 +33,6 @@ export interface Invoice {
   items: InvoiceItem[];
   invoice_date: string;
   due_date: string;
+  payment_method?: string;
+  extensions?: InvoiceExtension[];
 }

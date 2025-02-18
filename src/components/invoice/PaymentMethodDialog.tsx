@@ -4,7 +4,7 @@ import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { CreditCard, Coins, QrCode } from "lucide-react";
 import { useState } from "react";
-import QRCode from "qrcode.react";
+import { QRCodeSVG } from "qrcode.react";
 import { formatCurrency } from "@/utils/formatters";
 
 interface PaymentMethodDialogProps {
@@ -103,7 +103,7 @@ export const PaymentMethodDialog = ({
 
           <TabsContent value="pix" className="mt-4">
             <div className="flex flex-col items-center space-y-4">
-              <QRCode value={pixQRCodeValue} size={200} />
+              <QRCodeSVG value={pixQRCodeValue} size={200} />
               <p className="text-sm text-muted-foreground">
                 Total a pagar: R$ {formatCurrency(total)}
               </p>
