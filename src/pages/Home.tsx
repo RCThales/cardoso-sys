@@ -2,7 +2,7 @@
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
-import { Calculator, LineChart, Package, ShoppingBag } from "lucide-react";
+import { Calculator, LineChart, Package, ShoppingBag, DollarSign } from "lucide-react";
 import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -20,6 +20,13 @@ const menuItems = [
     icon: LineChart,
     route: "/invoices/history",
     color: "from-blue-500 to-cyan-500",
+  },
+  {
+    title: "Financeiro",
+    description: "Análise financeira",
+    icon: DollarSign,
+    route: "/financial",
+    color: "from-emerald-500 to-teal-500",
   },
   {
     title: "Estoque",
