@@ -24,6 +24,7 @@ interface ClientData {
   postalCode: string;
   isPaid: boolean;
   deliveryFee: number;
+  specialDiscount: number;
 }
 
 interface ClientFormProps {
