@@ -1,25 +1,18 @@
+
 import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
-
-export interface InvoiceItem {
-  description: string;
-  quantity: number;
-  price: number;
-  total: number;
-  productId: string;
-  rentalDays: number;
-}
+import { InvoiceItem } from "./types";
 
 interface InvoiceItemsProps {
   items: InvoiceItem[];
-  onAddItem: () => void;
-  onUpdateItem: (
+  onAddItem?: () => void;
+  onUpdateItem?: (
     index: number,
     field: keyof InvoiceItem,
     value: string
   ) => void;
-  onRemoveItem: (index: number) => void;
+  onRemoveItem?: (index: number) => void;
   readOnly?: boolean;
 }
 
