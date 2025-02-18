@@ -3,16 +3,19 @@ import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Plus } from "lucide-react";
+import { Plus, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@/utils/priceCalculator";
+import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
 
 const Products = () => {
   const [isOpen, setIsOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [name, setName] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const { toast } = useToast();
@@ -68,6 +71,34 @@ const Products = () => {
     }
   };
 
+  const handleDelete = async () => {
+    if (!selectedProduct) return;
+
+    try {
+      const { error } = await supabase
+        .from("products")
+        .delete()
+        .eq("id", selectedProduct.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Sucesso",
+        description: "Produto excluído com sucesso",
+      });
+
+      setIsDeleteDialogOpen(false);
+      setSelectedProduct(null);
+      refetch();
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Erro ao excluir produto",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
@@ -83,13 +114,28 @@ const Products = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {products?.map((product) => (
             <Card key={product.id} className="p-6">
-              <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
-              <p className="text-muted-foreground">
-                Valor base: R$ {product.base_price.toFixed(2)}
-              </p>
-              <p className="text-muted-foreground">
-                Código: {product.product_code}
-              </p>
+              <div className="flex justify-between items-start">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
+                  <p className="text-muted-foreground">
+                    Valor base: R$ {product.base_price.toFixed(2)}
+                  </p>
+                  <p className="text-muted-foreground">
+                    Código: {product.product_code}
+                  </p>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="text-destructive hover:text-destructive hover:bg-destructive/10"
+                  onClick={() => {
+                    setSelectedProduct(product);
+                    setIsDeleteDialogOpen(true);
+                  }}
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
             </Card>
           ))}
         </div>
@@ -124,6 +170,13 @@ const Products = () => {
             </form>
           </DialogContent>
         </Dialog>
+
+        <DeleteProductDialog
+          open={isDeleteDialogOpen}
+          onOpenChange={setIsDeleteDialogOpen}
+          onConfirm={handleDelete}
+          productName={selectedProduct?.name || ""}
+        />
       </div>
     </div>
   );
