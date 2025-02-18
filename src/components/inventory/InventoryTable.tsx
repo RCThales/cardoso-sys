@@ -156,27 +156,29 @@ export const InventoryTable = () => {
                   <TableCell className="text-right">{item.rented_quantity}</TableCell>
                   <TableCell className="text-right">{item.total_quantity - item.rented_quantity}</TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedItem({ item, product })}
-                      className="w-[140px]"
-                    >
-                      <ArrowUpDown className="h-4 w-4 mr-2" />
-                      Ajustar Total
-                    </Button>
+                    <div className="flex flex-col space-y-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setSelectedItem({ item, product })}
+                        className="w-[140px]"
+                      >
+                        <ArrowUpDown className="h-4 w-4 mr-2" />
+                        Ajustar Total
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               );
             }
 
             return (
-              <TableRow key={productId} className="[&_td]:border-b-0">
+              <TableRow key={productId}>
                 <TableCell className="font-medium">{product.product_code}</TableCell>
                 <TableCell>
                   <div className="font-medium">{product.name}</div>
                   <div className="mt-2 space-y-1">
-                    {items.map(item => (
+                    {items.map(item => item.size && (
                       <div key={item.id} className="flex justify-between text-sm text-muted-foreground">
                         <span>{item.size}</span>
                         <span className="ml-4">{item.total_quantity - item.rented_quantity} disponíveis</span>
@@ -194,8 +196,8 @@ export const InventoryTable = () => {
                   {items.reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  <div className="space-y-2">
-                    {items.map(item => (
+                  <div className="flex flex-col space-y-2">
+                    {items.map(item => item.size && (
                       <Button
                         key={item.id}
                         variant="outline"

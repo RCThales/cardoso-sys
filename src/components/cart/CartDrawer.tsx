@@ -92,7 +92,7 @@ export const CartDrawer = () => {
                 <div className="flex justify-between items-center">
                   <span className="font-medium">
                     {product?.name}
-                    {item.size && <span className="ml-2 text-muted-foreground">({item.size})</span>}
+                    {item.size && <span className="text-muted-foreground ml-2">({item.size})</span>}
                   </span>
                   <Button
                     variant="ghost"
