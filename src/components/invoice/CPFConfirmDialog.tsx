@@ -13,6 +13,7 @@ interface CPFConfirmDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: () => void;
+  onCancel: () => void;
   clientName: string;
 }
 
@@ -20,6 +21,7 @@ export const CPFConfirmDialog = ({
   open,
   onOpenChange,
   onConfirm,
+  onCancel,
   clientName,
 }: CPFConfirmDialogProps) => {
   return (
@@ -33,7 +35,7 @@ export const CPFConfirmDialog = ({
           </DialogDescription>
         </DialogHeader>
         <DialogFooter className="flex gap-2 mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant="outline" onClick={onCancel}>
             Cancelar
           </Button>
           <Button onClick={onConfirm}>Confirmar e Prosseguir</Button>

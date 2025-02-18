@@ -8,6 +8,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CPFConfirmDialog } from "../CPFConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
+import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
+import { AlertTriangle } from "lucide-react";
 
 interface PersonalInfoProps {
   clientData: ClientData;
@@ -24,6 +26,8 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
   const [showCPFConfirm, setShowCPFConfirm] = useState(false);
   const [existingClientName, setExistingClientName] = useState("");
   const [confirmedCPF, setConfirmedCPF] = useState<string | null>(null);
+  const [showLoyaltyAlert, setShowLoyaltyAlert] = useState(false);
+  const [orderCount, setOrderCount] = useState(0);
 
   const handleBlur = async (field: string) => {
     setTouchedFields(prev => ({
@@ -37,13 +41,12 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
   };
 
   const checkExistingCPF = async (cpf: string) => {
-    if (confirmedCPF === cpf) return; // Se o CPF já foi confirmado, não verifica novamente
+    if (confirmedCPF === cpf) return;
 
     const { data, error } = await supabase
       .from("invoices")
-      .select("client_name")
-      .eq("client_cpf", cpf)
-      .limit(1);
+      .select("client_name, id")
+      .eq("client_cpf", cpf);
 
     if (error) {
       toast({
@@ -56,7 +59,13 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
 
     if (data && data.length > 0) {
       setExistingClientName(data[0].client_name);
+      setOrderCount(data.length);
       setShowCPFConfirm(true);
+
+      // Verifica se o cliente atingiu múltiplos de 10 pedidos
+      if (data.length % 10 === 0) {
+        setShowLoyaltyAlert(true);
+      }
     }
   };
 
@@ -72,7 +81,13 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
 
   const handleCPFConfirm = () => {
     setConfirmedCPF(clientData.cpf);
+    onClientDataChange({ ...clientData, name: existingClientName });
     setShowCPFConfirm(false);
+  };
+
+  const handleCPFCancel = () => {
+    setShowCPFConfirm(false);
+    onClientDataChange({ ...clientData, cpf: "" });
   };
 
   const isCPFValid = validateCPF(clientData.cpf);
@@ -138,8 +153,23 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
         open={showCPFConfirm}
         onOpenChange={setShowCPFConfirm}
         onConfirm={handleCPFConfirm}
+        onCancel={handleCPFCancel}
         clientName={existingClientName}
       />
+
+      <AlertDialog open={showLoyaltyAlert} onOpenChange={setShowLoyaltyAlert}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <AlertTriangle className="h-5 w-5 text-yellow-500" />
+              Cliente Fiel!
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              Este cliente completou {orderCount} pedidos! Considere oferecer um desconto especial como agradecimento pela fidelidade.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
