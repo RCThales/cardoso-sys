@@ -40,19 +40,19 @@ export const InventoryAdjustModal = ({
         </DialogHeader>
         <div className="space-y-6 py-4">
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="min-w-[120px]">
+            <div className="w-[120px]">
               <span className="text-muted-foreground">Código:</span>
               <p className="font-medium truncate">{product?.product_code}</p>
             </div>
-            <div className="min-w-[120px]">
+            <div className="w-[120px]">
               <span className="text-muted-foreground">Quantidade Total:</span>
               <p className="font-medium truncate">{item.total_quantity}</p>
             </div>
-            <div className="min-w-[120px]">
+            <div className="w-[120px]">
               <span className="text-muted-foreground">Quantidade Alugada:</span>
               <p className="font-medium truncate">{item.rented_quantity}</p>
             </div>
-            <div className="min-w-[120px]">
+            <div className="w-[120px]">
               <span className="text-muted-foreground">Quantidade Disponível:</span>
               <p className="font-medium truncate">{availableQuantity}</p>
             </div>
@@ -69,14 +69,13 @@ export const InventoryAdjustModal = ({
               value={adjustQuantity}
               onChange={(e) => setAdjustQuantity(Math.max(1, parseInt(e.target.value) || 1))}
               className="w-full"
-              style={{ maxWidth: "100%" }}
             />
           </div>
 
           <div className="flex justify-between gap-4">
             <Button
               variant="outline"
-              className="flex-1"
+              className="w-[calc(50%-0.5rem)]"
               onClick={() => onUpdateQuantity(item.id, -1, adjustQuantity)}
               disabled={isUpdating || item.total_quantity <= item.rented_quantity}
             >
@@ -85,7 +84,7 @@ export const InventoryAdjustModal = ({
             </Button>
             <Button
               variant="outline"
-              className="flex-1"
+              className="w-[calc(50%-0.5rem)]"
               onClick={() => onUpdateQuantity(item.id, 1, adjustQuantity)}
               disabled={isUpdating}
             >

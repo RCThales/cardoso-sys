@@ -1,7 +1,7 @@
 
-import { Button } from "../ui/button";
 import { TableCell, TableRow } from "../ui/table";
-import { Pencil } from "lucide-react";
+import { Button } from "../ui/button";
+import { ArrowUpDown } from "lucide-react";
 
 interface InventoryTableRowProps {
   item: {
@@ -11,8 +11,8 @@ interface InventoryTableRowProps {
     product_id: string;
   };
   product: {
-    product_code: string;
     name: string;
+    product_code: string;
   } | undefined;
   onAdjustClick: () => void;
 }
@@ -36,10 +36,10 @@ export const InventoryTableRow = ({
           variant="outline"
           size="sm"
           onClick={onAdjustClick}
-          className="ml-auto"
+          className="w-[180px]"
         >
-          <Pencil className="h-4 w-4 mr-2" />
-          Ajustar Quantidade
+          <ArrowUpDown className="h-4 w-4 mr-2" />
+          Ajustar Quantidade Total
         </Button>
       </TableCell>
     </TableRow>
