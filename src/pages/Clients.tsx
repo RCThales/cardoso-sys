@@ -1,13 +1,20 @@
 
 import { useState } from "react";
 import { Navbar } from "@/components/Navbar";
-import { ClientsTable } from "@/components/clients/ClientsTable";
-import { ClientsSearch } from "@/components/clients/ClientsSearch";
-import { ClientsFilters } from "@/components/clients/ClientsFilters";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCPF } from "@/utils/formatters";
 
-export interface ClientSummary {
+interface ClientSummary {
   cpf: string;
   name: string;
   totalSpent: number;
@@ -17,10 +24,9 @@ export interface ClientSummary {
 
 const Clients = () => {
   const [search, setSearch] = useState("");
-  const [orderBy, setOrderBy] = useState<"totalSpent" | "orderCount">("totalSpent");
 
   const { data: clients, isLoading } = useQuery({
-    queryKey: ["clients", search, orderBy],
+    queryKey: ["clients", search],
     queryFn: async () => {
       const { data: invoices } = await supabase
         .from("invoices")
@@ -63,11 +69,7 @@ const Clients = () => {
         );
       }
 
-      return clientList.sort((a, b) => 
-        orderBy === "totalSpent" 
-          ? b.totalSpent - a.totalSpent
-          : b.orderCount - a.orderCount
-      );
+      return clientList.sort((a, b) => b.totalSpent - a.totalSpent);
     }
   });
 
@@ -80,12 +82,49 @@ const Clients = () => {
             <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
           </div>
           
-          <div className="flex flex-col md:flex-row gap-4">
-            <ClientsSearch value={search} onChange={setSearch} />
-            <ClientsFilters orderBy={orderBy} onOrderByChange={setOrderBy} />
-          </div>
+          <Input
+            placeholder="Buscar por nome ou CPF..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="max-w-sm"
+          />
 
-          <ClientsTable clients={clients || []} isLoading={isLoading} />
+          <div className="border rounded-lg">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>CPF</TableHead>
+                  <TableHead className="text-right">Total Gasto</TableHead>
+                  <TableHead className="text-right">Quantidade de Pedidos</TableHead>
+                  <TableHead>Último Pedido</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center">
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  clients?.map((client) => (
+                    <TableRow key={client.cpf}>
+                      <TableCell className="font-medium">{client.name}</TableCell>
+                      <TableCell>{formatCPF(client.cpf)}</TableCell>
+                      <TableCell className="text-right">
+                        R$ {client.totalSpent.toFixed(2)}
+                      </TableCell>
+                      <TableCell className="text-right">{client.orderCount}</TableCell>
+                      <TableCell>
+                        {new Date(client.lastOrderDate).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </div>
       </div>
     </div>

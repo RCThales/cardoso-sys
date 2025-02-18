@@ -1,7 +1,6 @@
 
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { LogOut } from "lucide-react";
 
 export function Navbar() {
   return (
@@ -9,9 +8,11 @@ export function Navbar() {
       <Link to="/" className="text-lg font-semibold">
         CARDOSO SYS
       </Link>
-      <Button variant="ghost" size="icon">
-        <LogOut className="h-5 w-5" />
-      </Button>
+      <div className="flex items-center gap-4">
+        <Link to="/clients">
+          <Button variant="ghost">Clientes</Button>
+        </Link>
+      </div>
     </div>
   );
 }

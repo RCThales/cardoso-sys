@@ -25,7 +25,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "./ui/dialog";
-import { Info, ShoppingCart } from "lucide-react";
+import { Info, ShoppingCart, LogOut } from "lucide-react";
 import { Input } from "./ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -158,7 +158,10 @@ export const RentalCalculator = () => {
 
   return (
     <div className="relative">
-      <div className="fixed top-2 right-4 z-50">
+      <div className="fixed top-2 right-4 z-50 flex items-center gap-2">
+        <Button variant="ghost" size="icon" onClick={() => supabase.auth.signOut()}>
+          <LogOut className="h-5 w-5" />
+        </Button>
         <CartDrawer />
       </div>
       <Card className="w-full max-w-lg mx-auto p-8 shadow-lg animate-fade-in">
