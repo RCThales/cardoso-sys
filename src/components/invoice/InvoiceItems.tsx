@@ -27,13 +27,14 @@ interface InvoiceItemsProps {
 
 export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsProps) => {
   const handleProductChange = (index: number, productId: string) => {
+    const selectedProduct = PRODUCTS.find(p => p.id === productId);
     const item = items[index];
     const rentalDays = Number(item.rentalDays) || 1;
     const quantity = Number(item.quantity) || 1;
     const total = calculateTotalPrice(rentalDays, productId) * quantity;
     
     onUpdateItem(index, "productId", productId);
-    onUpdateItem(index, "description", PRODUCTS.find(p => p.id === productId)?.name || "");
+    onUpdateItem(index, "description", selectedProduct?.name || "");
     onUpdateItem(index, "price", total.toString());
     onUpdateItem(index, "total", total.toString());
   };
@@ -69,10 +70,6 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
     return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
   };
 
-  const getProductName = (productId: string) => {
-    return PRODUCTS.find(p => p.id === productId)?.name || "Selecione um produto";
-  };
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
@@ -87,12 +84,12 @@ export const InvoiceItems = ({ items, onAddItem, onUpdateItem }: InvoiceItemsPro
               Produto
             </label>
             <Select
-              value={item.productId}
+              value={item.productId || ""}
               onValueChange={(value) => handleProductChange(index, value)}
             >
               <SelectTrigger>
-                <SelectValue>
-                  {getProductName(item.productId)}
+                <SelectValue placeholder="Selecione um produto">
+                  {PRODUCTS.find(p => p.id === item.productId)?.name || "Selecione um produto"}
                 </SelectValue>
               </SelectTrigger>
               <SelectContent>

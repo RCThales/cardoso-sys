@@ -71,7 +71,6 @@ export const PreviewInvoiceDialog = ({
                 <TableRow>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Quantidade</TableHead>
-                  <TableHead>Preço</TableHead>
                   <TableHead className="text-right">Total</TableHead>
                 </TableRow>
               </TableHeader>
@@ -80,7 +79,6 @@ export const PreviewInvoiceDialog = ({
                   <TableRow key={index}>
                     <TableCell>{item.description}</TableCell>
                     <TableCell>{item.quantity}</TableCell>
-                    <TableCell>R$ {formatCurrency(item.price)}</TableCell>
                     <TableCell className="text-right">R$ {formatCurrency(item.total)}</TableCell>
                   </TableRow>
                 ))}
