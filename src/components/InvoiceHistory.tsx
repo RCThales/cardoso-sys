@@ -1,333 +1,153 @@
 import { useEffect, useState } from "react";
-import { Card } from "./ui/card";
-import { Button } from "./ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { LoaderCircle, Search } from "lucide-react";
-import { useToast } from "./ui/use-toast";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
-import { Input } from "./ui/input";
-import { format } from "date-fns";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "./ui/select";
-import { Invoice } from "./invoice/types";
-import { DeleteInvoiceDialog } from "./invoice/DeleteInvoiceDialog";
-import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
 import { InvoiceTable } from "./invoice/InvoiceTable";
-
-declare module "jspdf" {
-  interface jsPDF {
-    autoTable: (options: any) => void;
-  }
-}
+import { useToast } from "./ui/use-toast";
+import { Invoice, convertDatabaseInvoice } from "./invoice/types";
+import { formatCurrency } from "@/utils/formatters";
+import { saveAs } from 'file-saver';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+import { useNavigate } from "react-router-dom";
 
 export const InvoiceHistory = () => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
-  const [deleteInvoiceId, setDeleteInvoiceId] = useState<number | null>(null);
-  const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchInvoices();
-  }, [sortOrder]);
+  }, []);
 
   const fetchInvoices = async () => {
-    setLoading(true);
-    try {
-      const { data } = await supabase
-        .from("invoices")
-        .select("*")
-        .order("invoice_date", { ascending: sortOrder === "asc" });
-
-      if (data) {
-        const formattedInvoices: Invoice[] = data.map((invoice) => ({
-          ...invoice,
-          items: Array.isArray(invoice.items) ? (invoice.items as any[]).map(item => ({
-            description: String(item.description || ''),
-            quantity: parseFloat(item.quantity) || 0,
-            price: parseFloat(item.price) || 0,
-            total: parseFloat(item.total) || 0,
-            productId: item.productId ? String(item.productId) : '',
-            rentalDays: item.rentalDays ? parseFloat(item.rentalDays) : 1
-          })) : [],
-          created_at: invoice.created_at || new Date().toISOString(),
-          total: parseFloat(String(invoice.total)) || 0,
-          is_paid: !!invoice.is_paid
-        }));
-        setInvoices(formattedInvoices);
-      }
-    } catch (error) {
-      toast({
-        title: "Erro",
-        description: "Erro ao carregar faturas",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteInvoiceId) return;
-
-    const { error } = await supabase
+    const { data: invoicesData, error } = await supabase
       .from("invoices")
-      .delete()
-      .eq("id", deleteInvoiceId);
+      .select("*")
+      .order("created_at", { ascending: false });
 
     if (error) {
       toast({
-        title: "Erro",
-        description: "Erro ao deletar fatura",
+        title: "Erro ao carregar faturas",
+        description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Sucesso",
-        description: "Fatura deletada com sucesso",
-      });
-      fetchInvoices();
+      return;
     }
-    setDeleteInvoiceId(null);
+
+    // Convert database records to Invoice type
+    const convertedInvoices = invoicesData.map(convertDatabaseInvoice);
+    setInvoices(convertedInvoices);
   };
 
-  const handleTogglePaid = async (invoiceId: number, currentStatus: boolean) => {
+  const handleTogglePaid = async (invoiceId: number, currentStatus: boolean, method?: string) => {
     const { error } = await supabase
       .from("invoices")
-      .update({ is_paid: !currentStatus })
+      .update({ 
+        is_paid: !currentStatus,
+        payment_method: method 
+      })
       .eq("id", invoiceId);
 
     if (error) {
       toast({
-        title: "Erro",
-        description: "Erro ao atualizar status da fatura",
+        title: "Erro ao atualizar status",
+        description: error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Sucesso",
-        description: "Status da fatura atualizado com sucesso",
-      });
-      fetchInvoices();
+      return;
     }
+
+    await fetchInvoices();
   };
 
   const handleToggleReturned = async (invoiceId: number, currentStatus: boolean) => {
-    try {
-      const invoice = invoices.find(inv => inv.id === invoiceId);
-      if (!invoice) return;
+    const { error } = await supabase
+      .from("invoices")
+      .update({ is_returned: !currentStatus })
+      .eq("id", invoiceId);
 
-      const { error: updateError } = await supabase
-        .from("invoices")
-        .update({ is_returned: !currentStatus })
-        .eq("id", invoiceId);
-
-      if (updateError) throw updateError;
-
-      if (!currentStatus) {
-        for (const item of invoice.items) {
-          if (item.productId === 'delivery-fee') continue;
-          
-          if (typeof item.productId === 'string') {
-            const { data: inventoryItems, error: inventoryError } = await supabase
-              .from("inventory")
-              .select("rented_quantity")
-              .eq("product_id", item.productId);
-
-            if (inventoryError) throw inventoryError;
-            
-            if (inventoryItems && inventoryItems.length > 0) {
-              const inventoryItem = inventoryItems[0];
-              const newQuantity = Math.max(0, inventoryItem.rented_quantity - item.quantity);
-              
-              const { error: updateInventoryError } = await supabase
-                .from("inventory")
-                .update({ rented_quantity: newQuantity })
-                .eq("product_id", item.productId);
-
-              if (updateInventoryError) throw updateInventoryError;
-            }
-          }
-        }
-      }
-
+    if (error) {
       toast({
-        title: "Sucesso",
-        description: "Status de devolução atualizado com sucesso",
-      });
-      
-      fetchInvoices();
-    } catch (error) {
-      console.error('Error updating return status:', error);
-      toast({
-        title: "Erro",
-        description: "Erro ao atualizar status de devolução",
+        title: "Erro ao atualizar status",
+        description: error.message,
         variant: "destructive",
       });
+      return;
     }
+
+    await fetchInvoices();
   };
 
-  const formatCurrency = (value: number | string | null | undefined): string => {
-    if (value === null || value === undefined) return "0.00";
-    const numValue = typeof value === "string" ? parseFloat(value) : value;
-    return isNaN(numValue) ? "0.00" : numValue.toFixed(2);
-  };
-
-  const generatePDF = (invoice: Invoice) => {
+  const handleDownload = (invoice: Invoice) => {
     const doc = new jsPDF();
 
-    const img = new Image();
-    img.src = "/lovable-uploads/e9185795-25bc-4086-a973-5a5ff9e3c108.png";
-    doc.addImage(img, "PNG", 15, 15, 30, 10);
+    // Cabeçalho
+    doc.text(`Fatura #${invoice.invoice_number}`, 10, 10);
 
-    doc.setFontSize(10);
-    doc.text("Cardoso Aluguel de Muletas e Produtos Ortopédicos", 15, 35);
-    doc.text("CNPJ: 57.684.914/0001-36", 15, 40);
-    doc.text(
-      "Quadra 207, Lote 4, Residencial Imprensa IV, Águas Claras",
-      15,
-      45
-    );
-    doc.text("Brasília Distrito Federal 71926250", 15, 50);
-    doc.text("cardosoalugueldemuletas@gmail.com", 15, 55);
+    // Informações do Cliente
+    doc.text(`Cliente: ${invoice.client_name}`, 10, 20);
+    doc.text(`CPF: ${invoice.client_cpf}`, 10, 25);
+    doc.text(`Telefone: ${invoice.client_phone}`, 10, 30);
+    doc.text(`Endereço: ${invoice.client_address}, ${invoice.client_address_number} ${invoice.client_address_complement} - ${invoice.client_city}, ${invoice.client_state} - ${invoice.client_postal_code}`, 10, 35);
 
-    doc.setFontSize(20);
-    doc.text("FATURA", 150, 30);
-    doc.setFontSize(12);
-    doc.text(`Nº ${invoice.invoice_number}`, 150, 40);
+    // Tabela de Itens
+    const columns = ["Descrição", "Quantidade", "Preço Unitário", "Total"];
+    const rows = invoice.items.map(item => [item.description, item.quantity, formatCurrency(item.price), formatCurrency(item.total)]);
 
-    doc.setFontSize(10);
-    doc.text("PARA:", 15, 70);
-    doc.text(invoice.client_name, 15, 75);
-    doc.text(`CPF: ${invoice.client_cpf}`, 15, 80);
-    doc.text(`Tel: ${invoice.client_phone}`, 15, 85);
-    doc.text(
-      `${invoice.client_address}${
-        invoice.client_address_number
-          ? `, ${invoice.client_address_number}`
-          : ""
-      }`,
-      15,
-      90
-    );
-    if (invoice.client_address_complement) {
-      doc.text(invoice.client_address_complement, 15, 95);
-    }
-    doc.text(`${invoice.client_city} - ${invoice.client_state}`, 15, 100);
-    doc.text(invoice.client_postal_code, 15, 105);
-
-    doc.text(
-      `Data da Fatura: ${format(new Date(invoice.invoice_date), "dd/MM/yyyy")}`,
-      150,
-      70
-    );
-    doc.text(
-      `Vencimento: ${format(new Date(invoice.due_date), "dd/MM/yyyy")}`,
-      150,
-      75
-    );
-
-    const tableData = invoice.items.map((item) => [
-      item.description,
-      item.quantity,
-      `R$ ${formatCurrency(item.total)}`
-    ]);
-
-    doc.autoTable({
-      startY: 115,
-      head: [["Descrição", "Quantidade", "Total"]],
-      body: tableData,
+    autoTable(doc, {
+      head: [columns],
+      body: rows,
+      startY: 40,
     });
 
-    const finalY = (doc as any).lastAutoTable.finalY + 10;
-    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 150, finalY);
+    const finalY = (doc as any).lastAutoTable.finalY;
 
-    doc.setFontSize(8);
-    doc.text(
-      "Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços,",
-      15,
-      270
-    );
-    doc.text("conforme lei complementar 116/2003.", 15, 275);
+    // Totais
+    doc.text(`Total: R$ ${formatCurrency(invoice.total)}`, 10, finalY + 10);
+    doc.text(`Data da Fatura: ${new Date(invoice.invoice_date).toLocaleDateString()}`, 10, finalY + 15);
+    doc.text(`Data de Vencimento: ${new Date(invoice.due_date).toLocaleDateString()}`, 10, finalY + 20);
 
-    doc.save(`fatura-${invoice.invoice_number}.pdf`);
+    doc.save(`fatura_${invoice.invoice_number}.pdf`);
   };
 
-  const filteredInvoices = invoices.filter(
-    (invoice) =>
-      invoice.client_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handlePreview = (invoice: Invoice) => {
+    navigate(`/invoice-preview/${invoice.id}`);
+  };
 
-  if (loading) {
-    return (
-      <Card className="p-6 flex justify-center items-center h-64">
-        <LoaderCircle className="w-8 h-8 animate-spin" />
-      </Card>
-    );
-  }
+  const handleDelete = async (invoiceId: number) => {
+    const confirmDelete = window.confirm("Tem certeza que deseja excluir esta fatura?");
+    if (!confirmDelete) return;
+
+    const { error } = await supabase
+      .from("invoices")
+      .delete()
+      .eq("id", invoiceId);
+
+    if (error) {
+      toast({
+        title: "Erro ao excluir fatura",
+        description: error.message,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Fatura excluída",
+      description: "Fatura excluída com sucesso.",
+    });
+
+    await fetchInvoices();
+  };
 
   return (
-    <Card className="p-6">
-      <div className="mb-4 space-y-4">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por nome ou número da fatura"
-                className="pl-8"
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-              />
-            </div>
-          </div>
-          <Select
-            value={sortOrder}
-            onValueChange={(value: "asc" | "desc") => setSortOrder(value)}
-          >
-            <SelectTrigger className="w-[220px]">
-              <SelectValue placeholder="Ordenar por data" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="asc">Data (mais antiga primeiro)</SelectItem>
-              <SelectItem value="desc">Data (mais recente primeiro)</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-
-      <InvoiceTable
-        invoices={filteredInvoices}
-        onTogglePaid={handleTogglePaid}
-        onToggleReturned={handleToggleReturned}
-        onDownload={generatePDF}
-        onPreview={setPreviewInvoice}
-        onDelete={setDeleteInvoiceId}
-        formatCurrency={formatCurrency}
-      />
-
-      <DeleteInvoiceDialog
-        open={!!deleteInvoiceId}
-        onOpenChange={() => setDeleteInvoiceId(null)}
-        onConfirm={handleDelete}
-      />
-
-      <PreviewInvoiceDialog
-        invoice={previewInvoice}
-        open={!!previewInvoice}
-        onOpenChange={() => setPreviewInvoice(null)}
-        onDownload={generatePDF}
-        formatCurrency={formatCurrency}
-      />
-    </Card>
+    <InvoiceTable
+      invoices={invoices}
+      onTogglePaid={handleTogglePaid}
+      onToggleReturned={handleToggleReturned}
+      onDownload={handleDownload}
+      onPreview={handlePreview}
+      onDelete={handleDelete}
+      formatCurrency={formatCurrency}
+    />
   );
 };

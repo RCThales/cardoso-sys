@@ -35,4 +35,19 @@ export interface Invoice {
   due_date: string;
   payment_method?: string;
   extensions?: InvoiceExtension[];
+  user_id?: string;
 }
+
+// Helper type for Supabase JSON conversion
+export type DatabaseInvoice = Omit<Invoice, 'extensions'> & {
+  extensions: InvoiceExtension[] | null;
+};
+
+// Converter function
+export const convertDatabaseInvoice = (dbInvoice: any): Invoice => {
+  return {
+    ...dbInvoice,
+    extensions: dbInvoice.extensions ? JSON.parse(JSON.stringify(dbInvoice.extensions)) : undefined,
+    items: Array.isArray(dbInvoice.items) ? dbInvoice.items : JSON.parse(dbInvoice.items || '[]'),
+  };
+};
