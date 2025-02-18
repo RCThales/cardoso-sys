@@ -33,16 +33,17 @@ export const InvoiceGenerator = () => {
     
     // Adiciona os itens do carrinho
     cartItems.forEach((cartItem) => {
+      const product = PRODUCTS.find(p => p.id === cartItem.productId);
       addItem();
       const lastIndex = items.length;
-      updateItem(lastIndex, "description", PRODUCTS.find(p => p.id === cartItem.productId)?.name || "");
+      updateItem(lastIndex, "productId", cartItem.productId);
+      updateItem(lastIndex, "description", product?.name || "");
       updateItem(lastIndex, "quantity", cartItem.quantity.toString());
       updateItem(lastIndex, "rentalDays", cartItem.days.toString());
-      updateItem(lastIndex, "productId", cartItem.productId);
       updateItem(lastIndex, "price", (cartItem.total / cartItem.quantity).toString());
       updateItem(lastIndex, "total", cartItem.total.toString());
     });
-  }, [cartItems]);
+  }, [cartItems, addItem, items.length, removeItem, updateItem]);
 
   const formatCurrency = (value: number | string | null | undefined): string => {
     if (value === null || value === undefined) return "0.00";
