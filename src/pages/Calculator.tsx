@@ -14,6 +14,7 @@ import {
   calculateTotalPrice,
   type Product,
   type ProductConstants,
+  type ProductSize,
 } from "@/utils/priceCalculator";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
