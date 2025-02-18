@@ -135,14 +135,22 @@ export const InvoiceHistory = () => {
       if (!currentStatus) {
         for (const item of invoice.items) {
           if (typeof item.productId === 'string') {
-            const { error: inventoryError } = await supabase
+            const { data: inventoryItem } = await supabase
               .from("inventory")
-              .update({
-                rented_quantity: supabase.sql`rented_quantity - ${item.quantity}`,
-              })
-              .eq("product_id", item.productId);
+              .select("rented_quantity")
+              .eq("product_id", item.productId)
+              .single();
 
-            if (inventoryError) throw inventoryError;
+            if (inventoryItem) {
+              const newQuantity = Math.max(0, inventoryItem.rented_quantity - item.quantity);
+              
+              const { error: inventoryError } = await supabase
+                .from("inventory")
+                .update({ rented_quantity: newQuantity })
+                .eq("product_id", item.productId);
+
+              if (inventoryError) throw inventoryError;
+            }
           }
         }
       }

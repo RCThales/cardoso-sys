@@ -17,6 +17,7 @@ export interface Invoice {
   client_phone: string;
   total: number;
   is_paid: boolean;
+  is_returned: boolean;
   client_address: string;
   client_address_number: string;
   client_address_complement: string;

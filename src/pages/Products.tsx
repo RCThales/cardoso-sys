@@ -9,18 +9,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
-
-interface Product {
-  id: string;
-  name: string;
-  base_price: number;
-  constants: {
-    CONSTANTE_VALOR_ALUGUEL_A: number;
-    CONSTANTE_VALOR_ALUGUEL_B: number;
-    REGRESSION_DISCOUNT: number;
-    SPECIAL_RATES: Record<number, number>;
-  };
-}
+import type { Product } from "@/utils/priceCalculator";
 
 const Products = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -33,17 +22,30 @@ const Products = () => {
     queryFn: async () => {
       const { data, error } = await supabase.from("products").select("*");
       if (error) throw error;
-      return data as Product[];
+      return data as unknown as Product[];
     },
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      const productCode = '#' + Math.random().toString(36).substring(2, 8).toUpperCase();
       const { error } = await supabase.from("products").insert({
         id: name.toLowerCase().replace(/\s+/g, "-"),
         name,
         base_price: parseFloat(basePrice),
+        product_code: productCode,
+        constants: {
+          CONSTANTE_VALOR_ALUGUEL_A: 3.72,
+          CONSTANTE_VALOR_ALUGUEL_B: 1.89,
+          REGRESSION_DISCOUNT: 0.0608,
+          SPECIAL_RATES: {
+            "7": 30,
+            "10": 40,
+            "15": 50,
+            "30": 75
+          }
+        }
       });
 
       if (error) throw error;
@@ -84,6 +86,9 @@ const Products = () => {
               <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
               <p className="text-muted-foreground">
                 Valor base: R$ {product.base_price.toFixed(2)}
+              </p>
+              <p className="text-muted-foreground">
+                Código: {product.product_code}
               </p>
             </Card>
           ))}

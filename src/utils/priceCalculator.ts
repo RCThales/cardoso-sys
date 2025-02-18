@@ -13,6 +13,7 @@ export interface Product {
   name: string;
   base_price: number;
   constants: ProductConstants;
+  product_code: string;
 }
 
 export async function fetchProducts(): Promise<Product[]> {
