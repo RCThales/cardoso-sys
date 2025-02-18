@@ -187,13 +187,13 @@ export const InventoryTable = () => {
                   </div>
                 </TableCell>
                 <TableCell className="text-right">
-                  {items.reduce((sum, item) => sum + item.total_quantity, 0)}
+                  {items.filter(item => item.size).reduce((sum, item) => sum + item.total_quantity, 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {items.reduce((sum, item) => sum + item.rented_quantity, 0)}
+                  {items.filter(item => item.size).reduce((sum, item) => sum + item.rented_quantity, 0)}
                 </TableCell>
                 <TableCell className="text-right">
-                  {items.reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
+                  {items.filter(item => item.size).reduce((sum, item) => sum + (item.total_quantity - item.rented_quantity), 0)}
                 </TableCell>
                 <TableCell className="text-right">
                   <div className="flex flex-col space-y-2">
