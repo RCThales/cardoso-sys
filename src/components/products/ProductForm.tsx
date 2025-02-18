@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -203,10 +202,14 @@ export const ProductForm = ({
   const handleDragEnd = async (event) => {
     const { active, over } = event;
     
-    if (active.id !== over.id) {
-      const oldIndex = sizes.indexOf(active.id);
-      const newIndex = sizes.indexOf(over.id);
-      
+    if (!active || !over || active.id === over.id) {
+      return;
+    }
+    
+    const oldIndex = sizes.indexOf(active.id);
+    const newIndex = sizes.indexOf(over.id);
+    
+    if (oldIndex !== -1 && newIndex !== -1) {
       const newSizes = arrayMove(sizes, oldIndex, newIndex);
       setSizes(newSizes);
 
