@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -52,7 +51,7 @@ const Products = () => {
     setIsOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent, quantities: Record<string, number>) => {
     e.preventDefault();
     try {
       const sizeObjects = sizes.map(size => ({ size }));
@@ -77,14 +76,21 @@ const Products = () => {
             .upsert({
               product_id: selectedProduct.id,
               size,
-              total_quantity: 0,
+              total_quantity: quantities[size] || 0,
               rented_quantity: 0,
-            }, {
-              onConflict: 'product_id,size'
             });
 
           if (inventoryError) throw inventoryError;
         }
+
+        // Remover entradas de inventário sem tamanho
+        const { error: deleteError } = await supabase
+          .from("inventory")
+          .delete()
+          .eq("product_id", selectedProduct.id)
+          .is("size", null);
+
+        if (deleteError) throw deleteError;
 
         toast({
           title: "Sucesso",
@@ -123,7 +129,7 @@ const Products = () => {
             .insert({
               product_id: productId,
               size,
-              total_quantity: 0,
+              total_quantity: quantities[size] || 0,
               rented_quantity: 0,
             });
 

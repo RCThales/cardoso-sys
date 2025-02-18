@@ -7,7 +7,7 @@ import { X } from "lucide-react";
 import { Badge } from "../ui/badge";
 
 interface ProductFormProps {
-  onSubmit: (e: React.FormEvent) => Promise<void>;
+  onSubmit: (e: React.FormEvent, quantities: Record<string, number>) => Promise<void>;
   name: string;
   setName: (name: string) => void;
   basePrice: string;
@@ -28,20 +28,35 @@ export const ProductForm = ({
   setSizes,
 }: ProductFormProps) => {
   const [newSize, setNewSize] = useState("");
+  const [quantities, setQuantities] = useState<Record<string, number>>({});
 
   const handleAddSize = () => {
     if (newSize && !sizes.includes(newSize)) {
       setSizes([...sizes, newSize]);
+      setQuantities(prev => ({ ...prev, [newSize]: 0 }));
       setNewSize("");
     }
   };
 
   const handleRemoveSize = (sizeToRemove: string) => {
     setSizes(sizes.filter(size => size !== sizeToRemove));
+    const newQuantities = { ...quantities };
+    delete newQuantities[sizeToRemove];
+    setQuantities(newQuantities);
+  };
+
+  const handleQuantityChange = (size: string, value: string) => {
+    const quantity = Math.max(0, parseInt(value) || 0);
+    setQuantities(prev => ({ ...prev, [size]: quantity }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    onSubmit(e, quantities);
   };
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className="space-y-4">
       <div className="space-y-2">
         <label className="text-sm font-medium">Nome do Produto</label>
         <Input
@@ -73,18 +88,29 @@ export const ProductForm = ({
             Adicionar
           </Button>
         </div>
-        <div className="flex flex-wrap gap-2 mt-2">
+        <div className="space-y-2 mt-4">
           {sizes.map((size) => (
-            <Badge key={size} variant="secondary" className="px-2 py-1">
-              {size}
-              <button
-                type="button"
-                onClick={() => handleRemoveSize(size)}
-                className="ml-2 hover:text-destructive"
-              >
-                <X className="h-3 w-3" />
-              </button>
-            </Badge>
+            <div key={size} className="flex items-center gap-2">
+              <Badge variant="secondary" className="px-2 py-1 min-w-[60px]">
+                {size}
+                <button
+                  type="button"
+                  onClick={() => handleRemoveSize(size)}
+                  className="ml-2 hover:text-destructive"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </Badge>
+              <Input
+                type="number"
+                min="0"
+                value={quantities[size] || 0}
+                onChange={(e) => handleQuantityChange(size, e.target.value)}
+                placeholder="Quantidade"
+                className="w-32"
+              />
+              <span className="text-sm text-muted-foreground">unidades</span>
+            </div>
           ))}
         </div>
       </div>
