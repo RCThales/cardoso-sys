@@ -59,7 +59,7 @@ export const PreviewInvoiceDialog = ({
               <h3 className="font-semibold">Detalhes da Fatura</h3>
               <p>Nº: {invoice.invoice_number}</p>
               <p>Data: {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}</p>
-              <p>Vencimento: {format(parseISO(invoice.due_date), "dd/MM/yyyy")}</p>
+              <p>Data de Devolução: {format(parseISO(invoice.return_date || ''), "dd/MM/yyyy")}</p>
               <p>Status: {invoice.is_paid ? "Pago" : "Pendente"}</p>
               {invoice.is_paid && invoice.payment_method && (
                 <p>Forma de Pagamento: {invoice.payment_method}</p>

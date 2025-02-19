@@ -7,9 +7,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const InvoiceHistory = () => {
   const [search, setSearch] = useState("");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid" | "returned" | "not-returned">("all");
-  const [dateSortType, setDateSortType] = useState<"invoice" | "return">("invoice");
+  const [dateSortType, setDateSortType] = useState<"invoice" | "return">("return");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -47,7 +47,7 @@ const InvoiceHistory = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="desc">Mais recentes primeiro</SelectItem>
-                <SelectItem value="asc">Mais antigas primeiro</SelectItem>
+                <SelectItem value="asc">Mais próximas primeiro</SelectItem>
               </SelectContent>
             </Select>
 
