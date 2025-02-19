@@ -1,4 +1,3 @@
-
 import { RentalCalculator } from "@/components/RentalCalculator";
 import { Navbar } from "@/components/Navbar";
 import { useEffect, useState } from "react";
@@ -14,19 +13,22 @@ const Index = () => {
   useEffect(() => {
     const checkSession = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
-        
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+
         if (!session) {
           navigate("/auth");
           return;
         }
-        
+
         setIsLoading(false);
       } catch (error) {
         console.error("Erro ao verificar sessão:", error);
         toast({
           title: "Erro",
-          description: "Erro ao verificar sua sessão. Por favor, faça login novamente.",
+          description:
+            "Erro ao verificar sua sessão. Por favor, faça login novamente.",
           variant: "destructive",
         });
         navigate("/auth");
@@ -35,7 +37,9 @@ const Index = () => {
 
     checkSession();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       if (!session) {
         navigate("/auth");
       }

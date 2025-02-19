@@ -1,4 +1,3 @@
-
 import type { Product } from "@/utils/priceCalculator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,10 @@ import { useProductForm } from "./useProductForm";
 import { SizesSection } from "./SizesSection";
 
 interface ProductFormProps {
-  onSubmit: (e: React.FormEvent, quantities: Record<string, number>) => Promise<void>;
+  onSubmit: (
+    e: React.FormEvent,
+    quantities: Record<string, number>
+  ) => Promise<void>;
   name: string;
   setName: (name: string) => void;
   basePrice: string;
@@ -39,12 +41,12 @@ export const ProductForm = ({
     handleAddSize,
     handleRemoveSize,
     handleQuantityChange,
-    handleDragEnd
+    handleDragEnd,
   } = useProductForm({
     selectedProduct,
     sizes,
     setSizes,
-    initialQuantities
+    initialQuantities,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

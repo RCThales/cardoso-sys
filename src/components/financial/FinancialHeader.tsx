@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -21,12 +20,22 @@ interface FinancialHeaderProps {
   investmentDetails: Array<{ description: string; amount: number }>;
 }
 
-export const FinancialHeader = ({ monthName, summary, expenseDetails, investmentDetails }: FinancialHeaderProps) => {
+export const FinancialHeader = ({
+  monthName,
+  summary,
+  expenseDetails,
+  investmentDetails,
+}: FinancialHeaderProps) => {
   const navigate = useNavigate();
 
   const handleDownloadPDF = async () => {
     try {
-      const pdfBlob = await generateFinancialPDF(summary, monthName, expenseDetails, investmentDetails);
+      const pdfBlob = await generateFinancialPDF(
+        summary,
+        monthName,
+        expenseDetails,
+        investmentDetails
+      );
       const fileName = `relatorio-financeiro-${format(new Date(), "MMMM-yyyy", {
         locale: ptBR,
       })}.pdf`;
@@ -39,7 +48,11 @@ export const FinancialHeader = ({ monthName, summary, expenseDetails, investment
   return (
     <div className="flex flex-col gap-4 mb-8">
       <div className="flex items-center gap-4">
-        <Button variant="outline" size="icon" onClick={() => navigate("/financial")}>
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() => navigate("/financial")}
+        >
           <ArrowLeft className="h-4 w-4" />
         </Button>
         <div>
@@ -51,11 +64,7 @@ export const FinancialHeader = ({ monthName, summary, expenseDetails, investment
           </p>
         </div>
       </div>
-      <Button 
-        variant="outline" 
-        onClick={handleDownloadPDF}
-        className="w-fit"
-      >
+      <Button variant="outline" onClick={handleDownloadPDF} className="w-fit">
         <Download className="h-4 w-4 mr-2" />
         Baixar Relatório Completo
       </Button>

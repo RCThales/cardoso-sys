@@ -63,7 +63,6 @@ export const generateFinancialPDF = async (
     ["Receita Bruta", `R$ ${formatCurrency(summary.grossIncome)}`],
     ["Despesas", `R$ ${formatCurrency(summary.expenses)}`],
     ["Lucro Líquido", `R$ ${formatCurrency(summary.netProfit)}`],
-    ["Investimento Total", `R$ ${formatCurrency(summary.totalInvestment)}`],
     ["Ticket Médio", `R$ ${formatCurrency(summary.averageTicket)}`],
     ["Número de Faturas", summary.invoiceCount.toString()],
   ];
@@ -96,7 +95,7 @@ export const generateFinancialPDF = async (
   let currentY = (doc as any).lastAutoTable.finalY + 20;
 
   doc.setFontSize(14);
-  doc.text("Detalhamento das Despesas", 20, currentY);
+  doc.text("Detalhamento dos Gastos", 20, currentY);
   currentY += 10;
 
   autoTable(doc, {

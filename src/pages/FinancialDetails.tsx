@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { format, subMonths } from "date-fns";
@@ -31,12 +30,21 @@ const FinancialDetails = () => {
     invoiceCount: 0,
     averageTicket: 0,
   });
-  const [previousSummary, setPreviousSummary] = useState<FinancialSummary | null>(null);
-  const [investmentDetails, setInvestmentDetails] = useState<Array<{ name: string; amount: number }>>([]);
+  const [previousSummary, setPreviousSummary] =
+    useState<FinancialSummary | null>(null);
+  const [investmentDetails, setInvestmentDetails] = useState<
+    Array<{ name: string; amount: number }>
+  >([]);
 
-  const monthName = month 
-    ? format(new Date(parseInt(year || ""), parseInt(month) - 1, 1), "MMMM 'de' yyyy", { locale: ptBR }) 
+  const monthName = month
+    ? format(
+        new Date(parseInt(year || ""), parseInt(month) - 1, 1),
+        "MMMM 'de' yyyy",
+        { locale: ptBR }
+      )
     : "";
+
+  const TAXES_MEI = 81.9;
 
   const calculateExpenseDetails = (grossIncome: number) => [
     {
@@ -44,13 +52,15 @@ const FinancialDetails = () => {
       amount: grossIncome * 0.15,
     },
     {
-      description: "Desconto de impostos (5%)",
-      amount: grossIncome * 0.05,
+      description: "Desconto de impostos " + TAXES_MEI,
+      amount: TAXES_MEI,
     },
   ];
 
-  const getInvestmentDetails = (investments: Array<{ name: string; amount: number }>) => {
-    return investments.map(inv => ({
+  const getInvestmentDetails = (
+    investments: Array<{ name: string; amount: number }>
+  ) => {
+    return investments.map((inv) => ({
       description: inv.name,
       amount: Number(inv.amount),
     }));
@@ -72,21 +82,38 @@ const FinancialDetails = () => {
         .from("invoices")
         .select("*")
         .gte("invoice_date", currentDate.toISOString())
-        .lte("invoice_date", new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).toISOString());
+        .lte(
+          "invoice_date",
+          new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+            0
+          ).toISOString()
+        );
 
       const { data: previousInvoices } = await supabase
         .from("invoices")
         .select("*")
         .gte("invoice_date", previousDate.toISOString())
-        .lte("invoice_date", new Date(previousDate.getFullYear(), previousDate.getMonth() + 1, 0).toISOString());
+        .lte(
+          "invoice_date",
+          new Date(
+            previousDate.getFullYear(),
+            previousDate.getMonth() + 1,
+            0
+          ).toISOString()
+        );
 
-      const currentGrossIncome = currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
-      const previousGrossIncome = previousInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
-      
+      const currentGrossIncome =
+        currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+      const previousGrossIncome =
+        previousInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+
       const currentExpenses = currentGrossIncome * 0.2;
       const previousExpenses = previousGrossIncome * 0.2;
 
-      const totalInvestment = investments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
+      const totalInvestment =
+        investments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
 
       const currentSummary = {
         grossIncome: currentGrossIncome,
@@ -94,18 +121,27 @@ const FinancialDetails = () => {
         netProfit: currentGrossIncome - currentExpenses - totalInvestment,
         totalInvestment,
         invoiceCount: currentInvoices?.length || 0,
-        averageTicket: currentInvoices?.length ? currentGrossIncome / currentInvoices.length : 0,
+        averageTicket: currentInvoices?.length
+          ? currentGrossIncome / currentInvoices.length
+          : 0,
       };
 
       // Só define previousSummary se houver dados do mês anterior
-      setPreviousSummary(previousInvoices && previousInvoices.length > 0 ? {
-        grossIncome: previousGrossIncome,
-        expenses: previousExpenses,
-        netProfit: previousGrossIncome - previousExpenses - totalInvestment,
-        totalInvestment,
-        invoiceCount: previousInvoices.length,
-        averageTicket: previousInvoices.length ? previousGrossIncome / previousInvoices.length : 0,
-      } : null);
+      setPreviousSummary(
+        previousInvoices && previousInvoices.length > 0
+          ? {
+              grossIncome: previousGrossIncome,
+              expenses: previousExpenses,
+              netProfit:
+                previousGrossIncome - previousExpenses - totalInvestment,
+              totalInvestment,
+              invoiceCount: previousInvoices.length,
+              averageTicket: previousInvoices.length
+                ? previousGrossIncome / previousInvoices.length
+                : 0,
+            }
+          : null
+      );
 
       setSummary(currentSummary);
       setInvestmentDetails(investments || []);
@@ -118,8 +154,8 @@ const FinancialDetails = () => {
     <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container py-8">
-        <FinancialHeader 
-          monthName={monthName} 
+        <FinancialHeader
+          monthName={monthName}
           summary={summary}
           expenseDetails={calculateExpenseDetails(summary.grossIncome)}
           investmentDetails={getInvestmentDetails(investmentDetails)}

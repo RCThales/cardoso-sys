@@ -34,8 +34,14 @@ export const CartDrawer = () => {
     },
   });
 
-  const getAvailableQuantity = (productId: string) => {
-    const item = inventory?.find((i) => i.product_id === productId);
+  const getAvailableQuantity = (productId: string, size?: string) => {
+    const item = inventory?.find((i) => {
+      if (size) {
+        return i.product_id === productId && i.size === size;
+      } else {
+        return i.product_id === productId && i.size === null;
+      }
+    });
     return item ? item.total_quantity - item.rented_quantity : 0;
   };
 
@@ -43,7 +49,9 @@ export const CartDrawer = () => {
     item: (typeof items)[0],
     newQuantity: number
   ) => {
-    const availableQuantity = getAvailableQuantity(item.productId);
+    const availableQuantity = getAvailableQuantity(item.productId, item.size);
+
+    console.log(availableQuantity);
 
     if (newQuantity > availableQuantity) {
       toast({

@@ -17,20 +17,16 @@ import {
   SelectValue,
 } from "./ui/select";
 import { Button } from "./ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "./ui/dialog";
-import { Info, ShoppingCart, LogOut } from "lucide-react";
+
+import { useNavigate } from "react-router-dom";
+import { ShoppingCart, LogOut } from "lucide-react";
 import { Input } from "./ui/input";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/store/cartStore";
 import { useToast } from "./ui/use-toast";
 import { CartDrawer } from "./cart/CartDrawer";
+import { handleLogout } from "../utils/Logout";
 
 export const RentalCalculator = () => {
   const [days, setDays] = useState(1);
@@ -160,13 +156,15 @@ export const RentalCalculator = () => {
     return <div>Carregando...</div>;
   }
 
+  const navigate = useNavigate();
+
   return (
     <div className="relative">
       <div className="fixed top-2 right-4 z-50 flex items-center gap-2">
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => supabase.auth.signOut()}
+          onClick={() => handleLogout(navigate)}
         >
           <LogOut className="h-5 w-5" />
         </Button>
