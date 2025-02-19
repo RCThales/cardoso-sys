@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +9,6 @@ interface UseProductFormProps {
   selectedProduct: Product | null;
   sizes: string[];
   setSizes: (sizes: string[]) => void;
-  initialQuantity?: string;
   initialQuantities?: Record<string, number>;
 }
 
@@ -16,11 +16,9 @@ export const useProductForm = ({
   selectedProduct,
   sizes,
   setSizes,
-  initialQuantity,
   initialQuantities = {},
 }: UseProductFormProps) => {
   const [newSize, setNewSize] = useState("");
-  const [quantity, setQuantity] = useState(initialQuantity);
   const [quantities, setQuantities] = useState(initialQuantities);
   const { toast } = useToast();
 
@@ -54,6 +52,7 @@ export const useProductForm = ({
         setQuantities((prev) => ({ ...prev, [newSize]: 0 }));
         setNewSize("");
       } catch (error) {
+        console.error("Erro ao adicionar tamanho:", error);
         toast({
           title: "Erro",
           description: "Erro ao adicionar tamanho",
@@ -70,6 +69,14 @@ export const useProductForm = ({
           .filter((size) => size !== sizeToRemove)
           .map((size) => ({ size }));
 
+        const { error: inventoryError } = await supabase
+          .from("inventory")
+          .delete()
+          .eq("product_id", selectedProduct.id)
+          .eq("size", sizeToRemove);
+
+        if (inventoryError) throw inventoryError;
+
         const { error } = await supabase
           .from("products")
           .update({
@@ -78,14 +85,6 @@ export const useProductForm = ({
           .eq("id", selectedProduct.id);
 
         if (error) throw error;
-
-        const { error: inventoryError } = await supabase
-          .from("inventory")
-          .delete()
-          .eq("product_id", selectedProduct.id)
-          .eq("size", sizeToRemove);
-
-        if (inventoryError) throw inventoryError;
       }
 
       setSizes(sizes.filter((size) => size !== sizeToRemove));
@@ -93,6 +92,7 @@ export const useProductForm = ({
       delete newQuantities[sizeToRemove];
       setQuantities(newQuantities);
     } catch (error) {
+      console.error("Erro ao remover tamanho:", error);
       toast({
         title: "Erro",
         description: "Erro ao remover tamanho",
@@ -106,10 +106,7 @@ export const useProductForm = ({
     setQuantities((prev) => ({ ...prev, [size]: quantity }));
   };
 
-  const handleDragEnd = async (event: {
-    active: { id: string };
-    over: { id: string };
-  }) => {
+  const handleDragEnd = async (event: { active: { id: string }; over: { id: string } }) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {
@@ -130,6 +127,7 @@ export const useProductForm = ({
 
           if (error) throw error;
         } catch (error) {
+          console.error("Erro ao atualizar ordem:", error);
           toast({
             title: "Erro",
             description: "Erro ao atualizar ordem dos tamanhos",
@@ -143,8 +141,6 @@ export const useProductForm = ({
   return {
     newSize,
     setNewSize,
-    setQuantity,
-    quantity,
     quantities,
     handleAddSize,
     handleRemoveSize,

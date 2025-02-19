@@ -14,16 +14,20 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCPF } from "@/utils/formatters";
 import type { ClientSummary } from "@/types/client";
+import { ClientDetailsDialog } from "@/components/clients/ClientDetailsDialog";
+import { Button } from "@/components/ui/button";
+import { Eye } from "lucide-react";
 
 const Clients = () => {
   const [search, setSearch] = useState("");
+  const [selectedClient, setSelectedClient] = useState<ClientSummary | null>(null);
 
   const { data: clients, isLoading } = useQuery({
     queryKey: ["clients", search],
     queryFn: async () => {
       const { data: invoices } = await supabase
         .from("invoices")
-        .select("client_name, client_cpf, total, created_at");
+        .select("*");
 
       if (!invoices) return [];
 
@@ -44,6 +48,13 @@ const Clients = () => {
           clientMap.set(invoice.client_cpf, {
             cpf: invoice.client_cpf,
             name: invoice.client_name,
+            phone: invoice.client_phone,
+            address: invoice.client_address,
+            addressNumber: invoice.client_address_number,
+            addressComplement: invoice.client_address_complement,
+            city: invoice.client_city,
+            state: invoice.client_state,
+            postalCode: invoice.client_postal_code,
             totalSpent: total,
             orderCount: 1,
             lastOrderDate: invoice.created_at
@@ -91,12 +102,13 @@ const Clients = () => {
                   <TableHead className="text-right">Total Gasto</TableHead>
                   <TableHead className="text-right">Quantidade de Pedidos</TableHead>
                   <TableHead>Último Pedido</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       Carregando...
                     </TableCell>
                   </TableRow>
@@ -112,6 +124,15 @@ const Clients = () => {
                       <TableCell>
                         {new Date(client.lastOrderDate).toLocaleDateString('pt-BR')}
                       </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setSelectedClient(client)}
+                        >
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))
                 )}
@@ -120,6 +141,12 @@ const Clients = () => {
           </div>
         </div>
       </div>
+
+      <ClientDetailsDialog
+        client={selectedClient}
+        open={!!selectedClient}
+        onOpenChange={(open) => !open && setSelectedClient(null)}
+      />
     </div>
   );
 };
