@@ -55,7 +55,7 @@ export const SortableSizeItem = ({
       <button
         type="button"
         onClick={onRemove}
-        className="ml-2 hover:text-destructive ml-auto"
+        className="hover:text-destructive ml-auto"
       >
         <X className="h-3 w-3 " />
       </button>

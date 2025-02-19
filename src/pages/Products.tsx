@@ -1,10 +1,14 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { useState, useMemo } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Product } from "@/utils/priceCalculator";
@@ -21,6 +25,7 @@ const Products = () => {
   const [basePrice, setBasePrice] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
+  const [quantity, setQuantity] = useState<string>();
   const [quantities, setQuantities] = useState<Record<string, number>>({});
   const { toast } = useToast();
 
@@ -49,7 +54,7 @@ const Products = () => {
     setSelectedProduct(product);
     setName(product.name);
     setBasePrice(product.base_price.toString());
-    setSizes((product.sizes || []).map(s => s.size));
+    setSizes((product.sizes || []).map((s) => s.size));
 
     // Carregar quantidades do inventário
     const { data: inventoryData, error } = await supabase
@@ -68,21 +73,27 @@ const Products = () => {
 
     // Atualizar quantidades baseado nos dados do inventário
     const quantities = {};
-    inventoryData.forEach(item => {
+    inventoryData.forEach((item) => {
       quantities[item.size] = item.total_quantity;
+      console.log(item);
     });
 
     setQuantities(quantities);
     setIsOpen(true);
   };
 
-  const handleSubmit = async (e: React.FormEvent, quantities: Record<string, number>) => {
+  const handleSubmit = async (
+    e: React.FormEvent,
+    quantities: Record<string, number>
+  ) => {
     e.preventDefault();
     try {
-      const sizeObjects = sizes.map(size => ({ size }));
-      
+      const sizeObjects = sizes.map((size) => ({ size }));
+      console.log(sizeObjects);
+
       if (selectedProduct) {
-        const { error } = await supabase
+        // Atualiza o produto existente
+        const { error: productError } = await supabase
           .from("products")
           .update({
             name,
@@ -91,20 +102,23 @@ const Products = () => {
           })
           .eq("id", selectedProduct.id);
 
-        if (error) throw error;
+        if (productError) throw productError;
 
+        // Atualiza o inventory para cada tamanho
         for (const size of sizes) {
+          const totalQuantity = quantities[size] || parseFloat(quantity) || 0;
+
           const { error: inventoryError } = await supabase
             .from("inventory")
             .upsert(
               {
                 product_id: selectedProduct.id,
                 size,
-                total_quantity: quantities[size] || 0,
+                total_quantity: totalQuantity,
                 rented_quantity: 0,
               },
               {
-                onConflict: 'product_id,size'
+                onConflict: "product_id,size",
               }
             );
 
@@ -116,42 +130,36 @@ const Products = () => {
           description: "Produto atualizado com sucesso",
         });
       } else {
-        const productCode = '#' + Math.random().toString(36).substring(2, 8).toUpperCase();
+        // Cria um novo produto
+        const productCode =
+          "#" + Math.random().toString(36).substring(2, 8).toUpperCase();
         const productId = name.toLowerCase().replace(/\s+/g, "-");
-        
-        const { error } = await supabase.from("products").insert({
+
+        const { error: productError } = await supabase.from("products").insert({
           id: productId,
           name,
           base_price: parseFloat(basePrice),
           product_code: productCode,
           sizes: sizeObjects,
-          constants: {
-            CONSTANTE_VALOR_ALUGUEL_A: 3.72,
-            CONSTANTE_VALOR_ALUGUEL_B: 1.89,
-            REGRESSION_DISCOUNT: 0.0608,
-            SPECIAL_RATES: {
-              "7": 30,
-              "10": 40,
-              "15": 50,
-              "30": 75
-            }
-          }
         });
 
-        if (error) throw error;
+        if (productError) throw productError;
 
+        // Cria o inventory para cada tamanho
         for (const size of sizes) {
+          const totalQuantity = quantities[size] || parseFloat(quantity) || 0;
+
           const { error: inventoryError } = await supabase
             .from("inventory")
             .upsert(
               {
                 product_id: productId,
                 size,
-                total_quantity: quantities[size] || 0,
+                total_quantity: totalQuantity,
                 rented_quantity: 0,
               },
               {
-                onConflict: 'product_id,size'
+                onConflict: "product_id,size",
               }
             );
 
@@ -164,17 +172,21 @@ const Products = () => {
         });
       }
 
+      // Reseta o formulário e fecha o modal
       setIsOpen(false);
       setSelectedProduct(null);
       setName("");
       setBasePrice("");
       setSizes([]);
       setQuantities({});
+
+      // Recarrega os dados
       refetch();
     } catch (error) {
+      console.error("Erro ao processar o produto:", error);
       toast({
         title: "Erro",
-        description: selectedProduct 
+        description: selectedProduct
           ? "Erro ao atualizar produto"
           : "Erro ao adicionar produto",
         variant: "destructive",
@@ -270,6 +282,8 @@ const Products = () => {
               selectedProduct={selectedProduct}
               sizes={sizes}
               setSizes={setSizes}
+              setInitialQuantity={setQuantity}
+              initialQuantity={quantity}
               initialQuantities={quantities}
             />
           </DialogContent>

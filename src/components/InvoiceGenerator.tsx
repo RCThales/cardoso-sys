@@ -107,8 +107,13 @@ export const InvoiceGenerator = ({
     if (!validateRequiredFields()) return;
     await generateInvoice();
     clearCart();
-    onInvoiceCreated?.();
+    //onInvoiceCreated?.();
+    clearSessionStorage();
     navigate("/invoices/history");
+  };
+
+  const clearSessionStorage = () => {
+    sessionStorage.removeItem("clientData");
   };
 
   const handleBack = () => {

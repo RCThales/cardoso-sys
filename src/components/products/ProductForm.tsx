@@ -1,4 +1,3 @@
-
 import type { Product } from "@/utils/priceCalculator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,7 +5,10 @@ import { useProductForm } from "./useProductForm";
 import { SizesSection } from "./SizesSection";
 
 interface ProductFormProps {
-  onSubmit: (e: React.FormEvent, quantities: Record<string, number>) => Promise<void>;
+  onSubmit: (
+    e: React.FormEvent,
+    quantities: Record<string, number>
+  ) => Promise<void>;
   name: string;
   setName: (name: string) => void;
   basePrice: string;
@@ -14,6 +16,8 @@ interface ProductFormProps {
   selectedProduct: Product | null;
   sizes: string[];
   setSizes: (sizes: string[]) => void;
+  setInitialQuantity: (quantity: string) => void;
+  initialQuantity?: string;
   initialQuantities?: Record<string, number>;
 }
 
@@ -26,21 +30,25 @@ export const ProductForm = ({
   selectedProduct,
   sizes,
   setSizes,
+  setInitialQuantity,
+  initialQuantity,
   initialQuantities = {},
 }: ProductFormProps) => {
   const {
     newSize,
     setNewSize,
+    quantity,
     quantities,
     handleAddSize,
     handleRemoveSize,
     handleQuantityChange,
-    handleDragEnd
+    handleDragEnd,
   } = useProductForm({
     selectedProduct,
     sizes,
     setSizes,
-    initialQuantities
+    initialQuantity,
+    initialQuantities,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -58,6 +66,18 @@ export const ProductForm = ({
           onChange={(e) => setName(e.target.value)}
         />
       </div>
+      {sizes.length <= 0 && (
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Quantidade em Estoque</label>
+          <Input
+            type="number"
+            required
+            value={quantity}
+            onChange={(e) => setInitialQuantity(e.target.value)}
+          />
+        </div>
+      )}
+
       <div className="space-y-2">
         <label className="text-sm font-medium">Valor Base</label>
         <Input

@@ -1,12 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type ProductConstants = {
-  CONSTANTE_VALOR_ALUGUEL_A: number;
-  CONSTANTE_VALOR_ALUGUEL_B: number;
-  REGRESSION_DISCOUNT: number;
-  SPECIAL_RATES: Record<number, number>;
-};
-
 export interface ProductSize {
   size: string;
 }
@@ -15,7 +8,6 @@ export interface Product {
   id: string;
   name: string;
   base_price: number;
-  constants: ProductConstants;
   product_code: string;
   sizes?: ProductSize[];
 }
@@ -27,43 +19,57 @@ export async function fetchProducts(): Promise<Product[]> {
   return data.map((item) => ({
     ...item,
     sizes: item.sizes ? (item.sizes as unknown as ProductSize[]) : undefined,
-    constants: item.constants as ProductConstants,
+    base_price: item.base_price,
   }));
 }
 
 export function calculateDailyRate(
   rentalDays: number,
-  constants: ProductConstants
+  base_price: number // Preço base de 1 dia de aluguel
 ) {
-  return (
-    constants.CONSTANTE_VALOR_ALUGUEL_A *
-      Math.exp(-constants.REGRESSION_DISCOUNT * rentalDays) +
-    constants.CONSTANTE_VALOR_ALUGUEL_B
-  );
+  const initialPrice = base_price; // Valor inicial (ex: R$ 6,00)
+  const discountRate = 0.09; // Taxa de desconto exponencial (10% por dia)
+
+  // Calcula o valor diário com desconto exponencial
+  const dailyRate = initialPrice * Math.pow(1 - discountRate, rentalDays - 1);
+
+  // Garante que o valor diário não seja menor que um limite mínimo (ex: 10% do BASE_PRICE)
+  const minDailyRate = initialPrice * 0.26; // Limite mínimo de 10% do preço base
+  return Math.max(dailyRate, minDailyRate);
 }
 
 export function roundToNearestHalf(value: number) {
-  return Math.round(value * 2) / 2;
+  return Math.round(value * 5) / 5;
 }
 
 export function calculateTotalPrice(
   rentalDays: number,
-  constants: ProductConstants
+  base_price: number // Preço base de 1 dia de aluguel
 ) {
-  const days = Math.max(1, Math.min(365, rentalDays));
+  let totalPrice = 0;
 
-  if (constants.SPECIAL_RATES[days] !== undefined) {
-    return constants.SPECIAL_RATES[days];
+  // Calcula o valor total somando o valor diário com desconto progressivo
+  for (let day = 1; day <= rentalDays; day++) {
+    totalPrice += calculateDailyRate(day, base_price);
   }
 
-  const totalPrice = calculateDailyRate(days, constants) * days;
-  return roundToNearestHalf(totalPrice);
+  // Verifica se o número de dias está na lista de dias especiais
+  const specialDays = [5, 7, 10, 15, 20, 30, 60];
+  if (specialDays.includes(rentalDays)) {
+    // Arredonda para o próximo número que termina com 0 ou 5
+    return Math.round(totalPrice / 5) * 5;
+  }
+
+  // Caso contrário, arredonda para o múltiplo de 0.50 mais próximo
+  const roundedTotalPrice = Math.round(totalPrice * 2) / 2;
+
+  return roundedTotalPrice;
 }
 
-export const getProductConstants = (
+export const getProductBasePrice = (
   products: Product[],
   productId: string
-): ProductConstants | undefined => {
+): number | undefined => {
   const product = products.find((p) => p.id === productId);
-  return product?.constants;
+  return product?.base_price;
 };

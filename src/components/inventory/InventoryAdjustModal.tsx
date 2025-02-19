@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -13,11 +12,17 @@ interface InventoryAdjustModalProps {
     total_quantity: number;
     rented_quantity: number;
   };
-  product: {
-    name: string;
-    product_code: string;
-  } | undefined;
-  onUpdateQuantity: (itemId: number, change: number, adjustValue: number) => void;
+  product:
+    | {
+        name: string;
+        product_code: string;
+      }
+    | undefined;
+  onUpdateQuantity: (
+    itemId: number,
+    change: number,
+    adjustValue: number
+  ) => void;
   isUpdating: boolean;
 }
 
@@ -34,13 +39,13 @@ export const InventoryAdjustModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="sm:max-w-md max-w-[120px]">
         <DialogHeader>
           <DialogTitle>Ajustar Quantidade - {product?.name}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-6 py-4">
+        <div className="space-y-6 py-4 ">
           <div className="grid grid-cols-2 gap-4 text-sm">
-            <div className="w-[120px]">
+            <div className="w-[120px] ">
               <span className="text-muted-foreground">Código:</span>
               <p className="font-medium truncate">{product?.product_code}</p>
             </div>
@@ -53,7 +58,9 @@ export const InventoryAdjustModal = ({
               <p className="font-medium truncate">{item.rented_quantity}</p>
             </div>
             <div className="w-[120px]">
-              <span className="text-muted-foreground">Quantidade Disponível:</span>
+              <span className="text-muted-foreground">
+                Quantidade Disponível:
+              </span>
               <p className="font-medium truncate">{availableQuantity}</p>
             </div>
           </div>
@@ -67,7 +74,9 @@ export const InventoryAdjustModal = ({
               type="number"
               min="1"
               value={adjustQuantity}
-              onChange={(e) => setAdjustQuantity(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={(e) =>
+                setAdjustQuantity(Math.max(1, parseInt(e.target.value) || 1))
+              }
               className="w-full"
             />
           </div>
@@ -77,10 +86,12 @@ export const InventoryAdjustModal = ({
               variant="outline"
               className="w-[calc(50%-0.5rem)]"
               onClick={() => onUpdateQuantity(item.id, -1, adjustQuantity)}
-              disabled={isUpdating || item.total_quantity <= item.rented_quantity}
+              disabled={
+                isUpdating || item.total_quantity <= item.rented_quantity
+              }
             >
               <Minus className="h-4 w-4 mr-2" />
-              Remover {adjustQuantity} {adjustQuantity > 1 ? 'unidades' : 'unidade'}
+              Remover
             </Button>
             <Button
               variant="outline"
@@ -89,7 +100,7 @@ export const InventoryAdjustModal = ({
               disabled={isUpdating}
             >
               <Plus className="h-4 w-4 mr-2" />
-              Adicionar {adjustQuantity} {adjustQuantity > 1 ? 'unidades' : 'unidade'}
+              Adicionar
             </Button>
           </div>
         </div>

@@ -1,4 +1,3 @@
-
 import { format, parseISO } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -33,8 +32,10 @@ export const InvoiceTableRow = ({
   return (
     <TableRow
       className={cn({
-        "bg-green-50 hover:bg-green-100": invoice.is_paid && invoice.is_returned,
-        "bg-yellow-50 hover:bg-yellow-100": invoice.is_paid && !invoice.is_returned,
+        "bg-green-50 hover:bg-green-100":
+          invoice.is_paid && invoice.is_returned,
+        "bg-yellow-50 hover:bg-yellow-100":
+          invoice.is_paid && !invoice.is_returned,
         "bg-red-50 hover:bg-red-100": !invoice.is_paid && !invoice.is_returned,
       })}
     >
@@ -46,15 +47,20 @@ export const InvoiceTableRow = ({
             {invoice.extensions.map((ext: InvoiceExtension, idx: number) => (
               <div key={idx} className="ml-2">
                 {format(parseISO(ext.date), "dd/MM/yyyy")} (+{ext.days} dias)
-                {ext.additionalCost > 0 && ` - R$ ${formatCurrency(ext.additionalCost)}`}
+                {ext.additionalCost > 0 &&
+                  ` - R$ ${formatCurrency(ext.additionalCost)}`}
               </div>
             ))}
           </div>
         )}
       </TableCell>
-      <TableCell>{format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}</TableCell>
+      <TableCell>
+        {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
+      </TableCell>
       <TableCell>{invoice.client_name}</TableCell>
-      <TableCell className="text-right">R$ {formatCurrency(invoice.total)}</TableCell>
+      <TableCell className="text-right">
+        R$ {formatCurrency(invoice.total)}
+      </TableCell>
       <TableCell>
         {invoice.is_paid && invoice.is_returned ? (
           <div className="flex items-center gap-2">
@@ -82,7 +88,7 @@ export const InvoiceTableRow = ({
           />
         )}
       </TableCell>
-      <TableCell className="text-right space-x-2">
+      <TableCell className="text-right space-x-2 space-y-2">
         <Button
           variant="outline"
           size="icon"
@@ -99,6 +105,8 @@ export const InvoiceTableRow = ({
         >
           <Eye className="h-4 w-4" />
         </Button>
+        <Button className="invisible disabled w-4 h-4"></Button>
+
         <Button
           variant="destructive"
           size="icon"

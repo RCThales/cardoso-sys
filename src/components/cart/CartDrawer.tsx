@@ -28,9 +28,7 @@ export const CartDrawer = () => {
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("inventory")
-        .select("*");
+      const { data, error } = await supabase.from("inventory").select("*");
       if (error) throw error;
       return data;
     },
@@ -41,9 +39,12 @@ export const CartDrawer = () => {
     return item ? item.total_quantity - item.rented_quantity : 0;
   };
 
-  const handleQuantityChange = (item: typeof items[0], newQuantity: number) => {
+  const handleQuantityChange = (
+    item: (typeof items)[0],
+    newQuantity: number
+  ) => {
     const availableQuantity = getAvailableQuantity(item.productId);
-    
+
     if (newQuantity > availableQuantity) {
       toast({
         title: "Erro",
@@ -60,6 +61,29 @@ export const CartDrawer = () => {
         total: (item.total / item.quantity) * newQuantity,
       });
     }
+  };
+
+  const handleDaysChange = (item: (typeof items)[0], newDays: number) => {
+    if (newDays < 1) {
+      toast({
+        title: "Erro",
+        description: "O número de dias deve ser maior ou igual a 1",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const product = products?.find((p) => p.id === item.productId);
+    if (!product) return;
+
+    // Recalcula o total com base no novo número de dias
+    const newTotal = product.base_price * newDays * item.quantity;
+
+    addItem({
+      ...item,
+      days: newDays,
+      total: newTotal,
+    });
   };
 
   const totalPrice = items.reduce((acc, item) => acc + item.total, 0);
@@ -88,11 +112,18 @@ export const CartDrawer = () => {
           {items.map((item) => {
             const product = products?.find((p) => p.id === item.productId);
             return (
-              <div key={`${item.productId}-${item.size}`} className="flex flex-col space-y-2 p-4 border rounded-lg">
+              <div
+                key={`${item.productId}-${item.size}`}
+                className="flex flex-col space-y-2 p-4 border rounded-lg"
+              >
                 <div className="flex justify-between items-center">
                   <span className="font-medium">
                     {product?.name}
-                    {item.size && <span className="text-muted-foreground ml-2">({item.size})</span>}
+                    {item.size && (
+                      <span className="text-muted-foreground ml-2">
+                        ({item.size})
+                      </span>
+                    )}
                   </span>
                   <Button
                     variant="ghost"
@@ -102,32 +133,33 @@ export const CartDrawer = () => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="space-y-2">
-                  <div className="text-sm text-muted-foreground">
-                    {item.days} dias
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleQuantityChange(item, item.quantity - 1)}
-                    >
-                      <Minus className="h-4 w-4" />
-                    </Button>
+                <div className="flex items-center justify-end space-x-2 ">
+                  <span className="text-sm text-muted-foreground">
+                    Quantidade:
+                  </span>
+                  <Input
+                    type="number"
+                    value={item.quantity}
+                    onChange={(e) =>
+                      handleQuantityChange(item, parseInt(e.target.value, 10))
+                    }
+                    className="w-20 text-right"
+                  />
+                </div>
+                <div className="space-y-2 ">
+                  <div className="flex items-center justify-end  space-x-2 ">
+                    <span className="text-sm text-muted-foreground">Dias:</span>
                     <Input
                       type="number"
-                      value={item.quantity}
-                      onChange={(e) => handleQuantityChange(item, parseInt(e.target.value, 10))}
-                      className="w-20 text-center"
+                      value={item.days}
+                      onChange={(e) =>
+                        handleDaysChange(item, parseInt(e.target.value, 10))
+                      }
+                      className="w-20 text-right  ml-auto"
+                      min={1}
                     />
-                    <Button
-                      variant="outline"
-                      size="icon"
-                      onClick={() => handleQuantityChange(item, item.quantity + 1)}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
                   </div>
+
                   <div className="text-right font-medium">
                     R${item.total.toFixed(2)}
                   </div>

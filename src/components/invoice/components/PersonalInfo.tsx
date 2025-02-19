@@ -1,14 +1,19 @@
-
 import { Input } from "../../ui/input";
 import { formatCPF, formatPhone } from "@/utils/formatters";
 import { ClientData } from "../types/clientForm";
 import { validateCPF } from "@/utils/validateCPF";
 import { cn } from "@/lib/utils";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { CPFConfirmDialog } from "../CPFConfirmDialog";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogContent, AlertDialogHeader, AlertDialogTitle, AlertDialogDescription } from "@/components/ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogDescription,
+} from "@/components/ui/alert-dialog";
 import { AlertTriangle } from "lucide-react";
 
 interface PersonalInfoProps {
@@ -16,12 +21,15 @@ interface PersonalInfoProps {
   onClientDataChange: (data: ClientData) => void;
 }
 
-export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoProps) => {
+export const PersonalInfo = ({
+  clientData,
+  onClientDataChange,
+}: PersonalInfoProps) => {
   const { toast } = useToast();
   const [touchedFields, setTouchedFields] = useState({
     name: false,
     cpf: false,
-    phone: false
+    phone: false,
   });
   const [showCPFConfirm, setShowCPFConfirm] = useState(false);
   const [existingClientName, setExistingClientName] = useState("");
@@ -29,13 +37,32 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
   const [showLoyaltyAlert, setShowLoyaltyAlert] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
 
-  const handleBlur = async (field: string) => {
-    setTouchedFields(prev => ({
-      ...prev,
-      [field]: true
-    }));
+  useEffect(() => {
+    const storedData = sessionStorage.getItem("clientData");
+    if (storedData) {
+      const parsedData = JSON.parse(storedData);
+      // Atualiza o estado apenas se os dados armazenados não estiverem vazios
+      if (Object.keys(parsedData).length > 0) {
+        onClientDataChange(parsedData);
+      }
+    }
+  }, []);
 
-    if (field === 'cpf' && clientData.cpf && validateCPF(clientData.cpf)) {
+  useEffect(() => {
+    // Verifica se pelo menos um campo foi preenchido antes de salvar no sessionStorage
+    if (
+      clientData &&
+      (clientData.name.trim() !== "" ||
+        clientData.cpf.trim() !== "" ||
+        clientData.phone.trim() !== "")
+    ) {
+      sessionStorage.setItem("clientData", JSON.stringify(clientData));
+    }
+  }, [clientData]);
+
+  const handleBlur = async (field: string) => {
+    setTouchedFields((prev) => ({ ...prev, [field]: true }));
+    if (field === "cpf" && clientData.cpf && validateCPF(clientData.cpf)) {
       await checkExistingCPF(clientData.cpf);
     }
   };
@@ -61,8 +88,6 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
       setExistingClientName(data[0].client_name);
       setOrderCount(data.length);
       setShowCPFConfirm(true);
-
-      // Verifica se o cliente atingiu múltiplos de 10 pedidos
       if (data.length % 10 === 0) {
         setShowLoyaltyAlert(true);
       }
@@ -70,13 +95,11 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
   };
 
   const handleCPFChange = (value: string) => {
-    const formattedCPF = formatCPF(value);
-    onClientDataChange({ ...clientData, cpf: formattedCPF });
+    onClientDataChange({ ...clientData, cpf: formatCPF(value) });
   };
 
   const handlePhoneChange = (value: string) => {
-    const formattedPhone = formatPhone(value);
-    onClientDataChange({ ...clientData, phone: formattedPhone });
+    onClientDataChange({ ...clientData, phone: formatPhone(value) });
   };
 
   const handleCPFConfirm = () => {
@@ -91,7 +114,7 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
   };
 
   const isCPFValid = validateCPF(clientData.cpf);
-  const isPhoneValid = clientData.phone.replace(/\D/g, '').length === 11;
+  const isPhoneValid = clientData.phone.replace(/\D/g, "").length === 11;
 
   return (
     <>
@@ -103,7 +126,7 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
           onChange={(e) =>
             onClientDataChange({ ...clientData, name: e.target.value })
           }
-          onBlur={() => handleBlur('name')}
+          onBlur={() => handleBlur("name")}
           className={cn({
             "border-red-500": touchedFields.name && clientData.name === "",
           })}
@@ -119,12 +142,10 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
           required
           value={clientData.cpf}
           onChange={(e) => handleCPFChange(e.target.value)}
-          onBlur={() => handleBlur('cpf')}
+          onBlur={() => handleBlur("cpf")}
           placeholder="000.000.000-00"
           maxLength={14}
-          className={cn({
-            "border-red-500": touchedFields.cpf && !isCPFValid,
-          })}
+          className={cn({ "border-red-500": touchedFields.cpf && !isCPFValid })}
         />
         {touchedFields.cpf && !isCPFValid && (
           <p className="text-sm text-red-500">CPF inválido</p>
@@ -137,7 +158,7 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
           required
           value={clientData.phone}
           onChange={(e) => handlePhoneChange(e.target.value)}
-          onBlur={() => handleBlur('phone')}
+          onBlur={() => handleBlur("phone")}
           placeholder="(00) 00000-0000"
           maxLength={15}
           className={cn({
@@ -161,11 +182,12 @@ export const PersonalInfo = ({ clientData, onClientDataChange }: PersonalInfoPro
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
-              <AlertTriangle className="h-5 w-5 text-yellow-500" />
-              Cliente Fiel!
+              <AlertTriangle className="h-5 w-5 text-yellow-500" /> Cliente
+              Fiel!
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Este cliente completou {orderCount} pedidos! Considere oferecer um desconto especial como agradecimento pela fidelidade.
+              Este cliente completou {orderCount} pedidos! Considere oferecer um
+              desconto especial como agradecimento pela fidelidade.
             </AlertDialogDescription>
           </AlertDialogHeader>
         </AlertDialogContent>

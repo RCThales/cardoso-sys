@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -15,7 +14,11 @@ interface InvoiceHistoryProps {
   filterStatus: "all" | "paid" | "unpaid" | "returned" | "not-returned";
 }
 
-export const InvoiceHistory = ({ search, sortOrder, filterStatus }: InvoiceHistoryProps) => {
+export const InvoiceHistory = ({
+  search,
+  sortOrder,
+  filterStatus,
+}: InvoiceHistoryProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -49,7 +52,9 @@ export const InvoiceHistory = ({ search, sortOrder, filterStatus }: InvoiceHisto
 
     // Aplicar busca
     if (search) {
-      query = query.or(`client_name.ilike.%${search}%,client_cpf.ilike.%${search}%,invoice_number.ilike.%${search}%`);
+      query = query.or(
+        `client_name.ilike.%${search}%,client_cpf.ilike.%${search}%,invoice_number.ilike.%${search}%`
+      );
     }
 
     const { data: invoicesData, error } = await query;
@@ -67,12 +72,16 @@ export const InvoiceHistory = ({ search, sortOrder, filterStatus }: InvoiceHisto
     setInvoices(convertedInvoices);
   };
 
-  const handleTogglePaid = async (invoiceId: number, currentStatus: boolean, method?: string) => {
+  const handleTogglePaid = async (
+    invoiceId: number,
+    currentStatus: boolean,
+    method?: string
+  ) => {
     const { error } = await supabase
       .from("invoices")
-      .update({ 
+      .update({
         is_paid: !currentStatus,
-        payment_method: method 
+        payment_method: method,
       })
       .eq("id", invoiceId);
 
@@ -88,7 +97,10 @@ export const InvoiceHistory = ({ search, sortOrder, filterStatus }: InvoiceHisto
     await fetchInvoices();
   };
 
-  const handleToggleReturned = async (invoiceId: number, currentStatus: boolean) => {
+  const handleToggleReturned = async (
+    invoiceId: number,
+    currentStatus: boolean
+  ) => {
     const { error } = await supabase
       .from("invoices")
       .update({ is_returned: !currentStatus })
@@ -125,25 +137,102 @@ export const InvoiceHistory = ({ search, sortOrder, filterStatus }: InvoiceHisto
   };
 
   const handleDelete = async (invoiceId: number) => {
-    const { error } = await supabase
-      .from("invoices")
-      .delete()
-      .eq("id", invoiceId);
+    try {
+      // Buscar itens da fatura
+      const items = await getInvoiceItems(invoiceId);
 
-    if (error) {
+      if (!Array.isArray(items)) {
+        throw new Error("Os itens da fatura não são um array.");
+      }
+
+      // Atualizar estoque dos itens
+      await updateInventory(items);
+
+      // Deletar a fatura
+      await deleteInvoice(invoiceId);
+
+      // Atualizar a lista de faturas
+      await fetchInvoices();
+
+      // Exibir toast de sucesso
+      toast({
+        title: "Fatura deletada",
+        description: "A fatura foi deletada com sucesso",
+      });
+    } catch (error) {
+      console.error("Erro ao deletar fatura:", error);
       toast({
         title: "Erro ao deletar fatura",
         description: error.message,
         variant: "destructive",
       });
-      return;
+    }
+  };
+
+  // Função para buscar os itens da fatura
+  const getInvoiceItems = async (invoiceId: number) => {
+    const { data, error } = await supabase
+      .from("invoices")
+      .select("items")
+      .eq("id", invoiceId)
+      .single();
+
+    if (error || !data || !data.items) {
+      throw new Error("Erro ao buscar itens da fatura.");
     }
 
-    await fetchInvoices();
-    toast({
-      title: "Fatura deletada",
-      description: "A fatura foi deletada com sucesso",
-    });
+    // Garantir que items é um array
+    return Array.isArray(data.items) ? data.items : [];
+  };
+
+  // Função para atualizar o estoque
+  const updateInventory = async (items: any[]) => {
+    await Promise.all(
+      items
+        .filter((item) => item.productId !== "delivery-fee") // Ignorar taxa de entrega
+        .map(async (item) => {
+          await updateItemInventory(item);
+        })
+    );
+  };
+
+  // Função para atualizar o estoque de um item específico
+  const updateItemInventory = async (item: any) => {
+    const { data: inventoryItem, error: inventoryError } = await supabase
+      .from("inventory")
+      .select("rented_quantity")
+      .eq("product_id", item.productId)
+      .single();
+
+    if (inventoryError || !inventoryItem) {
+      throw new Error(`Erro ao buscar estoque para ${item.productId}`);
+    }
+
+    const newRentedQuantity = Math.max(
+      0,
+      inventoryItem.rented_quantity - item.quantity
+    );
+
+    const { error: updateError } = await supabase
+      .from("inventory")
+      .update({ rented_quantity: newRentedQuantity })
+      .eq("product_id", item.productId);
+
+    if (updateError) {
+      throw new Error(`Erro ao atualizar estoque para ${item.productId}`);
+    }
+  };
+
+  // Função para deletar a fatura
+  const deleteInvoice = async (invoiceId: number) => {
+    const { error: deleteError } = await supabase
+      .from("invoices")
+      .delete()
+      .eq("id", invoiceId);
+
+    if (deleteError) {
+      throw new Error(deleteError.message);
+    }
   };
 
   return (

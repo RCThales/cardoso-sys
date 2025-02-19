@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -9,16 +8,19 @@ interface UseProductFormProps {
   selectedProduct: Product | null;
   sizes: string[];
   setSizes: (sizes: string[]) => void;
+  initialQuantity?: string;
   initialQuantities?: Record<string, number>;
 }
 
-export const useProductForm = ({ 
-  selectedProduct, 
-  sizes, 
-  setSizes, 
-  initialQuantities = {} 
+export const useProductForm = ({
+  selectedProduct,
+  sizes,
+  setSizes,
+  initialQuantity,
+  initialQuantities = {},
 }: UseProductFormProps) => {
   const [newSize, setNewSize] = useState("");
+  const [quantity, setQuantity] = useState(initialQuantity);
   const [quantities, setQuantities] = useState(initialQuantities);
   const { toast } = useToast();
 
@@ -26,7 +28,7 @@ export const useProductForm = ({
     if (newSize && !sizes.includes(newSize)) {
       try {
         if (selectedProduct) {
-          const updatedSizes = [...sizes, newSize].map(size => ({ size }));
+          const updatedSizes = [...sizes, newSize].map((size) => ({ size }));
           const { error } = await supabase
             .from("products")
             .update({
@@ -49,7 +51,7 @@ export const useProductForm = ({
         }
 
         setSizes([...sizes, newSize]);
-        setQuantities(prev => ({ ...prev, [newSize]: 0 }));
+        setQuantities((prev) => ({ ...prev, [newSize]: 0 }));
         setNewSize("");
       } catch (error) {
         toast({
@@ -65,8 +67,8 @@ export const useProductForm = ({
     try {
       if (selectedProduct) {
         const updatedSizes = sizes
-          .filter(size => size !== sizeToRemove)
-          .map(size => ({ size }));
+          .filter((size) => size !== sizeToRemove)
+          .map((size) => ({ size }));
 
         const { error } = await supabase
           .from("products")
@@ -86,7 +88,7 @@ export const useProductForm = ({
         if (inventoryError) throw inventoryError;
       }
 
-      setSizes(sizes.filter(size => size !== sizeToRemove));
+      setSizes(sizes.filter((size) => size !== sizeToRemove));
       const newQuantities = { ...quantities };
       delete newQuantities[sizeToRemove];
       setQuantities(newQuantities);
@@ -101,16 +103,19 @@ export const useProductForm = ({
 
   const handleQuantityChange = (size: string, value: string) => {
     const quantity = Math.max(0, parseInt(value) || 0);
-    setQuantities(prev => ({ ...prev, [size]: quantity }));
+    setQuantities((prev) => ({ ...prev, [size]: quantity }));
   };
 
-  const handleDragEnd = async (event: { active: { id: string }; over: { id: string } }) => {
+  const handleDragEnd = async (event: {
+    active: { id: string };
+    over: { id: string };
+  }) => {
     const { active, over } = event;
-    
+
     if (active.id !== over.id) {
       const oldIndex = sizes.indexOf(active.id);
       const newIndex = sizes.indexOf(over.id);
-      
+
       const newSizes = arrayMove(sizes, oldIndex, newIndex);
       setSizes(newSizes);
 
@@ -119,7 +124,7 @@ export const useProductForm = ({
           const { error } = await supabase
             .from("products")
             .update({
-              sizes: newSizes.map(size => ({ size })),
+              sizes: newSizes.map((size) => ({ size })),
             })
             .eq("id", selectedProduct.id);
 
@@ -138,10 +143,12 @@ export const useProductForm = ({
   return {
     newSize,
     setNewSize,
+    setQuantity,
+    quantity,
     quantities,
     handleAddSize,
     handleRemoveSize,
     handleQuantityChange,
-    handleDragEnd
+    handleDragEnd,
   };
 };

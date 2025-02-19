@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
 import {
   calculateTotalPrice,
-  getProductConstants,
+  getProductBasePrice,
   fetchProducts,
   type Product,
-  type ProductConstants,
 } from "../utils/priceCalculator";
 import { Slider } from "./ui/slider";
 import { Card } from "./ui/card";
@@ -40,7 +39,7 @@ export const RentalCalculator = () => {
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
   const { toast } = useToast();
-  const { addItem } = useCartStore();
+  const { addItem, items } = useCartStore();
 
   const { data: products } = useQuery<Product[]>({
     queryKey: ["products"],
@@ -65,9 +64,10 @@ export const RentalCalculator = () => {
           setSelectedSize(product.sizes[0].size);
         }
       }
-      const constants = getProductConstants(products, selectedProduct);
-      if (constants) {
-        setPrice(calculateTotalPrice(days, constants));
+      const base_price = getProductBasePrice(products, selectedProduct);
+
+      if (base_price) {
+        setPrice(calculateTotalPrice(days, base_price));
       }
     }
   }, [days, selectedProduct, products]);
@@ -117,8 +117,12 @@ export const RentalCalculator = () => {
   };
 
   const selectedProductData = products?.find((p) => p.id === selectedProduct);
-  const constants = selectedProductData?.constants;
+  const base_price = selectedProductData?.base_price;
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
+
+  const isProductInCart = items.some(
+    (item) => item.productId === selectedProduct
+  );
 
   const handleAddToCart = () => {
     if (!products) return;
@@ -143,6 +147,7 @@ export const RentalCalculator = () => {
       days,
       total: price * quantity,
       size: selectedSize || undefined,
+      base_price,
     });
 
     toast({
@@ -154,13 +159,6 @@ export const RentalCalculator = () => {
   if (!products) {
     return <div>Carregando...</div>;
   }
-
-  const specialRates = constants
-    ? Object.entries(constants.SPECIAL_RATES || {}).map(([days, price]) => ({
-        days: parseInt(days, 10),
-        price: price as number,
-      }))
-    : [];
 
   return (
     <div className="relative">
@@ -291,59 +289,33 @@ export const RentalCalculator = () => {
             </motion.div>
 
             <Button onClick={handleAddToCart} className="w-full">
-              <ShoppingCart className="mr-2 h-4 w-4" /> Adicionar ao Carrinho
+              <ShoppingCart className="mr-2 h-4 w-4" />{" "}
+              {isProductInCart ? "Atualizar Carrinho" : "Adicionar ao Carrinho"}
             </Button>
 
             <div className="grid grid-cols-2 gap-4 mt-6">
-              {specialRates.map(
-                ({ days: specialDays, price: specialPrice }) => (
+              {[5, 7, 10, 15, 20, 30].map((days) => {
+                // Calcula o preço total para os dias específicos
+                const totalPrice = calculateTotalPrice(days, base_price);
+
+                return (
                   <Card
-                    key={specialDays}
+                    key={days}
                     className="p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors"
-                    onClick={() => setDays(specialDays)}
+                    onClick={() => setDays(days)} // Define os dias ao clicar no card
                   >
-                    <div className="font-medium">{specialDays} dias</div>
+                    <div className="font-medium">{days} dias</div>
                     <div className="text-sm text-muted-foreground">
-                      R${specialPrice}
+                      R${totalPrice.toFixed(2)}{" "}
+                      {/* Exibe o preço total formatado */}
                     </div>
                   </Card>
-                )
-              )}
+                );
+              })}
             </div>
           </div>
         </div>
       </Card>
-
-      <Dialog>
-        <DialogTrigger asChild>
-          <Button
-            size="icon"
-            className="fixed bottom-4 right-4 rounded-full"
-            variant="outline"
-          >
-            <Info className="h-4 w-4" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Constantes do Produto</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <div className="font-medium">CONSTANTE_VALOR_ALUGUEL_A</div>
-              <div className="text-muted-foreground">
-                {constants?.CONSTANTE_VALOR_ALUGUEL_A}
-              </div>
-            </div>
-            <div>
-              <div className="font-medium">CONSTANTE_VALOR_ALUGUEL_B</div>
-              <div className="text-muted-foreground">
-                {constants?.CONSTANTE_VALOR_ALUGUEL_B}
-              </div>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 };

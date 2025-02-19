@@ -33,8 +33,6 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
     return null;
   }
 
-  console.log(items);
-
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">

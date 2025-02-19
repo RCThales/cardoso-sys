@@ -1,4 +1,3 @@
-
 import { useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceGenerator } from "@/components/InvoiceGenerator";
@@ -12,26 +11,22 @@ const CreateInvoice = () => {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (items.length === 0) {
-      navigate("/calc");
-    }
-
     // Solicita permissão para notificações quando o componente montar
-    if ('Notification' in window) {
-      Notification.requestPermission().then(permission => {
-        if (permission === 'granted') {
-          console.log('Notificações permitidas');
+    if ("Notification" in window) {
+      Notification.requestPermission().then((permission) => {
+        if (permission === "granted") {
+          console.log("Notificações permitidas");
         }
       });
     }
   }, [items, navigate]);
 
   const handleInvoiceCreated = () => {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      const notification = new Notification('Fatura Gerada', {
-        body: 'Uma nova fatura foi gerada com sucesso!',
-        icon: '/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png',
-        badge: '/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png'
+    if ("Notification" in window && Notification.permission === "granted") {
+      const notification = new Notification("Fatura Gerada", {
+        body: "Uma nova fatura foi gerada com sucesso!",
+        icon: "/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png",
+        badge: "/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png",
       });
 
       notification.onclick = () => {
