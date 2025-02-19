@@ -7,6 +7,7 @@ const InvoicePage = () => {
       search=""
       sortOrder="desc"
       filterStatus="all"
+      dateSortType="invoice"
     />
   );
 };
