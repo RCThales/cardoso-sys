@@ -47,7 +47,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Informações da Fatura
   doc.text([
     `Data: ${format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}`,
-    `Vencimento: ${format(parseISO(invoice.due_date), "dd/MM/yyyy")}`,
+    `Data de Devolução: ${format(parseISO(invoice.return_date || ''), "dd/MM/yyyy")}`,
     `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
     invoice.payment_method ? `Forma de Pagamento: ${invoice.payment_method}` : '',
   ], pageWidth - 60, 75);
