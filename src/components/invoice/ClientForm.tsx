@@ -1,4 +1,3 @@
-
 import { Input } from "../ui/input";
 import { PersonalInfo } from "./components/PersonalInfo";
 import { AddressInfo } from "./components/AddressInfo";
@@ -8,15 +7,18 @@ import { SearchClientDialog } from "./SearchClientDialog";
 import { useState } from "react";
 import { Search } from "lucide-react";
 
-export const ClientForm = ({ clientData, onClientDataChange }: ClientFormProps) => {
+export const ClientForm = ({
+  clientData,
+  onClientDataChange,
+}: ClientFormProps) => {
   const [searchOpen, setSearchOpen] = useState(false);
 
   return (
     <>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="md:grid md:grid-cols-2 gap-4">
         <div className="col-span-2 flex justify-end">
-          <Button 
-            variant="outline" 
+          <Button
+            variant="outline"
             onClick={() => setSearchOpen(true)}
             className="mb-4"
           >
@@ -25,9 +27,15 @@ export const ClientForm = ({ clientData, onClientDataChange }: ClientFormProps) 
           </Button>
         </div>
 
-        <PersonalInfo clientData={clientData} onClientDataChange={onClientDataChange} />
-        <AddressInfo clientData={clientData} onClientDataChange={onClientDataChange} />
-        
+        <PersonalInfo
+          clientData={clientData}
+          onClientDataChange={onClientDataChange}
+        />
+        <AddressInfo
+          clientData={clientData}
+          onClientDataChange={onClientDataChange}
+        />
+
         <div className="space-y-2 col-span-2">
           <label className="text-sm font-medium flex items-center space-x-2">
             <Input

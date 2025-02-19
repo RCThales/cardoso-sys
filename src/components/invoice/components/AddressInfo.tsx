@@ -1,13 +1,15 @@
-
 import { Input } from "../../ui/input";
-import { 
+import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue 
+  SelectValue,
 } from "../../ui/select";
-import { ESTADOS_BRASILEIROS, fetchAddressByCep } from "@/utils/brazilianStates";
+import {
+  ESTADOS_BRASILEIROS,
+  fetchAddressByCep,
+} from "@/utils/brazilianStates";
 import { useState } from "react";
 import { useToast } from "../../ui/use-toast";
 import { ClientData } from "../types/clientForm";
@@ -18,17 +20,20 @@ interface AddressInfoProps {
   onClientDataChange: (data: ClientData) => void;
 }
 
-export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps) => {
+export const AddressInfo = ({
+  clientData,
+  onClientDataChange,
+}: AddressInfoProps) => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [touchedFields, setTouchedFields] = useState({
-    postalCode: false
+    postalCode: false,
   });
 
   const handleBlur = (field: string) => {
-    setTouchedFields(prev => ({
+    setTouchedFields((prev) => ({
       ...prev,
-      [field]: true
+      [field]: true,
     }));
   };
 
@@ -44,13 +49,13 @@ export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps
           postalCode: cep,
           address: address.street,
           city: address.city,
-          state: address.state
+          state: address.state,
         });
       } catch (error) {
         toast({
           title: "Erro",
           description: "CEP não encontrado",
-          variant: "destructive"
+          variant: "destructive",
         });
       } finally {
         setIsLoading(false);
@@ -66,11 +71,11 @@ export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps
           required
           value={clientData.postalCode}
           onChange={(e) => {
-            const cep = e.target.value.replace(/\D/g, '');
+            const cep = e.target.value.replace(/\D/g, "");
             handleCepChange(cep);
             onClientDataChange({ ...clientData, postalCode: cep });
           }}
-          onBlur={() => handleBlur('postalCode')}
+          onBlur={() => handleBlur("postalCode")}
           placeholder="Digite o CEP"
           disabled={isLoading}
           className={cn({
@@ -109,7 +114,10 @@ export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps
         <Input
           value={clientData.addressComplement}
           onChange={(e) =>
-            onClientDataChange({ ...clientData, addressComplement: e.target.value })
+            onClientDataChange({
+              ...clientData,
+              addressComplement: e.target.value,
+            })
           }
           placeholder="Complemento"
         />
@@ -128,9 +136,9 @@ export const AddressInfo = ({ clientData, onClientDataChange }: AddressInfoProps
 
       <div className="space-y-2">
         <label className="text-sm font-medium">Estado</label>
-        <Select 
+        <Select
           value={clientData.state}
-          onValueChange={(value) => 
+          onValueChange={(value) =>
             onClientDataChange({ ...clientData, state: value })
           }
           disabled={isLoading}
