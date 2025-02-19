@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -71,11 +72,9 @@ const Products = () => {
       return;
     }
 
-    // Atualizar quantidades baseado nos dados do inventário
     const quantities = {};
     inventoryData.forEach((item) => {
       quantities[item.size] = item.total_quantity;
-      console.log(item);
     });
 
     setQuantities(quantities);
@@ -89,7 +88,6 @@ const Products = () => {
     e.preventDefault();
     try {
       const sizeObjects = sizes.map((size) => ({ size }));
-      console.log(sizeObjects);
 
       if (selectedProduct) {
         // Atualiza o produto existente
@@ -106,7 +104,7 @@ const Products = () => {
 
         // Atualiza o inventory para cada tamanho
         for (const size of sizes) {
-          const totalQuantity = quantities[size] || parseFloat(quantity) || 0;
+          const totalQuantity = quantities[size] || 0;
 
           const { error: inventoryError } = await supabase
             .from("inventory")
@@ -145,23 +143,32 @@ const Products = () => {
 
         if (productError) throw productError;
 
-        // Cria o inventory para cada tamanho
-        for (const size of sizes) {
-          const totalQuantity = quantities[size] || parseFloat(quantity) || 0;
-
-          const { error: inventoryError } = await supabase
-            .from("inventory")
-            .upsert(
-              {
+        // Cria o inventory para o produto
+        if (sizes.length > 0) {
+          // Se tem tamanhos, cria uma entrada para cada tamanho
+          for (const size of sizes) {
+            const totalQuantity = quantities[size] || 0;
+            const { error: inventoryError } = await supabase
+              .from("inventory")
+              .insert({
                 product_id: productId,
                 size,
                 total_quantity: totalQuantity,
                 rented_quantity: 0,
-              },
-              {
-                onConflict: "product_id,size",
-              }
-            );
+              });
+
+            if (inventoryError) throw inventoryError;
+          }
+        } else {
+          // Se não tem tamanhos, cria uma única entrada sem tamanho
+          const { error: inventoryError } = await supabase
+            .from("inventory")
+            .insert({
+              product_id: productId,
+              size: null,
+              total_quantity: parseInt(quantity || "0"),
+              rented_quantity: 0,
+            });
 
           if (inventoryError) throw inventoryError;
         }
@@ -179,6 +186,7 @@ const Products = () => {
       setBasePrice("");
       setSizes([]);
       setQuantities({});
+      setQuantity(undefined);
 
       // Recarrega os dados
       refetch();
@@ -198,6 +206,7 @@ const Products = () => {
     if (!selectedProduct) return;
 
     try {
+      // Primeiro deleta do inventory
       const { error: inventoryError } = await supabase
         .from("inventory")
         .delete()
@@ -205,12 +214,13 @@ const Products = () => {
 
       if (inventoryError) throw inventoryError;
 
-      const { error } = await supabase
+      // Depois deleta o produto
+      const { error: productError } = await supabase
         .from("products")
         .delete()
         .eq("id", selectedProduct.id);
 
-      if (error) throw error;
+      if (productError) throw productError;
 
       toast({
         title: "Sucesso",
@@ -221,6 +231,7 @@ const Products = () => {
       setSelectedProduct(null);
       refetch();
     } catch (error) {
+      console.error("Erro ao excluir produto:", error);
       toast({
         title: "Erro",
         description: "Erro ao excluir produto",
@@ -236,6 +247,7 @@ const Products = () => {
     setBasePrice("");
     setSizes([]);
     setQuantities({});
+    setQuantity(undefined);
   };
 
   return (
