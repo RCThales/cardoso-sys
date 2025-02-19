@@ -64,23 +64,23 @@ export const PaymentMethodDialog = ({
         <DialogHeader>
           <DialogTitle>Forma de Pagamento</DialogTitle>
         </DialogHeader>
-        <Tabs defaultValue="card" value={method} onValueChange={setMethod}>
+        <Tabs defaultValue="Cartão" value={method} onValueChange={setMethod}>
           <TabsList className="grid grid-cols-3 gap-4">
             <TabsTrigger value="card">
               <CreditCard className="h-4 w-4 mr-2" />
               Cartão
             </TabsTrigger>
-            <TabsTrigger value="cash">
+            <TabsTrigger value="Dinheiro">
               <Coins className="h-4 w-4 mr-2" />
               Dinheiro
             </TabsTrigger>
-            <TabsTrigger value="pix">
+            <TabsTrigger value="Pix">
               <QrCode className="h-4 w-4 mr-2" />
               PIX
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="card" className="mt-4">
+          <TabsContent value="Cartão" className="mt-4">
             <p className="text-sm text-muted-foreground mb-4">
               Total a pagar: R$ {formatCurrency(total)}
             </p>
@@ -89,7 +89,7 @@ export const PaymentMethodDialog = ({
             </Button>
           </TabsContent>
 
-          <TabsContent value="cash" className="mt-4 space-y-4">
+          <TabsContent value="Dinheiro" className="mt-4 space-y-4">
             <div>
               <label className="text-sm font-medium">Valor Recebido:</label>
               <input
@@ -123,7 +123,7 @@ export const PaymentMethodDialog = ({
             </Button>
           </TabsContent>
 
-          <TabsContent value="pix" className="mt-4">
+          <TabsContent value="Pix" className="mt-4">
             <div className="flex flex-col items-center space-y-4">
               {qrCode && (
                 <img src={qrCode} alt="QR Code PIX" className="w-48 h-48" />

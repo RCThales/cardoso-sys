@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
@@ -87,157 +86,165 @@ const Products = () => {
   ) => {
     e.preventDefault();
     try {
-      const sizeObjects = sizes.map((size) => ({ size }));
-
       if (selectedProduct) {
-        // Atualiza o produto existente
-        const { error: productError } = await supabase
-          .from("products")
-          .update({
-            name,
-            base_price: parseFloat(basePrice),
-            sizes: sizeObjects,
-          })
-          .eq("id", selectedProduct.id);
-
-        if (productError) throw productError;
-
-        // Atualiza o inventory para cada tamanho
-        for (const size of sizes) {
-          const totalQuantity = quantities[size] || 0;
-
-          const { error: inventoryError } = await supabase
-            .from("inventory")
-            .upsert(
-              {
-                product_id: selectedProduct.id,
-                size,
-                total_quantity: totalQuantity,
-                rented_quantity: 0,
-              },
-              {
-                onConflict: "product_id,size",
-              }
-            );
-
-          if (inventoryError) throw inventoryError;
-        }
-
-        toast({
-          title: "Sucesso",
-          description: "Produto atualizado com sucesso",
-        });
+        await updateProduct(selectedProduct.id, quantities);
+        showToast("Sucesso", "Produto atualizado com sucesso");
       } else {
-        // Cria um novo produto
-        const productCode =
-          "#" + Math.random().toString(36).substring(2, 8).toUpperCase();
-        const productId = name.toLowerCase().replace(/\s+/g, "-");
+        await createProduct(quantities);
+        showToast("Sucesso", "Produto adicionado com sucesso");
+      }
 
-        const { error: productError } = await supabase.from("products").insert({
+      resetForm();
+      refetch();
+    } catch (error) {
+      console.error("Erro ao processar o produto:", error);
+      showToast(
+        "Erro",
+        selectedProduct
+          ? "Erro ao atualizar produto"
+          : "Erro ao adicionar produto",
+        "destructive"
+      );
+    }
+  };
+
+  const updateProduct = async (
+    productId: string,
+    quantities: Record<string, number>
+  ) => {
+    const { error: productError } = await supabase
+      .from("products")
+      .update({
+        name,
+        base_price: parseFloat(basePrice),
+        sizes: sizes.map((size) => ({ size })),
+      })
+      .eq("id", productId);
+
+    if (productError) throw productError;
+
+    await updateInventory(productId, quantities);
+  };
+
+  const createProduct = async (quantities: Record<string, number>) => {
+    const productCode =
+      "#" + Math.random().toString(36).substring(2, 8).toUpperCase();
+
+    // Garante que o nome do produto seja convertido corretamente para um ID válido
+    const productId = name
+      .toLowerCase()
+      .trim()
+      .replace(/\s+/g, "-") // Substitui espaços por hífens
+      .replace(/[^a-z0-9-]/g, ""); // Remove caracteres especiais
+
+    const { data: insertedProducts, error: productError } = await supabase
+      .from("products")
+      .insert([
+        {
           id: productId,
           name,
           base_price: parseFloat(basePrice),
           product_code: productCode,
-          sizes: sizeObjects,
-        });
+          sizes: sizes.map((size) => ({ size })),
+        },
+      ])
+      .select("id")
+      .single();
 
-        if (productError) throw productError;
+    if (productError) throw productError;
 
-        // Cria o inventory para o produto
-        if (sizes.length > 0) {
-          // Se tem tamanhos, cria uma entrada para cada tamanho
-          for (const size of sizes) {
-            const totalQuantity = quantities[size] || 0;
-            const { error: inventoryError } = await supabase
-              .from("inventory")
-              .insert({
-                product_id: productId,
-                size,
-                total_quantity: totalQuantity,
-                rented_quantity: 0,
-              });
+    await createInventory(insertedProducts.id, quantities);
+  };
 
-            if (inventoryError) throw inventoryError;
-          }
-        } else {
-          // Se não tem tamanhos, cria uma única entrada sem tamanho
-          const { error: inventoryError } = await supabase
-            .from("inventory")
-            .insert({
-              product_id: productId,
-              size: null,
-              total_quantity: parseInt(quantity || "0"),
-              rented_quantity: 0,
-            });
+  const updateInventory = async (
+    productId: string,
+    quantities: Record<string, number>
+  ) => {
+    for (const size of sizes) {
+      const totalQuantity = quantities[size] || 0;
 
-          if (inventoryError) throw inventoryError;
-        }
+      const { error: inventoryError } = await supabase.from("inventory").upsert(
+        {
+          product_id: productId,
+          size,
+          total_quantity: totalQuantity,
+          rented_quantity: 0,
+        },
+        { onConflict: "product_id,size" }
+      );
 
-        toast({
-          title: "Sucesso",
-          description: "Produto adicionado com sucesso",
-        });
-      }
-
-      // Reseta o formulário e fecha o modal
-      setIsOpen(false);
-      setSelectedProduct(null);
-      setName("");
-      setBasePrice("");
-      setSizes([]);
-      setQuantities({});
-      setQuantity(undefined);
-
-      // Recarrega os dados
-      refetch();
-    } catch (error) {
-      console.error("Erro ao processar o produto:", error);
-      toast({
-        title: "Erro",
-        description: selectedProduct
-          ? "Erro ao atualizar produto"
-          : "Erro ao adicionar produto",
-        variant: "destructive",
-      });
+      if (inventoryError) throw inventoryError;
     }
+  };
+
+  const createInventory = async (
+    productId: string,
+    quantities: Record<string, number>
+  ) => {
+    if (sizes.length > 0) {
+      await updateInventory(productId, quantities);
+    } else {
+      const { error: inventoryError } = await supabase
+        .from("inventory")
+        .insert({
+          product_id: productId,
+          size: null,
+          total_quantity: parseInt(quantity || "0"),
+          rented_quantity: 0,
+        });
+
+      if (inventoryError) throw inventoryError;
+    }
+  };
+
+  const showToast = (
+    title: string,
+    description: string,
+    variant: "default" | "destructive" = "default"
+  ) => {
+    toast({ title, description, variant });
+  };
+
+  const resetForm = () => {
+    setIsOpen(false);
+    setSelectedProduct(null);
+    setName("");
+    setBasePrice("");
+    setSizes([]);
+    setQuantities({});
+    setQuantity(undefined);
   };
 
   const handleDelete = async () => {
     if (!selectedProduct) return;
 
     try {
-      // Primeiro deleta do inventory
-      const { error: inventoryError } = await supabase
-        .from("inventory")
-        .delete()
-        .eq("product_id", selectedProduct.id);
-
-      if (inventoryError) throw inventoryError;
-
-      // Depois deleta o produto
-      const { error: productError } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", selectedProduct.id);
-
-      if (productError) throw productError;
-
-      toast({
-        title: "Sucesso",
-        description: "Produto excluído com sucesso",
-      });
-
-      setIsDeleteDialogOpen(false);
-      setSelectedProduct(null);
+      await deleteProduct(selectedProduct.id); // Exclui primeiro o produto
+      showToast("Sucesso", "Produto excluído com sucesso");
+      resetSelection();
       refetch();
     } catch (error) {
       console.error("Erro ao excluir produto:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir produto",
-        variant: "destructive",
-      });
+      showToast("Erro", "Erro ao excluir produto", "destructive");
     }
+  };
+
+  const deleteProduct = async (productId: string) => {
+    const { error } = await supabase
+      .from("products")
+      .delete()
+      .eq("id", productId);
+
+    if (error) {
+      console.error("Erro ao deletar produto:", error);
+    } else {
+      console.log("Produto deletado com sucesso!");
+    }
+  };
+
+  const resetSelection = () => {
+    setIsDeleteDialogOpen(false);
+    setSelectedProduct(null);
   };
 
   const handleCloseDialog = () => {
