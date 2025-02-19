@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -12,12 +13,14 @@ interface InvoiceHistoryProps {
   search: string;
   sortOrder: "asc" | "desc";
   filterStatus: "all" | "paid" | "unpaid" | "returned" | "not-returned";
+  dateSortType: "invoice" | "return";
 }
 
 export const InvoiceHistory = ({
   search,
   sortOrder,
   filterStatus,
+  dateSortType,
 }: InvoiceHistoryProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
@@ -26,13 +29,10 @@ export const InvoiceHistory = ({
 
   useEffect(() => {
     fetchInvoices();
-  }, [search, sortOrder, filterStatus]);
+  }, [search, sortOrder, filterStatus, dateSortType]);
 
   const fetchInvoices = async () => {
-    let query = supabase
-      .from("invoices")
-      .select("*")
-      .order("created_at", { ascending: sortOrder === "asc" });
+    let query = supabase.from("invoices").select("*");
 
     // Aplicar filtros de status
     switch (filterStatus) {
@@ -68,7 +68,22 @@ export const InvoiceHistory = ({
       return;
     }
 
-    const convertedInvoices = invoicesData.map(convertDatabaseInvoice);
+    let convertedInvoices = invoicesData.map(convertDatabaseInvoice);
+
+    // Ordenar por data
+    convertedInvoices.sort((a, b) => {
+      const dateA = dateSortType === "invoice" 
+        ? new Date(a.invoice_date) 
+        : new Date(a.return_date || "");
+      const dateB = dateSortType === "invoice" 
+        ? new Date(b.invoice_date) 
+        : new Date(b.return_date || "");
+
+      return sortOrder === "asc" 
+        ? dateA.getTime() - dateB.getTime()
+        : dateB.getTime() - dateA.getTime();
+    });
+
     setInvoices(convertedInvoices);
   };
 

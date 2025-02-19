@@ -1,3 +1,4 @@
+
 import { format, parseISO } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -58,6 +59,9 @@ export const InvoiceTableRow = ({
         {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
       </TableCell>
       <TableCell>{invoice.client_name}</TableCell>
+      <TableCell>
+        {invoice.return_date && format(parseISO(invoice.return_date), "dd/MM/yyyy")}
+      </TableCell>
       <TableCell className="text-right">
         R$ {formatCurrency(invoice.total)}
       </TableCell>

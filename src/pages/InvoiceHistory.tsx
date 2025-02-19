@@ -9,6 +9,7 @@ const InvoiceHistory = () => {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid" | "returned" | "not-returned">("all");
+  const [dateSortType, setDateSortType] = useState<"invoice" | "return">("invoice");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
@@ -30,9 +31,19 @@ const InvoiceHistory = () => {
           />
           
           <div className="flex gap-4">
+            <Select value={dateSortType} onValueChange={(value) => setDateSortType(value as "invoice" | "return")}>
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Ordenar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="invoice">Data da Fatura</SelectItem>
+                <SelectItem value="return">Data de Devolução</SelectItem>
+              </SelectContent>
+            </Select>
+
             <Select value={sortOrder} onValueChange={(value) => setSortOrder(value as "asc" | "desc")}>
               <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Ordenar por data" />
+                <SelectValue placeholder="Ordem" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="desc">Mais recentes primeiro</SelectItem>
@@ -59,6 +70,7 @@ const InvoiceHistory = () => {
           search={search}
           sortOrder={sortOrder}
           filterStatus={filterStatus}
+          dateSortType={dateSortType}
         />
       </div>
     </div>
