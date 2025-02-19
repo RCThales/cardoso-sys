@@ -29,14 +29,20 @@ import { CartDrawer } from "./cart/CartDrawer";
 import { handleLogout } from "../utils/Logout";
 
 export const RentalCalculator = () => {
+  // Estados
   const [days, setDays] = useState(1);
   const [quantity, setQuantity] = useState(1);
   const [price, setPrice] = useState(0);
   const [selectedProduct, setSelectedProduct] = useState("");
   const [selectedSize, setSelectedSize] = useState<string>("");
+  const [basePrice, setBasePrice] = useState<number | null>(null);
+
+  // Hooks de terceiros
   const { toast } = useToast();
   const { addItem, items } = useCartStore();
+  const navigate = useNavigate();
 
+  // Queries
   const { data: products } = useQuery<Product[]>({
     queryKey: ["products"],
     queryFn: fetchProducts,
@@ -51,23 +57,27 @@ export const RentalCalculator = () => {
     },
   });
 
+  // Efeitos
   useEffect(() => {
-    if (products && products.length > 0) {
-      if (!selectedProduct) {
-        setSelectedProduct(products[0].id);
-        const product = products[0];
-        if (product.sizes && product.sizes.length > 0) {
-          setSelectedSize(product.sizes[0].size);
-        }
+    if (products && products.length > 0 && !selectedProduct) {
+      const firstProduct = products[0];
+      setSelectedProduct(firstProduct.id);
+      if (firstProduct.sizes && firstProduct.sizes.length > 0) {
+        setSelectedSize(firstProduct.sizes[0].size);
       }
-      const base_price = getProductBasePrice(products, selectedProduct);
+    }
+  }, [products]);
 
-      if (base_price) {
-        setPrice(calculateTotalPrice(days, base_price));
-      }
+  useEffect(() => {
+    const base_price = getProductBasePrice(products || [], selectedProduct);
+
+    if (base_price) {
+      setBasePrice(base_price); // Armazena o base_price no estado
+      setPrice(calculateTotalPrice(days, base_price));
     }
   }, [days, selectedProduct, products]);
 
+  // Funções
   const handleProductChange = (productId: string) => {
     setSelectedProduct(productId);
     const product = products?.find((p) => p.id === productId);
@@ -96,7 +106,11 @@ export const RentalCalculator = () => {
       selectedSize
     );
 
-    if (newQuantity >= 1 && newQuantity <= availableQuantity) {
+    if (
+      !isNaN(newQuantity) &&
+      newQuantity >= 1 &&
+      newQuantity <= availableQuantity
+    ) {
       setQuantity(newQuantity);
     }
   };
@@ -112,21 +126,12 @@ export const RentalCalculator = () => {
     }
   };
 
-  const selectedProductData = products?.find((p) => p.id === selectedProduct);
-  const base_price = selectedProductData?.base_price;
-  const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
-
-  const isProductInCart = items.some(
-    (item) => item.productId === selectedProduct
-  );
-
   const handleAddToCart = () => {
     if (!products) return;
 
-    const availableQuantity = getAvailableQuantity(
-      selectedProduct,
-      selectedSize
-    );
+    const availableQuantity = inventory
+      ? getAvailableQuantity(selectedProduct, selectedSize)
+      : 0;
 
     if (quantity > availableQuantity) {
       toast({
@@ -143,7 +148,7 @@ export const RentalCalculator = () => {
       days,
       total: price * quantity,
       size: selectedSize || undefined,
-      base_price,
+      base_price: selectedProductData?.base_price,
     });
 
     toast({
@@ -152,11 +157,16 @@ export const RentalCalculator = () => {
     });
   };
 
+  // Dados derivados
+  const selectedProductData = products?.find((p) => p.id === selectedProduct);
+  const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
+  const isProductInCart = items.some(
+    (item) => item.productId === selectedProduct && item.size === selectedSize
+  );
+
   if (!products) {
     return <div>Carregando...</div>;
   }
-
-  const navigate = useNavigate();
 
   return (
     <div className="relative">
@@ -219,9 +229,7 @@ export const RentalCalculator = () => {
                       <SelectContent>
                         {selectedProductData.sizes.map((size) => (
                           <SelectItem key={size.size} value={size.size}>
-                            {size.size} (
-                            {getAvailableQuantity(selectedProduct, size.size)}{" "}
-                            disponíveis)
+                            {size.size} ({availableQuantity} disponíveis)
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -294,7 +302,7 @@ export const RentalCalculator = () => {
             <div className="grid grid-cols-2 gap-4 mt-6">
               {[5, 7, 10, 15, 20, 30].map((days) => {
                 // Calcula o preço total para os dias específicos
-                const totalPrice = calculateTotalPrice(days, base_price);
+                const totalPrice = calculateTotalPrice(days, basePrice);
 
                 return (
                   <Card
