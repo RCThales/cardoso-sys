@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable, { RowInput } from "jspdf-autotable";
 import { Invoice, InvoiceExtension } from "@/components/invoice/types";
@@ -17,48 +16,77 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
 
   // Cabeçalho
   doc.setFontSize(20);
-  doc.text("FATURA", pageWidth / 2, 20, { align: "center" });
-  
+  doc.text("FATURA DE LOCAÇÃO", pageWidth / 2, 20, { align: "center" });
+
   // Informações da empresa
   doc.setFontSize(10);
-  doc.text([
-    "Cardoso Aluguel de Muletas",
-    "Quadra 207, Lote 4, Residencial Imprensa IV, Águas Claras",
-    "Brasília - Distrito Federal - 71926250",
-    "CNPJ: 57.684.914/0001-36",
-    "cardosoalugueldemuletas@gmail.com"
-  ], pageWidth / 2, 30, { align: "center" });
-  
+  doc.text(
+    [
+      "Cardoso Aluguel de Muletas",
+      "Quadra 207, Lote 4, Residencial Imprensa IV, Águas Claras",
+      "Brasília - Distrito Federal - 71926250",
+      "CNPJ: 57.684.914/0001-36",
+      "cardosoalugueldemuletas@gmail.com",
+      "(61)98198-8450",
+    ],
+    pageWidth / 2,
+    30,
+    { align: "center" }
+  );
+
   doc.setFontSize(12);
-  doc.text(`Nº: ${invoice.invoice_number}`, pageWidth / 2, 60, { align: "center" });
-  
+  doc.text(`Nº: ${invoice.invoice_number}`, pageWidth / 2, 60, {
+    align: "center",
+  });
+
   // Informações do Cliente
   doc.setFontSize(10);
-  doc.text([
-    `Cliente: ${invoice.client_name}`,
-    `CPF: ${invoice.client_cpf}`,
-    `Tel: ${invoice.client_phone}`,
-    `Endereço: ${invoice.client_address}${invoice.client_address_number ? `, ${invoice.client_address_number}` : ''}`,
-    invoice.client_address_complement ? `Complemento: ${invoice.client_address_complement}` : '',
-    `${invoice.client_city} - ${invoice.client_state}`,
-    `CEP: ${invoice.client_postal_code}`,
-  ], 15, 75);
+  doc.text(
+    [
+      `Cliente: ${invoice.client_name}`,
+      `CPF: ${invoice.client_cpf}`,
+      `Tel: ${invoice.client_phone}`,
+      `Endereço: ${invoice.client_address}${
+        invoice.client_address_number
+          ? `, ${invoice.client_address_number}`
+          : ""
+      }`,
+      invoice.client_address_complement
+        ? `Complemento: ${invoice.client_address_complement}`
+        : "",
+      `${invoice.client_city} - ${invoice.client_state}`,
+      `CEP: ${invoice.client_postal_code}`,
+    ],
+    15,
+    75
+  );
 
   // Informações da Fatura
-  doc.text([
-    `Data: ${format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}`,
-    `Data de Devolução: ${format(parseISO(invoice.return_date || ''), "dd/MM/yyyy")}`,
-    `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
-    invoice.payment_method ? `Forma de Pagamento: ${invoice.payment_method}` : '',
-  ], pageWidth - 60, 75);
+  doc.text(
+    [
+      `Data: ${format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}`,
+      `Data de Devolução: ${format(
+        parseISO(invoice.return_date || ""),
+        "dd/MM/yyyy"
+      )}`,
+      `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
+      invoice.payment_method
+        ? `Forma de Pagamento: ${invoice.payment_method}`
+        : "",
+    ],
+    pageWidth - 60,
+    75
+  );
 
   // Tabela de Itens
   const itemsTableData: string[][] = [];
-  
+
   // Adiciona os itens principais
-  invoice.items.forEach(item => {
-    if (item.productId !== 'delivery-fee') {
-      const description = item.size ? `${item.description} (${item.size})` : item.description;
+  invoice.items.forEach((item) => {
+    if (item.productId !== "delivery-fee") {
+      const description = item.size
+        ? `${item.description} (${item.size})`
+        : item.description;
       itemsTableData.push([
         description,
         item.rentalDays.toString(),
@@ -69,21 +97,23 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   });
 
   // Adiciona o frete se existir
-  const deliveryItem = invoice.items.find(item => item.productId === 'delivery-fee');
+  const deliveryItem = invoice.items.find(
+    (item) => item.productId === "delivery-fee"
+  );
   if (deliveryItem && deliveryItem.total > 0) {
     itemsTableData.push([
-      'Frete',
-      '1',
-      '1',
+      "Frete",
+      "1",
+      "1",
       `R$ ${formatCurrency(deliveryItem.total)}`,
     ]);
   }
 
   autoTable(doc, {
-    head: [['Descrição', 'Dias', 'Quantidade', 'Total']],
+    head: [["Descrição", "Dias", "Quantidade", "Total"]],
     body: itemsTableData,
     startY: 105,
-    theme: 'grid',
+    theme: "grid",
     headStyles: { fillColor: [41, 128, 185] },
   });
 
@@ -91,17 +121,19 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
 
   // Extensões (se houver)
   if (invoice.extensions && invoice.extensions.length > 0) {
-    const extensionsTableData = invoice.extensions.map((ext: InvoiceExtension) => [
-      format(parseISO(ext.date), "dd/MM/yyyy"),
-      ext.days.toString(),
-      `R$ ${formatCurrency(ext.additionalCost)}`,
-    ]);
+    const extensionsTableData = invoice.extensions.map(
+      (ext: InvoiceExtension) => [
+        format(parseISO(ext.date), "dd/MM/yyyy"),
+        ext.days.toString(),
+        `R$ ${formatCurrency(ext.additionalCost)}`,
+      ]
+    );
 
     autoTable(doc, {
-      head: [['Data da Extensão', 'Dias Adicionais', 'Custo Adicional']],
+      head: [["Data da Extensão", "Dias Adicionais", "Custo Adicional"]],
       body: extensionsTableData,
       startY: currentY + 10,
-      theme: 'grid',
+      theme: "grid",
       headStyles: { fillColor: [41, 128, 185] },
     });
 
@@ -110,51 +142,54 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
 
   // Resumo financeiro
   const summaryData = [];
-  
+
   // Subtotal
   const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
-  summaryData.push(['Subtotal', `R$ ${formatCurrency(subtotal)}`]);
-  
-  // Frete (se houver)
-  if (deliveryItem && deliveryItem.total > 0) {
-    summaryData.push(['Frete', `R$ ${formatCurrency(deliveryItem.total)}`]);
-  }
-  
+  summaryData.push(["Subtotal", `R$ ${formatCurrency(subtotal)}`]);
+
   // Desconto (se houver)
+  console.log("subTotal: " + subtotal);
+  console.log("invoice.total: " + invoice.total);
   const discount = subtotal - invoice.total;
   if (discount > 0) {
-    summaryData.push(['Desconto', `- R$ ${formatCurrency(discount)}`]);
+    summaryData.push(["Desconto", `- R$ ${formatCurrency(discount)}`]);
   }
 
   // Extensões (valor total)
   if (invoice.extensions && invoice.extensions.length > 0) {
-    const extensionsTotal = invoice.extensions.reduce((sum, ext) => sum + ext.additionalCost, 0);
-    summaryData.push(['Total das Extensões', `R$ ${formatCurrency(extensionsTotal)}`]);
+    const extensionsTotal = invoice.extensions.reduce(
+      (sum, ext) => sum + ext.additionalCost,
+      0
+    );
+    summaryData.push([
+      "Total das Extensões",
+      `R$ ${formatCurrency(extensionsTotal)}`,
+    ]);
   }
 
   // Total Final
-  summaryData.push(['Total', `R$ ${formatCurrency(invoice.total)}`]);
+  summaryData.push(["Total", `R$ ${formatCurrency(invoice.total)}`]);
 
   autoTable(doc, {
     body: summaryData,
     startY: currentY + 10,
-    theme: 'plain',
+    theme: "plain",
     styles: { cellPadding: 1 },
     columnStyles: {
       0: { cellWidth: 100 },
-      1: { cellWidth: 50, halign: 'right' },
+      1: { cellWidth: 50, halign: "right" },
     },
   });
 
   // Move o texto legal para o rodapé da página
   const pageHeight = doc.internal.pageSize.getHeight();
-  doc.setFontSize(8);
+  doc.setFontSize(9);
   doc.text(
-    "Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços, conforme lei complementar 116/2003.",
+    "Locação de bens móveis, dispensada de emissão de nota fiscal de serviço por não configurar atividade de prestação de serviços, conforme lei complementar 116/2003. \n\n Obs: Para entregas, o valor do frete é referente apenas a entrega, a devolução é de responsabilidade do locatário.",
     pageWidth / 2,
-    pageHeight - 10,
+    pageHeight - 25,
     { align: "center", maxWidth: pageWidth - 20 }
   );
 
-  return doc.output('blob');
+  return doc.output("blob");
 };

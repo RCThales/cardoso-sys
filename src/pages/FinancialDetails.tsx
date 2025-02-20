@@ -8,13 +8,14 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { FinancialCard } from "@/components/financial/FinancialCard";
 import { FinancialHeader } from "@/components/financial/FinancialHeader";
+import { Separator } from "@radix-ui/react-select";
 
 type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 
 interface FinancialSummary {
   grossIncome: number;
-  expenses: number;
   netProfit: number;
+  totalExpenses: number;
   totalInvestment: number;
   invoiceCount: number;
   averageTicket: number;
@@ -24,8 +25,8 @@ const FinancialDetails = () => {
   const { year, month } = useParams();
   const [summary, setSummary] = useState<FinancialSummary>({
     grossIncome: 0,
-    expenses: 0,
     netProfit: 0,
+    totalExpenses: 0,
     totalInvestment: 0,
     invoiceCount: 0,
     averageTicket: 0,
@@ -33,6 +34,9 @@ const FinancialDetails = () => {
   const [previousSummary, setPreviousSummary] =
     useState<FinancialSummary | null>(null);
   const [investmentDetails, setInvestmentDetails] = useState<
+    Array<{ name: string; amount: number }>
+  >([]);
+  const [expenseDetails, setExpenseDetails] = useState<
     Array<{ name: string; amount: number }>
   >([]);
 
@@ -44,25 +48,21 @@ const FinancialDetails = () => {
       )
     : "";
 
-  const TAXES_MEI = 81.9;
-
-  const calculateExpenseDetails = (grossIncome: number) => [
-    {
-      description: "Custos operacionais (15%)",
-      amount: grossIncome * 0.15,
-    },
-    {
-      description: "Desconto de impostos " + TAXES_MEI,
-      amount: TAXES_MEI,
-    },
-  ];
-
   const getInvestmentDetails = (
     investments: Array<{ name: string; amount: number }>
   ) => {
     return investments.map((inv) => ({
       description: inv.name,
       amount: Number(inv.amount),
+    }));
+  };
+
+  const getExpenseDetails = (
+    expenses: Array<{ name: string; amount: number }>
+  ) => {
+    return expenses.map((exp) => ({
+      description: exp.name,
+      amount: Number(exp.amount),
     }));
   };
 
@@ -75,6 +75,11 @@ const FinancialDetails = () => {
 
       const { data: investments } = await supabase
         .from("investments")
+        .select("*")
+        .order("date", { ascending: false });
+
+      const { data: expenses } = await supabase
+        .from("expenses")
         .select("*")
         .order("date", { ascending: false });
 
@@ -108,17 +113,22 @@ const FinancialDetails = () => {
         currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
       const previousGrossIncome =
         previousInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+      0.2;
 
-      const currentExpenses = currentGrossIncome * 0.2;
       const previousExpenses = previousGrossIncome * 0.2;
 
       const totalInvestment =
         investments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
 
+      console.log("Total Investmente: " + investments);
+      const totalExpenses =
+        expenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
+      console.log("Total Expenses: " + expenses);
+
       const currentSummary = {
         grossIncome: currentGrossIncome,
-        expenses: currentExpenses,
-        netProfit: currentGrossIncome - currentExpenses - totalInvestment,
+        netProfit: currentGrossIncome - totalExpenses - totalInvestment,
+        totalExpenses,
         totalInvestment,
         invoiceCount: currentInvoices?.length || 0,
         averageTicket: currentInvoices?.length
@@ -131,9 +141,9 @@ const FinancialDetails = () => {
         previousInvoices && previousInvoices.length > 0
           ? {
               grossIncome: previousGrossIncome,
-              expenses: previousExpenses,
               netProfit:
                 previousGrossIncome - previousExpenses - totalInvestment,
+              totalExpenses,
               totalInvestment,
               invoiceCount: previousInvoices.length,
               averageTicket: previousInvoices.length
@@ -157,10 +167,10 @@ const FinancialDetails = () => {
         <FinancialHeader
           monthName={monthName}
           summary={summary}
-          expenseDetails={calculateExpenseDetails(summary.grossIncome)}
+          expenseDetails={getExpenseDetails(expenseDetails)}
           investmentDetails={getInvestmentDetails(investmentDetails)}
         />
-
+        <div className="pb-3 font-medium text-lg">Faturamento</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <FinancialCard
             title="Receita Bruta"
@@ -171,16 +181,6 @@ const FinancialDetails = () => {
             iconColor="text-green-500"
           />
           <FinancialCard
-            title="Despesas"
-            value={summary.expenses}
-            previousValue={previousSummary?.expenses}
-            description="Inclui descontos e custos operacionais"
-            icon={TrendingDown}
-            iconColor="text-red-500"
-            showDetails
-            details={calculateExpenseDetails(summary.grossIncome)}
-          />
-          <FinancialCard
             title="Lucro Líquido"
             value={summary.netProfit}
             previousValue={previousSummary?.netProfit}
@@ -189,22 +189,35 @@ const FinancialDetails = () => {
             iconColor="text-emerald-500"
           />
           <FinancialCard
-            title="Investimento Total"
-            value={summary.totalInvestment}
-            previousValue={previousSummary?.totalInvestment}
-            description="Em equipamentos e infraestrutura"
-            icon={LineChart}
-            iconColor="text-blue-500"
-            showDetails
-            details={getInvestmentDetails(investmentDetails)}
-          />
-          <FinancialCard
             title="Ticket Médio"
             value={summary.averageTicket}
             previousValue={previousSummary?.averageTicket}
             description="Valor médio por fatura"
             icon={DollarSign}
             iconColor="text-purple-500"
+          />
+        </div>
+        <div className="pb-3 font-medium text-lg mt-6">Gastos</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <FinancialCard
+            title="Despesas"
+            value={summary.totalExpenses}
+            previousValue={previousSummary?.totalExpenses}
+            description="Impostos e manutenção de equipamentos"
+            icon={TrendingDown}
+            iconColor="text-red-500"
+            showDetails
+            details={getExpenseDetails(expenseDetails)}
+          />
+          <FinancialCard
+            title="Investimentos"
+            value={summary.totalInvestment}
+            previousValue={previousSummary?.totalInvestment}
+            description="Em equipamentos, infraestrutura e marketing"
+            icon={LineChart}
+            iconColor="text-blue-500"
+            showDetails
+            details={getInvestmentDetails(investmentDetails)}
           />
         </div>
       </div>

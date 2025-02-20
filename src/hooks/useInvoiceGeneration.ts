@@ -15,28 +15,34 @@ export const useInvoiceGeneration = () => {
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
     const hasValidPostalCode = clientData.postalCode.length === 8;
-    const hasValidPhone = clientData.phone.replace(/\D/g, '').length === 11;
+    const hasValidPhone = clientData.phone.replace(/\D/g, "").length === 11;
     const hasValidCPF = validateCPF(clientData.cpf);
     const hasItems = items.length > 0;
 
-    return hasName && hasValidPostalCode && hasValidPhone && hasValidCPF && hasItems;
+    return (
+      hasName && hasValidPostalCode && hasValidPhone && hasValidCPF && hasItems
+    );
   };
 
   const addItem = () => {
     setItems([
       ...items,
-      { 
-        description: "", 
-        quantity: 1, 
-        price: 0, 
+      {
+        description: "",
+        quantity: 1,
+        price: 0,
         total: 0,
         productId: "",
-        rentalDays: 1
+        rentalDays: 1,
       },
     ]);
   };
 
-  const updateItem = (index: number, field: keyof InvoiceItem, value: string) => {
+  const updateItem = (
+    index: number,
+    field: keyof InvoiceItem,
+    value: string
+  ) => {
     const newItems = [...items];
     const item = { ...newItems[index] };
 
@@ -56,14 +62,13 @@ export const useInvoiceGeneration = () => {
 
   const calculateSubtotal = (): number => {
     const itemsTotal = items.reduce((sum, item) => {
-      const itemTotal = typeof item.total === 'number' ? item.total : 0;
+      const itemTotal = typeof item.total === "number" ? item.total : 0;
       return sum + itemTotal;
     }, 0);
-    
+
     const subtotal = itemsTotal + (clientData.deliveryFee || 0);
-    const discount = (subtotal * clientData.specialDiscount) / 100;
-    
-    return subtotal - discount;
+
+    return subtotal - clientData.specialDiscount;
   };
 
   const generateInvoice = async () => {

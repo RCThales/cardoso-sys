@@ -82,6 +82,7 @@ export const InvoiceGenerator = ({
   };
 
   const handleDiscountChange = (value: string) => {
+    console.log(value);
     setClientData({
       ...clientData,
       specialDiscount: Number(value) || 0,
@@ -97,10 +98,12 @@ export const InvoiceGenerator = ({
     [items]
   );
 
-  const calculateTotal = () => {
-    const subtotal = itemsSubtotal + (clientData.deliveryFee || 0);
-    const discount = (subtotal * clientData.specialDiscount) / 100;
-    return subtotal - discount;
+  const itemSubTotalPlusShipping = () => {
+    return itemsSubtotal + (clientData.deliveryFee || 0);
+  };
+
+  const calculateTotalItemsPlusShippingMinusDiscount = () => {
+    return itemSubTotalPlusShipping() - clientData.specialDiscount;
   };
 
   const handleGenerateInvoice = async () => {
@@ -119,8 +122,6 @@ export const InvoiceGenerator = ({
   const handleBack = () => {
     navigate("/calc");
   };
-
-  const discountOptions = Array.from({ length: 21 }, (_, i) => i * 5);
 
   const isFormValid = useMemo(
     () => validateRequiredFields(),
@@ -167,44 +168,39 @@ export const InvoiceGenerator = ({
             </label>
             <div className="w-32">
               <Input
-                id="deliveryFee"
                 type="number"
-                value={clientData.deliveryFee}
+                id="deliveryFee"
+                className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                value={clientData.deliveryFee || ""}
                 onChange={(e) => handleDeliveryFeeChange(e.target.value)}
+                placeholder="R$ 0,00"
                 min={0}
-                step="0.01"
-                className="text-right"
               />
             </div>
           </div>
-
           <div className="flex justify-between items-center">
             <label className="font-medium" htmlFor="specialDiscount">
               Desconto Especial:
             </label>
             <div className="w-32">
-              <Select
-                value={String(clientData.specialDiscount)}
-                onValueChange={handleDiscountChange}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o desconto" />
-                </SelectTrigger>
-                <SelectContent>
-                  {discountOptions.map((discount) => (
-                    <SelectItem key={discount} value={String(discount)}>
-                      {discount}%
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Input
+                type="number"
+                id="specialDiscount"
+                className="w-full px-2 py-1 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="R$ 0,00"
+                min="0"
+                max={itemSubTotalPlusShipping()}
+                value={clientData.specialDiscount || ""}
+                onChange={(e) => handleDiscountChange(e.target.value)}
+              />
             </div>
           </div>
 
           <div className="flex justify-between items-center pt-4 border-t">
             <span className="font-medium text-lg">Total:</span>
             <span className="text-xl font-bold">
-              R$ {formatCurrency(calculateTotal())}
+              R${" "}
+              {formatCurrency(calculateTotalItemsPlusShippingMinusDiscount())}
             </span>
           </div>
         </div>

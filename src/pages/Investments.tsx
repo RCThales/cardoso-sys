@@ -1,18 +1,17 @@
-
 import { useEffect, useState } from "react";
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogHeader, 
-  DialogTitle, 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
   DialogTrigger,
   DialogDescription,
-  DialogFooter
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Navbar } from "@/components/Navbar";
@@ -28,13 +27,25 @@ interface Investment {
   description: string | null;
 }
 
+interface Expense {
+  id: number;
+  name: string;
+  amount: number;
+  date: string;
+  description: string | null;
+}
+
 const Investments = () => {
   const { toast } = useToast();
   const [investments, setInvestments] = useState<Investment[]>([]);
+  const [expenses, setExpenses] = useState<Expense[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [investmentToDelete, setInvestmentToDelete] = useState<Investment | null>(null);
-  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(null);
+  const [investmentToDelete, setInvestmentToDelete] =
+    useState<Investment | null>(null);
+  const [editingInvestment, setEditingInvestment] = useState<Investment | null>(
+    null
+  );
   const [formData, setFormData] = useState({
     name: "",
     amount: "",
@@ -75,13 +86,13 @@ const Investments = () => {
           .from("investments")
           .update(investmentData)
           .eq("id", editingInvestment.id)
-      : await supabase
-          .from("investments")
-          .insert([investmentData]);
+      : await supabase.from("investments").insert([investmentData]);
 
     if (error) {
       toast({
-        title: `Erro ao ${editingInvestment ? 'editar' : 'adicionar'} investimento`,
+        title: `Erro ao ${
+          editingInvestment ? "editar" : "adicionar"
+        } investimento`,
         description: "Tente novamente mais tarde",
         variant: "destructive",
       });
@@ -89,8 +100,10 @@ const Investments = () => {
     }
 
     toast({
-      title: `Investimento ${editingInvestment ? 'editado' : 'adicionado'}`,
-      description: `O investimento foi ${editingInvestment ? 'atualizado' : 'registrado'} com sucesso`,
+      title: `Investimento ${editingInvestment ? "editado" : "adicionado"}`,
+      description: `O investimento foi ${
+        editingInvestment ? "atualizado" : "registrado"
+      } com sucesso`,
     });
 
     setIsDialogOpen(false);
@@ -147,7 +160,15 @@ const Investments = () => {
     fetchInvestments();
   };
 
-  const totalInvestment = investments.reduce((sum, inv) => sum + Number(inv.amount), 0);
+  const totalInvestment = investments.reduce(
+    (sum, inv) => sum + Number(inv.amount),
+    0
+  );
+
+  const totalExpenses = expenses.reduce(
+    (sum, exp) => sum + Number(exp.amount),
+    0
+  );
 
   return (
     <div className="min-h-screen bg-background">
@@ -155,11 +176,15 @@ const Investments = () => {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Investimentos</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Gastos</h1>
             <p className="text-muted-foreground mt-2">
-              Gerencie os investimentos em equipamentos e infraestrutura
+              Gerencie os gastos em equipamentos, impostos, infraestrutura e
+              marketing.
             </p>
           </div>
+        </div>
+
+        <div className="grid grid-cols-2">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
@@ -170,23 +195,33 @@ const Investments = () => {
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>
-                  {editingInvestment ? "Editar Investimento" : "Adicionar Investimento"}
+                  {editingInvestment
+                    ? "Editar Investimento"
+                    : "Adicionar Investimento"}
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
                 <div>
-                  <label htmlFor="name" className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor="name"
+                    className="text-sm font-medium mb-1 block"
+                  >
                     Nome
                   </label>
                   <Input
                     id="name"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div>
-                  <label htmlFor="amount" className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor="amount"
+                    className="text-sm font-medium mb-1 block"
+                  >
                     Valor
                   </label>
                   <Input
@@ -194,30 +229,129 @@ const Investments = () => {
                     type="number"
                     step="0.01"
                     value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div>
-                  <label htmlFor="date" className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor="date"
+                    className="text-sm font-medium mb-1 block"
+                  >
                     Data
                   </label>
                   <Input
                     id="date"
                     type="date"
                     value={formData.date}
-                    onChange={(e) => setFormData({ ...formData, date: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
                     required
                   />
                 </div>
                 <div>
-                  <label htmlFor="description" className="text-sm font-medium mb-1 block">
+                  <label
+                    htmlFor="description"
+                    className="text-sm font-medium mb-1 block"
+                  >
                     Descrição
                   </label>
                   <Input
                     id="description"
                     value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                  />
+                </div>
+                <Button type="submit" className="w-full">
+                  {editingInvestment ? "Salvar" : "Adicionar"}
+                </Button>
+              </form>
+            </DialogContent>
+          </Dialog>
+
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Nova Despesa
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>
+                  {editingInvestment ? "Editar Despesa" : "Adicionar Despesa"}
+                </DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                <div>
+                  <label
+                    htmlFor="name"
+                    className="text-sm font-medium mb-1 block"
+                  >
+                    Nome
+                  </label>
+                  <Input
+                    id="name"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="amount"
+                    className="text-sm font-medium mb-1 block"
+                  >
+                    Valor
+                  </label>
+                  <Input
+                    id="amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.amount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="date"
+                    className="text-sm font-medium mb-1 block"
+                  >
+                    Data
+                  </label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={formData.date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, date: e.target.value })
+                    }
+                    required
+                  />
+                </div>
+                <div>
+                  <label
+                    htmlFor="description"
+                    className="text-sm font-medium mb-1 block"
+                  >
+                    Descrição
+                  </label>
+                  <Input
+                    id="description"
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
                   />
                 </div>
                 <Button type="submit" className="w-full">
@@ -228,16 +362,29 @@ const Investments = () => {
           </Dialog>
         </div>
 
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle>Total Investido</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-3xl font-bold">
-              R$ {formatCurrency(totalInvestment)}
-            </p>
-          </CardContent>
-        </Card>
+        <div className="grid grid-cols-2">
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Total de Investimentos</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">
+                R$ {formatCurrency(totalInvestment)}
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Total de Despesa</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-3xl font-bold">
+                R$ {formatCurrency(totalExpenses)}
+              </p>
+            </CardContent>
+          </Card>
+        </div>
 
         <div className="grid gap-4">
           {investments.map((investment) => (
@@ -280,19 +427,20 @@ const Investments = () => {
           ))}
         </div>
 
-        <Dialog
-          open={isDeleteDialogOpen}
-          onOpenChange={setIsDeleteDialogOpen}
-        >
+        <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
           <DialogContent>
             <DialogHeader>
               <DialogTitle>Confirmar exclusão</DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja excluir o investimento {investmentToDelete?.name}? Esta ação não pode ser desfeita.
+                Tem certeza que deseja excluir o investimento{" "}
+                {investmentToDelete?.name}? Esta ação não pode ser desfeita.
               </DialogDescription>
             </DialogHeader>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
                 Cancelar
               </Button>
               <Button variant="destructive" onClick={handleConfirmDelete}>
