@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { FinancialCard } from "@/components/financial/FinancialCard";
 import { FinancialHeader } from "@/components/financial/FinancialHeader";
+import { Separator } from "@radix-ui/react-select";
 
 type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 
@@ -18,7 +19,6 @@ interface FinancialSummary {
   totalInvestment: number;
   invoiceCount: number;
   averageTicket: number;
-  expenses: number;
 }
 
 const FinancialDetails = () => {
@@ -30,7 +30,6 @@ const FinancialDetails = () => {
     totalInvestment: 0,
     invoiceCount: 0,
     averageTicket: 0,
-    expenses: 0,
   });
   const [previousSummary, setPreviousSummary] =
     useState<FinancialSummary | null>(null);
@@ -135,7 +134,6 @@ const FinancialDetails = () => {
         averageTicket: currentInvoices?.length
           ? currentGrossIncome / currentInvoices.length
           : 0,
-        expenses: currentGrossIncome - totalExpenses - totalInvestment,
       };
 
       // Só define previousSummary se houver dados do mês anterior
@@ -151,7 +149,6 @@ const FinancialDetails = () => {
               averageTicket: previousInvoices.length
                 ? previousGrossIncome / previousInvoices.length
                 : 0,
-              expenses: previousGrossIncome - previousExpenses - totalInvestment,
             }
           : null
       );

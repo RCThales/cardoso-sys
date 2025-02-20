@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -8,7 +7,7 @@ import type { Product } from "@/utils/priceCalculator";
 interface UseProductFormProps {
   selectedProduct: Product | null;
   sizes: string[];
-  setSizes: (sizes: string[]) => void;
+  setSizes: (sizes: string[] | ((prevSizes: string[]) => string[])) => void;
   initialQuantities?: Record<string, number>;
 }
 
@@ -22,83 +21,31 @@ export const useProductForm = ({
   const [quantities, setQuantities] = useState(initialQuantities);
   const { toast } = useToast();
 
-  const handleAddSize = async () => {
+  const handleAddSize = () => {
     if (newSize && !sizes.includes(newSize)) {
-      try {
-        if (selectedProduct) {
-          const updatedSizes = [...sizes, newSize].map((size) => ({ size }));
-          const { error } = await supabase
-            .from("products")
-            .update({
-              sizes: updatedSizes,
-            })
-            .eq("id", selectedProduct.id);
-
-          if (error) throw error;
-
-          const { error: inventoryError } = await supabase
-            .from("inventory")
-            .insert({
-              product_id: selectedProduct.id,
-              size: newSize,
-              total_quantity: 0,
-              rented_quantity: 0,
-            });
-
-          if (inventoryError) throw inventoryError;
-        }
-
-        setSizes([...sizes, newSize]);
-        setQuantities((prev) => ({ ...prev, [newSize]: 0 }));
-        setNewSize("");
-      } catch (error) {
-        console.error("Erro ao adicionar tamanho:", error);
-        toast({
-          title: "Erro",
-          description: "Erro ao adicionar tamanho",
-          variant: "destructive",
-        });
-      }
+      // Atualizar a UI localmente para adicionar o novo tamanho
+      setSizes((prevSizes: string[]) => [...prevSizes, newSize]);
+      setQuantities((prev) => ({ ...prev, [newSize]: 0 }));
+      setNewSize("");
     }
   };
 
-  const handleRemoveSize = async (sizeToRemove: string) => {
-    try {
-      if (selectedProduct) {
-        const updatedSizes = sizes
-          .filter((size) => size !== sizeToRemove)
-          .map((size) => ({ size }));
+  const handleRemoveSize = (sizeToRemove: string) => {
+    // Atualizar a UI localmente para remover o tamanho
+    setSizes((prevSizes) => {
+      return prevSizes.filter((size) => size !== sizeToRemove);
+    });
 
-        const { error: inventoryError } = await supabase
-          .from("inventory")
-          .delete()
-          .eq("product_id", selectedProduct.id)
-          .eq("size", sizeToRemove);
+    const newQuantities = { ...quantities };
 
-        if (inventoryError) throw inventoryError;
+    delete newQuantities[sizeToRemove];
 
-        const { error } = await supabase
-          .from("products")
-          .update({
-            sizes: updatedSizes,
-          })
-          .eq("id", selectedProduct.id);
-
-        if (error) throw error;
-      }
-
-      setSizes(sizes.filter((size) => size !== sizeToRemove));
-      const newQuantities = { ...quantities };
-      delete newQuantities[sizeToRemove];
-      setQuantities(newQuantities);
-    } catch (error) {
-      console.error("Erro ao remover tamanho:", error);
-      toast({
-        title: "Erro",
-        description: "Erro ao remover tamanho",
-        variant: "destructive",
-      });
+    if (Object.keys(newQuantities).length === 0) {
+      newQuantities["null"] = 0;
     }
+
+    console.log(newQuantities);
+    setQuantities(newQuantities);
   };
 
   const handleQuantityChange = (size: string, value: string) => {
@@ -106,7 +53,10 @@ export const useProductForm = ({
     setQuantities((prev) => ({ ...prev, [size]: quantity }));
   };
 
-  const handleDragEnd = async (event: { active: { id: string }; over: { id: string } }) => {
+  const handleDragEnd = async (event: {
+    active: { id: string };
+    over: { id: string };
+  }) => {
     const { active, over } = event;
 
     if (active.id !== over.id) {

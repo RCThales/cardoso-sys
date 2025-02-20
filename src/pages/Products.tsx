@@ -90,6 +90,7 @@ const Products = () => {
         await updateProduct(selectedProduct.id, quantities);
         showToast("Sucesso", "Produto atualizado com sucesso");
       } else {
+        // Criando um novo produto
         await createProduct(quantities);
         showToast("Sucesso", "Produto adicionado com sucesso");
       }
@@ -112,18 +113,72 @@ const Products = () => {
     productId: string,
     quantities: Record<string, number>
   ) => {
+    // Verifique se houve alteração nos tamanhos
+    if (sizes.length > 0) {
+      // Excluindo os registros antigos no inventory apenas se houver alteração de tamanho
+      const { error: deleteError } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("product_id", productId);
+
+      if (deleteError) throw deleteError;
+    }
+
+    // Atualizando os dados do produto
     const { error: productError } = await supabase
       .from("products")
       .update({
         name,
         base_price: parseFloat(basePrice),
-        sizes: sizes.map((size) => ({ size })),
+        sizes: sizes.map((size) => ({ size })), // Atualizando os tamanhos
       })
       .eq("id", productId);
 
     if (productError) throw productError;
 
+    // Atualizando o inventário
     await updateInventory(productId, quantities);
+  };
+
+  const updateInventory = async (
+    productId: string,
+    quantities: Record<string, number>
+  ) => {
+    // Se não houver nenhum tamanho selecionado, vamos atualizar a quantidade total no inventory
+    if (sizes.length === 0) {
+      console.log(quantities);
+      const totalQuantity = quantities["null"] || 0;
+      console.log(totalQuantity);
+      const { error: inventoryError } = await supabase
+        .from("inventory")
+        .update({
+          total_quantity: totalQuantity,
+          rented_quantity: 0, // Atualizando para 0
+        })
+        .eq("product_id", productId) // Filtra pelo product_id
+        .is("size", null); // Filtra por size = null (produto sem size)
+
+      if (inventoryError) throw inventoryError;
+    } else {
+      // Se houver tamanhos, vamos atualizar para cada tamanho especificado
+      for (const size of sizes) {
+        const totalQuantity = quantities[size] || 0;
+
+        const { error: inventoryError } = await supabase
+          .from("inventory")
+          .upsert(
+            {
+              product_id: productId,
+              size,
+              total_quantity: totalQuantity,
+              rented_quantity: 0, // Inicializando com 0
+            },
+            { onConflict: "product_id,size" } // Garantir que não haja duplicação
+          );
+
+        if (inventoryError) throw inventoryError;
+      }
+    }
   };
 
   const createProduct = async (quantities: Record<string, number>) => {
@@ -145,7 +200,7 @@ const Products = () => {
           name,
           base_price: parseFloat(basePrice),
           product_code: productCode,
-          sizes: sizes.map((size) => ({ size })),
+          sizes: sizes.map((size) => ({ size })), // Inserindo tamanhos
         },
       ])
       .select("id")
@@ -153,48 +208,66 @@ const Products = () => {
 
     if (productError) throw productError;
 
+    // Criando os registros do inventário
     await createInventory(insertedProducts.id, quantities);
-  };
-
-  const updateInventory = async (
-    productId: string,
-    quantities: Record<string, number>
-  ) => {
-    for (const size of sizes) {
-      const totalQuantity = quantities[size] || 0;
-
-      const { error: inventoryError } = await supabase.from("inventory").upsert(
-        {
-          product_id: productId,
-          size,
-          total_quantity: totalQuantity,
-          rented_quantity: 0,
-        },
-        { onConflict: "product_id,size" }
-      );
-
-      if (inventoryError) throw inventoryError;
-    }
   };
 
   const createInventory = async (
     productId: string,
     quantities: Record<string, number>
   ) => {
-    if (sizes.length > 0) {
-      await updateInventory(productId, quantities);
-    } else {
-      const { error: inventoryError } = await supabase
-        .from("inventory")
-        .insert({
+    if (sizes.length === 0) {
+      // Se não houver tamanhos, tratamos como um tamanho único
+      const totalQuantity = quantities["null"] || 0;
+
+      const { error: inventoryError } = await supabase.from("inventory").upsert(
+        {
           product_id: productId,
           size: null,
-          total_quantity: parseInt(quantity || "0"),
-          rented_quantity: 0,
-        });
+          total_quantity: totalQuantity,
+          rented_quantity: 0, // Inicializando com 0
+        },
+        { onConflict: "product_id,size" } // Garantir que não haja duplicação
+      );
 
       if (inventoryError) throw inventoryError;
+    } else {
+      // Se houver tamanhos, criamos um inventário para cada tamanho
+      for (const size of sizes) {
+        const totalQuantity = quantities[size] || 0;
+
+        const { error: inventoryError } = await supabase
+          .from("inventory")
+          .upsert(
+            {
+              product_id: productId,
+              size,
+              total_quantity: totalQuantity,
+              rented_quantity: 0, // Inicializando com 0
+            },
+            { onConflict: "product_id,size" } // Garantir que não haja duplicação
+          );
+
+        if (inventoryError) throw inventoryError;
+      }
     }
+  };
+
+  const updateProductWithoutInventoryUpdate = async (
+    productId: string,
+    quantities: Record<string, number>
+  ) => {
+    // Apenas atualiza o produto sem mexer no inventory
+    const { error: productError } = await supabase
+      .from("products")
+      .update({
+        name,
+        base_price: parseFloat(basePrice),
+        sizes: sizes.map((size) => ({ size })), // Atualizando os tamanhos
+      })
+      .eq("id", productId);
+
+    if (productError) throw productError;
   };
 
   const showToast = (

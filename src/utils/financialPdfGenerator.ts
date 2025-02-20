@@ -9,7 +9,7 @@ Chart.register(...registerables);
 
 interface FinancialSummary {
   grossIncome: number;
-  expenses: number;
+  totalExpenses: number;
   netProfit: number;
   totalInvestment: number;
   invoiceCount: number;
@@ -61,7 +61,7 @@ export const generateFinancialPDF = async (
   // Indicadores Financeiros
   const data = [
     ["Receita Bruta", `R$ ${formatCurrency(summary.grossIncome)}`],
-    ["Despesas", `R$ ${formatCurrency(summary.expenses)}`],
+    ["Despesas", `R$ ${formatCurrency(summary.totalExpenses)}`],
     ["Lucro Líquido", `R$ ${formatCurrency(summary.netProfit)}`],
     ["Ticket Médio", `R$ ${formatCurrency(summary.averageTicket)}`],
     ["Número de Faturas", summary.invoiceCount.toString()],

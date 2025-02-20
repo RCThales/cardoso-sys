@@ -3,7 +3,13 @@ import { format, parseISO, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
@@ -53,9 +59,15 @@ const Investments = () => {
   const [itemToDelete, setItemToDelete] = useState<Investment | null>(null);
   const [editingItem, setEditingItem] = useState<Investment | null>(null);
   const [availableYears, setAvailableYears] = useState<number[]>([]);
-  const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
-  const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
-  const [viewMode, setViewMode] = useState<'investments' | 'expenses'>('investments');
+  const [selectedYear, setSelectedYear] = useState<string>(
+    new Date().getFullYear().toString()
+  );
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    (new Date().getMonth() + 1).toString()
+  );
+  const [viewMode, setViewMode] = useState<"investments" | "expenses">(
+    "investments"
+  );
 
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
@@ -66,7 +78,7 @@ const Investments = () => {
       .order("date", { ascending: false });
 
     const { data: expensesData, error: expensesError } = await supabase
-      .from("expenses")
+      .from("expenses") // Corrigido para "expenses" (se o nome da tabela estiver errado no Supabase, ajuste aqui)
       .select("*")
       .order("date", { ascending: false });
 
@@ -79,15 +91,15 @@ const Investments = () => {
     const processedExpenses = expensesData || [];
 
     const years = new Set<number>();
-    [...processedInvestments, ...processedExpenses].forEach(item => {
+    [...processedInvestments, ...processedExpenses].forEach((item) => {
       if (item.date) {
         years.add(new Date(item.date).getFullYear());
       }
     });
-    
+
     const sortedYears = Array.from(years).sort((a, b) => b - a);
     setAvailableYears(sortedYears);
-    
+
     if (sortedYears.length > 0 && !sortedYears.includes(Number(selectedYear))) {
       setSelectedYear(sortedYears[0].toString());
     }
@@ -136,11 +148,12 @@ const Investments = () => {
       for (let i = 0; i < installments; i++) {
         const installmentDate = addMonths(baseDate, i);
         entries.push({
-          name: installments > 1 
-            ? `${formData.name} (${i + 1}/${installments})` 
-            : formData.name,
+          name:
+            installments > 1
+              ? `${formData.name} (${i + 1}/${installments})`
+              : formData.name,
           amount: installmentAmount,
-          date: installmentDate.toISOString().split('T')[0],
+          date: installmentDate.toISOString().split("T")[0],
           description: formData.description,
           installments: 1,
           is_recurring: formData.is_recurring,
@@ -160,8 +173,12 @@ const Investments = () => {
     }
 
     toast({
-      title: `${isExpenseDialog ? "Despesa" : "Investimento"} ${editingItem ? "editado" : "adicionado"}`,
-      description: `${isExpenseDialog ? "A despesa" : "O investimento"} foi ${editingItem ? "atualizado" : "registrado"} com sucesso`,
+      title: `${isExpenseDialog ? "Despesa" : "Investimento"} ${
+        editingItem ? "editado" : "adicionado"
+      }`,
+      description: `${isExpenseDialog ? "A despesa" : "O investimento"} foi ${
+        editingItem ? "atualizado" : "registrado"
+      } com sucesso`,
     });
 
     setIsDialogOpen(false);
@@ -181,6 +198,7 @@ const Investments = () => {
       is_recurring: item.is_recurring,
     });
     setIsDialogOpen(true);
+    setIsExpenseDialog(viewMode === "expenses"); // Define se é uma despesa ou investimento
   };
 
   const handleDeleteClick = (item: Investment) => {
@@ -191,15 +209,42 @@ const Investments = () => {
   const handleConfirmDelete = async () => {
     if (!itemToDelete) return;
 
-    const table = isExpenseDialog ? "expenses" : "investments";
-    const { error } = await supabase
+    const table = viewMode === "expenses" ? "expenses" : "investments";
+
+    // Identifica a base do nome (sem o sufixo da parcela)
+    const baseName = itemToDelete.name.replace(/\(\d+\/\d+\)$/, "").trim();
+
+    // Busca todas as parcelas relacionadas
+    const { data: relatedItems, error: fetchError } = await supabase
+      .from(table)
+      .select("*")
+      .ilike("name", `${baseName}%`); // Filtra itens com o mesmo nome base
+
+    if (fetchError) {
+      toast({
+        title: `Erro ao buscar ${
+          viewMode === "expenses" ? "despesas" : "investimentos"
+        } relacionados`,
+        description: "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Extrai os IDs dos itens relacionados
+    const idsToDelete = relatedItems.map((item) => item.id);
+
+    // Exclui todos os itens relacionados
+    const { error: deleteError } = await supabase
       .from(table)
       .delete()
-      .eq("id", itemToDelete.id);
+      .in("id", idsToDelete);
 
-    if (error) {
+    if (deleteError) {
       toast({
-        title: `Erro ao excluir ${isExpenseDialog ? "despesa" : "investimento"}`,
+        title: `Erro ao excluir ${
+          viewMode === "expenses" ? "despesas" : "investimentos"
+        }`,
         description: "Tente novamente mais tarde",
         variant: "destructive",
       });
@@ -207,17 +252,39 @@ const Investments = () => {
     }
 
     toast({
-      title: `${isExpenseDialog ? "Despesa" : "Investimento"} excluído`,
-      description: `${isExpenseDialog ? "A despesa" : "O investimento"} foi removido com sucesso`,
+      title: `${
+        viewMode === "expenses" ? "Despesas" : "Investimentos"
+      } excluídos`,
+      description: `Todas as parcelas de ${
+        viewMode === "expenses" ? "a despesa" : "o investimento"
+      } foram removidas com sucesso.`,
     });
 
     setIsDeleteDialogOpen(false);
     setItemToDelete(null);
-    fetchData();
+
+    // Atualiza os dados após a exclusão
+    await fetchData();
+
+    // Recalcula os meses disponíveis após a exclusão
+    const items = viewMode === "expenses" ? expenses : investments;
+    const availableMonths = getAvailableMonths();
+
+    console.log(availableMonths);
+    // Verifica se o mês selecionado ainda está disponível
+    if (!availableMonths.includes(Number(selectedMonth))) {
+      // Se o mês selecionado não estiver mais disponível, atualiza para o primeiro mês disponível
+      if (availableMonths.length > 0) {
+        setSelectedMonth(availableMonths[0].toString());
+      } else {
+        // Se não houver meses disponíveis, define o mês selecionado como vazio
+        setSelectedMonth("");
+      }
+    }
   };
 
   const handleCancelRecurring = async (item: Investment) => {
-    const table = isExpenseDialog ? "expenses" : "investments";
+    const table = viewMode === "expenses" ? "expenses" : "investments"; // Corrigido para usar viewMode
     const { error } = await supabase
       .from(table)
       .update({ is_recurring: false })
@@ -241,7 +308,7 @@ const Investments = () => {
   };
 
   const getFilteredItems = (items: Investment[]) => {
-    return items.filter(item => {
+    return items.filter((item) => {
       const date = new Date(item.date);
       return (
         date.getFullYear().toString() === selectedYear &&
@@ -251,10 +318,10 @@ const Investments = () => {
   };
 
   const getAvailableMonths = () => {
-    const items = viewMode === 'investments' ? investments : expenses;
+    const items = viewMode === "investments" ? investments : expenses;
     const months = new Set<number>();
-    
-    items.forEach(item => {
+
+    items.forEach((item) => {
       if (item.date) {
         const date = new Date(item.date);
         if (date.getFullYear().toString() === selectedYear) {
@@ -262,7 +329,7 @@ const Investments = () => {
         }
       }
     });
-    
+
     return Array.from(months).sort((a, b) => a - b);
   };
 
@@ -272,304 +339,381 @@ const Investments = () => {
       <div className="container py-8">
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Investimentos e Despesas</h1>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Investimentos e Despesas
+            </h1>
             <p className="text-muted-foreground mt-2">
-              Gerencie os investimentos e despesas em equipamentos, impostos, infraestrutura e
-              marketing.
+              Gerencie os investimentos e despesas em equipamentos, impostos,
+              infraestrutura e marketing.
             </p>
           </div>
         </div>
 
         <div className="flex gap-4 mb-8">
           <Button
-            variant={viewMode === 'investments' ? 'default' : 'outline'}
-            onClick={() => setViewMode('investments')}
+            variant={viewMode === "investments" ? "default" : "outline"}
+            onClick={() => setViewMode("investments")}
           >
             Investimentos
           </Button>
           <Button
-            variant={viewMode === 'expenses' ? 'default' : 'outline'}
-            onClick={() => setViewMode('expenses')}
+            variant={viewMode === "expenses" ? "default" : "outline"}
+            onClick={() => setViewMode("expenses")}
           >
             Despesas
           </Button>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setFormData(INITIAL_FORM_STATE);
-              setEditingItem(null);
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button onClick={() => {
-                setIsExpenseDialog(false);
-                setIsDialogOpen(true);
-              }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Novo Investimento
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingItem
-                    ? `Editar ${isExpenseDialog ? "Despesa" : "Investimento"}`
-                    : `Adicionar ${isExpenseDialog ? "Despesa" : "Investimento"}`}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                <div>
-                  <label htmlFor="name" className="text-sm font-medium mb-1 block">
-                    Nome
-                  </label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="amount" className="text-sm font-medium mb-1 block">
-                    Valor Total
-                  </label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, amount: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                {!editingItem && (
-                  <div>
-                    <label htmlFor="installments" className="text-sm font-medium mb-1 block">
-                      Número de Parcelas
-                    </label>
-                    <Select
-                      value={formData.installments}
-                      onValueChange={(value) => setFormData({ ...formData, installments: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o número de parcelas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {monthOptions.map((month) => (
-                          <SelectItem key={month} value={month.toString()}>
-                            {month}x de R$ {formatCurrency(Number(formData.amount) / month)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                <div>
-                  <label htmlFor="date" className="text-sm font-medium mb-1 block">
-                    {editingItem ? "Data" : "Data da Primeira Parcela"}
-                  </label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, date: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="description" className="text-sm font-medium mb-1 block">
-                    Descrição
-                  </label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="recurring"
-                    checked={formData.is_recurring}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, is_recurring: checked })
-                    }
-                  />
-                  <label htmlFor="recurring" className="text-sm font-medium">
-                    Pagamento Recorrente Mensal
-                  </label>
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingItem ? "Salvar" : "Adicionar"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
-            setIsDialogOpen(open);
-            if (!open) {
-              setFormData(INITIAL_FORM_STATE);
-              setEditingItem(null);
-            }
-          }}>
-            <DialogTrigger asChild>
-              <Button onClick={() => {
-                setIsExpenseDialog(true);
-                setIsDialogOpen(true);
-              }}>
-                <Plus className="mr-2 h-4 w-4" />
-                Nova Despesa
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>
-                  {editingItem ? "Editar Despesa" : "Adicionar Despesa"}
-                </DialogTitle>
-              </DialogHeader>
-              <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                <div>
-                  <label htmlFor="name" className="text-sm font-medium mb-1 block">
-                    Nome
-                  </label>
-                  <Input
-                    id="name"
-                    value={formData.name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, name: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="amount" className="text-sm font-medium mb-1 block">
-                    Valor Total
-                  </label>
-                  <Input
-                    id="amount"
-                    type="number"
-                    step="0.01"
-                    value={formData.amount}
-                    onChange={(e) =>
-                      setFormData({ ...formData, amount: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                {!editingItem && (
-                  <div>
-                    <label htmlFor="installments" className="text-sm font-medium mb-1 block">
-                      Número de Parcelas
-                    </label>
-                    <Select
-                      value={formData.installments}
-                      onValueChange={(value) => setFormData({ ...formData, installments: value })}
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o número de parcelas" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {monthOptions.map((month) => (
-                          <SelectItem key={month} value={month.toString()}>
-                            {month}x de R$ {formatCurrency(Number(formData.amount) / month)}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-                <div>
-                  <label htmlFor="date" className="text-sm font-medium mb-1 block">
-                    {editingItem ? "Data" : "Data da Primeira Parcela"}
-                  </label>
-                  <Input
-                    id="date"
-                    type="date"
-                    value={formData.date}
-                    onChange={(e) =>
-                      setFormData({ ...formData, date: e.target.value })
-                    }
-                    required
-                  />
-                </div>
-                <div>
-                  <label htmlFor="description" className="text-sm font-medium mb-1 block">
-                    Descrição
-                  </label>
-                  <Input
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) =>
-                      setFormData({ ...formData, description: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Switch
-                    id="recurring"
-                    checked={formData.is_recurring}
-                    onCheckedChange={(checked) =>
-                      setFormData({ ...formData, is_recurring: checked })
-                    }
-                  />
-                  <label htmlFor="recurring" className="text-sm font-medium">
-                    Pagamento Recorrente Mensal
-                  </label>
-                </div>
-                <Button type="submit" className="w-full">
-                  {editingItem ? "Salvar" : "Adicionar"}
-                </Button>
-              </form>
-            </DialogContent>
-          </Dialog>
-        </div>
-
         <div className="mb-8">
-          <div className="flex gap-4 mb-4">
-            <Select value={selectedYear} onValueChange={setSelectedYear}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Selecione o ano" />
-              </SelectTrigger>
-              <SelectContent>
-                {availableYears.map((year) => (
-                  <SelectItem key={year} value={year.toString()}>
-                    {year}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          {viewMode === "investments" && (
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                  setFormData(INITIAL_FORM_STATE);
+                  setEditingItem(null);
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => {
+                    setIsExpenseDialog(false);
+                    setIsDialogOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Novo Investimento
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingItem
+                      ? "Editar Investimento"
+                      : "Adicionar Investimento"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Nome
+                    </label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="amount"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Valor Total
+                    </label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  {!editingItem && (
+                    <div>
+                      <label
+                        htmlFor="installments"
+                        className="text-sm font-medium mb-1 block"
+                      >
+                        Número de Parcelas
+                      </label>
+                      <Select
+                        value={formData.installments}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, installments: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o número de parcelas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {monthOptions.map((month) => (
+                            <SelectItem key={month} value={month.toString()}>
+                              {month}x de R${" "}
+                              {formatCurrency(Number(formData.amount) / month)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div>
+                    <label
+                      htmlFor="date"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      {editingItem ? "Data" : "Data da Primeira Parcela"}
+                    </label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, date: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Descrição
+                    </label>
+                    <Input
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="recurring"
+                      checked={formData.is_recurring}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, is_recurring: checked })
+                      }
+                    />
+                    <label htmlFor="recurring" className="text-sm font-medium">
+                      Pagamento Recorrente Mensal
+                    </label>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    {editingItem ? "Salvar" : "Adicionar"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
 
-            <Select value={selectedMonth} onValueChange={setSelectedMonth}>
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Selecione o mês" />
-              </SelectTrigger>
-              <SelectContent>
-                {getAvailableMonths().map((month) => (
-                  <SelectItem key={month} value={month.toString()}>
-                    {format(new Date(2024, month - 1), 'MMMM', { locale: ptBR })}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          {viewMode === "expenses" && (
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                  setFormData(INITIAL_FORM_STATE);
+                  setEditingItem(null);
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => {
+                    setIsExpenseDialog(true);
+                    setIsDialogOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Despesa
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingItem ? "Editar Despesa" : "Adicionar Despesa"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Nome
+                    </label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="amount"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Valor Total
+                    </label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  {!editingItem && (
+                    <div>
+                      <label
+                        htmlFor="installments"
+                        className="text-sm font-medium mb-1 block"
+                      >
+                        Número de Parcelas
+                      </label>
+                      <Select
+                        value={formData.installments}
+                        onValueChange={(value) =>
+                          setFormData({ ...formData, installments: value })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione o número de parcelas" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {monthOptions.map((month) => (
+                            <SelectItem key={month} value={month.toString()}>
+                              {month}x de R${" "}
+                              {formatCurrency(Number(formData.amount) / month)}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                  <div>
+                    <label
+                      htmlFor="date"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      {editingItem ? "Data" : "Data da Primeira Parcela"}
+                    </label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, date: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Descrição
+                    </label>
+                    <Input
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      id="recurring"
+                      checked={formData.is_recurring}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, is_recurring: checked })
+                      }
+                    />
+                    <label htmlFor="recurring" className="text-sm font-medium">
+                      Pagamento Recorrente Mensal
+                    </label>
+                  </div>
+                  <Button type="submit" className="w-full">
+                    {editingItem ? "Salvar" : "Adicionar"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
+        <div className="mb-8">
+          {/* Exibe os dropdowns apenas se houver itens */}
+          {((investments.length > 0 && viewMode === "investments") ||
+            (expenses.length > 0 && viewMode === "expenses")) && (
+            <div className="flex gap-4 mb-4">
+              <Select value={selectedYear} onValueChange={setSelectedYear}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Selecione o ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableYears.map((year) => (
+                    <SelectItem key={year} value={year.toString()}>
+                      {year}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-        <div className="grid gap-4">
-          <h2 className="text-xl font-semibold mb-4">
-            {viewMode === 'expenses' ? "Despesas" : "Investimentos"} do Período
-          </h2>
-          {getFilteredItems(viewMode === 'expenses' ? expenses : investments).map((item) => (
+              <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Selecione o mês" />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAvailableMonths().map((month) => (
+                    <SelectItem key={month} value={month.toString()}>
+                      {format(new Date(2024, month - 1), "MMMM", {
+                        locale: ptBR,
+                      })}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          <div className="grid gap-4">
+            <h2 className="text-xl font-semibold mb-4">
+              {viewMode === "expenses" ? "Despesas" : "Investimentos"} do
+              Período
+            </h2>
+            {/* Exibe uma mensagem se não houver itens */}
+            {((investments.length === 0 && viewMode === "investments") ||
+              (expenses.length === 0 && viewMode === "expenses")) && (
+              <div className="text-center py-8">
+                <p className="text-muted-foreground">
+                  {viewMode === "expenses" ? "Nenhuma" : "Nenhum"}{" "}
+                  {viewMode === "expenses" ? "despesa" : "investimento"}{" "}
+                  {viewMode === "expenses" ? "encontrada" : "encontrado"}{" "}
+                </p>
+              </div>
+            )}
+          </div>
+          {getFilteredItems(
+            viewMode === "expenses" ? expenses : investments
+          ).map((item) => (
             <Card key={item.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -631,7 +775,8 @@ const Investments = () => {
             <DialogHeader>
               <DialogTitle>Confirmar exclusão</DialogTitle>
               <DialogDescription>
-                Tem certeza que deseja excluir {isExpenseDialog ? "a despesa" : "o investimento"}{" "}
+                Tem certeza que deseja excluir{" "}
+                {viewMode === "expenses" ? "a despesa" : "o investimento"}{" "}
                 {itemToDelete?.name}? Esta ação não pode ser desfeita.
               </DialogDescription>
             </DialogHeader>

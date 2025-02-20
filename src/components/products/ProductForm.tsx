@@ -1,4 +1,3 @@
-
 import type { Product } from "@/utils/priceCalculator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -55,12 +54,12 @@ export const ProductForm = ({
     queryKey: ["inventory", selectedProduct?.id],
     queryFn: async () => {
       if (!selectedProduct) return null;
-      
+
       const { data, error } = await supabase
         .from("inventory")
         .select("size, total_quantity")
         .eq("product_id", selectedProduct.id);
-        
+
       if (error) throw error;
       return data;
     },
@@ -92,15 +91,27 @@ export const ProductForm = ({
           onChange={(e) => setBasePrice(e.target.value)}
         />
       </div>
-      
-      {selectedProduct && inventoryData && (
+
+      {selectedProduct && inventoryData && sizes.length === 0 && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Quantidade em Estoque Atual</label>
+          <label className="text-sm font-medium">
+            Quantidade em Estoque Atual
+          </label>
           <div className="grid gap-2">
             {inventoryData.map((item) => (
-              <div key={item.size || 'default'} className="flex justify-between items-center p-2 bg-muted rounded">
-                <span>{item.size || 'Padrão'}</span>
-                <span className="font-medium">{item.total_quantity}</span>
+              <div
+                key={item.size || "default_inventory_item"}
+                className="flex justify-between items-center p-2 bg-muted rounded"
+              >
+                <span>{"Padrão"}</span>
+                <input
+                  type="number"
+                  className="w-16 p-1 text-center border rounded"
+                  value={quantities[item.size] ?? 0}
+                  onChange={(e) =>
+                    handleQuantityChange(item.size, e.target.value)
+                  }
+                />
               </div>
             ))}
           </div>

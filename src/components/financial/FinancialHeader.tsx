@@ -10,7 +10,7 @@ interface FinancialHeaderProps {
   monthName: string;
   summary: {
     grossIncome: number;
-    expenses: number;
+    totalExpenses: number;
     netProfit: number;
     totalInvestment: number;
     invoiceCount: number;

@@ -1,115 +1,131 @@
 
-import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
-import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
-import { CSS } from "@dnd-kit/utilities";
-import { useState } from "react";
-import { Card } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { format, parseISO } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Navbar } from "@/components/Navbar";
+import { supabase } from "@/integrations/supabase/client";
+import type { Database } from "@/integrations/supabase/types";
 
-interface CardItem {
-  id: string;
-  title: string;
-  description: string;
-  route: string;
+type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
+
+interface MonthData {
+  month: number;
+  year: number;
+  label: string;
+  count: number;
 }
 
-const initialItems: CardItem[] = [
-  {
-    id: "1",
-    title: "Investimentos",
-    description: "Gestão de investimentos e despesas em equipamentos, impostos, infraestrutura e marketing.",
-    route: "/investments",
-  },
-  {
-    id: "2",
-    title: "Faturamento",
-    description: "Análise detalhada do faturamento mensal e anual.",
-    route: "/financial/billing",
-  },
-  {
-    id: "3",
-    title: "Fluxo de Caixa",
-    description: "Controle de entradas e saídas financeiras.",
-    route: "/financial/cash-flow",
-  },
-  {
-    id: "4",
-    title: "Relatórios",
-    description: "Relatórios financeiros e indicadores de desempenho.",
-    route: "/financial/reports",
-  },
-];
-
-const SortableCard = ({ item }: { item: CardItem }) => {
-  const navigate = useNavigate();
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: item.id });
-
-  const style = {
-    transform: CSS.Transform.toString(transform),
-    transition,
-  };
-
-  return (
-    <div
-      ref={setNodeRef}
-      style={style}
-      {...attributes}
-      {...listeners}
-      onClick={() => navigate(item.route)}
-      className="cursor-pointer"
-    >
-      <Card className="p-6 hover:bg-accent transition-colors">
-        <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-        <p className="text-muted-foreground">{item.description}</p>
-      </Card>
-    </div>
-  );
-};
-
 const Financial = () => {
-  const [items, setItems] = useState(initialItems);
+  const navigate = useNavigate();
+  const [years, setYears] = useState<number[]>([]);
+  const [monthsByYear, setMonthsByYear] = useState<Record<number, MonthData[]>>({});
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
 
-  const handleDragEnd = (event: DragEndEvent) => {
-    const { active, over } = event;
-    
-    if (!over || active.id === over.id) {
-      return;
-    }
+  useEffect(() => {
+    const fetchInvoices = async () => {
+      const { data: invoices, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .order("invoice_date", { ascending: true });
 
-    const oldIndex = items.findIndex((item) => item.id === active.id);
-    const newIndex = items.findIndex((item) => item.id === over.id);
+      if (error) {
+        console.error("Error fetching invoices:", error);
+        return;
+      }
 
-    const newItems = [...items];
-    const [movedItem] = newItems.splice(oldIndex, 1);
-    newItems.splice(newIndex, 0, movedItem);
+      const monthsData: Record<number, Record<number, MonthData>> = {};
+      const yearsSet = new Set<number>();
 
-    setItems(newItems);
-  };
+      invoices.forEach((invoice: InvoiceRow) => {
+        const date = parseISO(invoice.invoice_date);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+
+        yearsSet.add(year);
+
+        if (!monthsData[year]) {
+          monthsData[year] = {};
+        }
+
+        if (!monthsData[year][month]) {
+          monthsData[year][month] = {
+            month,
+            year,
+            label: format(date, "MMMM", { locale: ptBR }),
+            count: 0,
+          };
+        }
+
+        monthsData[year][month].count++;
+      });
+
+      const processedYears = Array.from(yearsSet).sort((a, b) => b - a);
+      const processedMonths: Record<number, MonthData[]> = {};
+
+      processedYears.forEach(year => {
+        processedMonths[year] = Object.values(monthsData[year]).sort((a, b) => a.month - b.month);
+      });
+
+      setYears(processedYears);
+      setMonthsByYear(processedMonths);
+      if (processedYears.length > 0) {
+        setSelectedYear(processedYears[0]);
+      }
+    };
+
+    fetchInvoices();
+  }, []);
 
   return (
-    <div className="container py-8">
-      <h1 className="text-3xl font-bold mb-8">Gestão Financeira</h1>
-      <DndContext
-        collisionDetection={closestCenter}
-        onDragEnd={handleDragEnd}
-      >
-        <SortableContext
-          items={items}
-          strategy={verticalListSortingStrategy}
-        >
-          <div className="grid gap-4">
-            {items.map((item) => (
-              <SortableCard key={item.id} item={item} />
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Análise Financeira</h1>
+          <p className="text-muted-foreground mt-2">
+            Visualize os resultados financeiros por mês e ano
+          </p>
+        </div>
+
+        <Tabs defaultValue={selectedYear.toString()} className="space-y-4">
+          <TabsList>
+            {years.map(year => (
+              <TabsTrigger
+                key={year}
+                value={year.toString()}
+                onClick={() => setSelectedYear(year)}
+              >
+                {year}
+              </TabsTrigger>
             ))}
-          </div>
-        </SortableContext>
-      </DndContext>
+          </TabsList>
+
+          {years.map(year => (
+            <TabsContent key={year} value={year.toString()} className="space-y-4">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                {monthsByYear[year]?.map(month => (
+                  <Button
+                    key={`${year}-${month.month}`}
+                    variant="outline"
+                    className="h-auto py-8 flex flex-col gap-2"
+                    onClick={() => navigate(`/financial/${year}/${month.month + 1}`)}
+                  >
+                    <span className="text-lg font-semibold capitalize">
+                      {month.label}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                      {month.count} faturas
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
     </div>
   );
 };
