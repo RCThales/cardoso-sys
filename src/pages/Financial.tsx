@@ -1,5 +1,7 @@
 
-import { DragDropContext, Droppable, Draggable } from "@dnd-kit/core";
+import { DndContext, closestCenter, DragEndEvent } from "@dnd-kit/core";
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { useNavigate } from "react-router-dom";
@@ -38,16 +40,54 @@ const initialItems: CardItem[] = [
   },
 ];
 
+const SortableCard = ({ item }: { item: CardItem }) => {
+  const navigate = useNavigate();
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+  };
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      {...attributes}
+      {...listeners}
+      onClick={() => navigate(item.route)}
+      className="cursor-pointer"
+    >
+      <Card className="p-6 hover:bg-accent transition-colors">
+        <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
+        <p className="text-muted-foreground">{item.description}</p>
+      </Card>
+    </div>
+  );
+};
+
 const Financial = () => {
   const [items, setItems] = useState(initialItems);
-  const navigate = useNavigate();
 
-  const handleDragEnd = (result: any) => {
-    if (!result.destination) return;
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    
+    if (!over || active.id === over.id) {
+      return;
+    }
 
-    const newItems = Array.from(items);
-    const [reorderedItem] = newItems.splice(result.source.index, 1);
-    newItems.splice(result.destination.index, 0, reorderedItem);
+    const oldIndex = items.findIndex((item) => item.id === active.id);
+    const newIndex = items.findIndex((item) => item.id === over.id);
+
+    const newItems = [...items];
+    const [movedItem] = newItems.splice(oldIndex, 1);
+    newItems.splice(newIndex, 0, movedItem);
 
     setItems(newItems);
   };
@@ -55,37 +95,21 @@ const Financial = () => {
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-8">Gestão Financeira</h1>
-      <DragDropContext onDragEnd={handleDragEnd}>
-        <Droppable droppableId="cards">
-          {(provided) => (
-            <div
-              {...provided.droppableProps}
-              ref={provided.innerRef}
-              className="grid gap-4"
-            >
-              {items.map((item, index) => (
-                <Draggable key={item.id} draggableId={item.id} index={index}>
-                  {(provided) => (
-                    <div
-                      ref={provided.innerRef}
-                      {...provided.draggableProps}
-                      {...provided.dragHandleProps}
-                      onClick={() => navigate(item.route)}
-                      className="cursor-pointer"
-                    >
-                      <Card className="p-6 hover:bg-accent transition-colors">
-                        <h3 className="text-xl font-semibold mb-2">{item.title}</h3>
-                        <p className="text-muted-foreground">{item.description}</p>
-                      </Card>
-                    </div>
-                  )}
-                </Draggable>
-              ))}
-              {provided.placeholder}
-            </div>
-          )}
-        </Droppable>
-      </DragDropContext>
+      <DndContext
+        collisionDetection={closestCenter}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext
+          items={items}
+          strategy={verticalListSortingStrategy}
+        >
+          <div className="grid gap-4">
+            {items.map((item) => (
+              <SortableCard key={item.id} item={item} />
+            ))}
+          </div>
+        </SortableContext>
+      </DndContext>
     </div>
   );
 };
