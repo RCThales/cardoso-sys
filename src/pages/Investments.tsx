@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { format, parseISO, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -56,7 +55,8 @@ const Investments = () => {
   const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
-  
+  const [viewMode, setViewMode] = useState<'investments' | 'expenses'>('investments');
+
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
   const fetchData = async () => {
@@ -78,7 +78,6 @@ const Investments = () => {
     const processedInvestments = investmentsData || [];
     const processedExpenses = expensesData || [];
 
-    // Coletar anos únicos dos registros
     const years = new Set<number>();
     [...processedInvestments, ...processedExpenses].forEach(item => {
       if (item.date) {
@@ -110,7 +109,6 @@ const Investments = () => {
     const baseDate = new Date(formData.date);
 
     if (editingItem) {
-      // Edição simples sem parcelas
       const { error } = await supabase
         .from(table)
         .update({
@@ -132,7 +130,6 @@ const Investments = () => {
         return;
       }
     } else {
-      // Criação com possíveis parcelas
       const installmentAmount = amount / installments;
       const entries = [];
 
@@ -253,6 +250,22 @@ const Investments = () => {
     });
   };
 
+  const getAvailableMonths = () => {
+    const items = viewMode === 'investments' ? investments : expenses;
+    const months = new Set<number>();
+    
+    items.forEach(item => {
+      if (item.date) {
+        const date = new Date(item.date);
+        if (date.getFullYear().toString() === selectedYear) {
+          months.add(date.getMonth() + 1);
+        }
+      }
+    });
+    
+    return Array.from(months).sort((a, b) => a - b);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -265,6 +278,21 @@ const Investments = () => {
               marketing.
             </p>
           </div>
+        </div>
+
+        <div className="flex gap-4 mb-8">
+          <Button
+            variant={viewMode === 'investments' ? 'default' : 'outline'}
+            onClick={() => setViewMode('investments')}
+          >
+            Investimentos
+          </Button>
+          <Button
+            variant={viewMode === 'expenses' ? 'default' : 'outline'}
+            onClick={() => setViewMode('expenses')}
+          >
+            Despesas
+          </Button>
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
@@ -411,7 +439,6 @@ const Investments = () => {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
-                {/* Mesmo conteúdo do formulário anterior */}
                 <div>
                   <label htmlFor="name" className="text-sm font-medium mb-1 block">
                     Nome
@@ -528,7 +555,7 @@ const Investments = () => {
                 <SelectValue placeholder="Selecione o mês" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => i + 1).map((month) => (
+                {getAvailableMonths().map((month) => (
                   <SelectItem key={month} value={month.toString()}>
                     {format(new Date(2024, month - 1), 'MMMM', { locale: ptBR })}
                   </SelectItem>
@@ -540,9 +567,9 @@ const Investments = () => {
 
         <div className="grid gap-4">
           <h2 className="text-xl font-semibold mb-4">
-            {isExpenseDialog ? "Despesas" : "Investimentos"} do Período
+            {viewMode === 'expenses' ? "Despesas" : "Investimentos"} do Período
           </h2>
-          {getFilteredItems(isExpenseDialog ? expenses : investments).map((item) => (
+          {getFilteredItems(viewMode === 'expenses' ? expenses : investments).map((item) => (
             <Card key={item.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">

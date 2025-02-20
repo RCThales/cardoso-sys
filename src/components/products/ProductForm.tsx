@@ -1,8 +1,11 @@
+
 import type { Product } from "@/utils/priceCalculator";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProductForm } from "./useProductForm";
 import { SizesSection } from "./SizesSection";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 
 interface ProductFormProps {
   onSubmit: (
@@ -30,8 +33,6 @@ export const ProductForm = ({
   selectedProduct,
   sizes,
   setSizes,
-  setInitialQuantity,
-  initialQuantity,
   initialQuantities = {},
 }: ProductFormProps) => {
   const {
@@ -47,6 +48,23 @@ export const ProductForm = ({
     sizes,
     setSizes,
     initialQuantities,
+  });
+
+  // Buscar quantidade em estoque atual
+  const { data: inventoryData } = useQuery({
+    queryKey: ["inventory", selectedProduct?.id],
+    queryFn: async () => {
+      if (!selectedProduct) return null;
+      
+      const { data, error } = await supabase
+        .from("inventory")
+        .select("size, total_quantity")
+        .eq("product_id", selectedProduct.id);
+        
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!selectedProduct,
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -74,17 +92,21 @@ export const ProductForm = ({
           onChange={(e) => setBasePrice(e.target.value)}
         />
       </div>
-      {sizes.length === 0 && (
+      
+      {selectedProduct && inventoryData && (
         <div className="space-y-2">
-          <label className="text-sm font-medium">Quantidade em Estoque</label>
-          <Input
-            type="number"
-            required
-            value={initialQuantity}
-            onChange={(e) => setInitialQuantity(e.target.value)}
-          />
+          <label className="text-sm font-medium">Quantidade em Estoque Atual</label>
+          <div className="grid gap-2">
+            {inventoryData.map((item) => (
+              <div key={item.size || 'default'} className="flex justify-between items-center p-2 bg-muted rounded">
+                <span>{item.size || 'Padrão'}</span>
+                <span className="font-medium">{item.total_quantity}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
+
       <SizesSection
         sizes={sizes}
         newSize={newSize}
