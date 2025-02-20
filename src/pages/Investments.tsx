@@ -150,8 +150,18 @@ const Investments = () => {
       return;
     }
 
-    setInvestments(investmentsData || []);
-    setExpenses(expensesData || []);
+    const processedInvestments = (investmentsData || []).map(inv => ({
+      ...inv,
+      installments: inv.installments || 1
+    })) as Investment[];
+
+    const processedExpenses = (expensesData || []).map(exp => ({
+      ...exp,
+      installments: exp.installments || 1
+    })) as Investment[];
+
+    setInvestments(processedInvestments);
+    setExpenses(processedExpenses);
   };
 
   useEffect(() => {
