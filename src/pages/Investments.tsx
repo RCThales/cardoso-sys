@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { format, parseISO, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -16,24 +17,10 @@ import {
 } from "@/components/ui/dialog";
 import { useToast } from "@/components/ui/use-toast";
 import { Navbar } from "@/components/Navbar";
-import { Plus, Trash, Edit } from "lucide-react";
+import { Plus, Trash, Edit, RefreshCw } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { formatCurrency } from "@/utils/formatters";
-import {
-  DndContext,
-  closestCenter,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-} from '@dnd-kit/core';
-import {
-  arrayMove,
-  SortableContext,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from '@dnd-kit/sortable';
+import { Switch } from "@/components/ui/switch";
 
 interface Investment {
   id: number;
@@ -42,49 +29,20 @@ interface Investment {
   date: string;
   description: string | null;
   installments: number;
+  is_recurring: boolean;
   created_at: string | null;
 }
 
-interface FinancialCard {
-  id: string;
-  title: string;
-  value: number;
-  type: 'grossIncome' | 'netProfit' | 'expenses' | 'investment';
-}
-
-const SortableCard = ({ card }: { card: FinancialCard }) => {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-  } = useSortable({ id: card.id });
-
-  const style = {
-    transform: transform ? `translate3d(${transform.x}px, ${transform.y}px, 0)` : undefined,
-    transition,
-  };
-
-  const isNetProfit = card.type === 'netProfit';
-
-  return (
-    <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <Card className={`mb-8 cursor-move ${isNetProfit ? 'border-2 border-purple-500 bg-gradient-to-r from-purple-50 to-purple-100' : ''}`}>
-        <CardHeader>
-          <CardTitle>{card.title}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <p className={`text-3xl font-bold ${isNetProfit ? 'text-purple-700' : ''}`}>
-            R$ {formatCurrency(card.value)}
-          </p>
-        </CardContent>
-      </Card>
-    </div>
-  );
-};
-
 const monthOptions = Array.from({ length: 96 }, (_, i) => i + 1);
+
+const INITIAL_FORM_STATE = {
+  name: "",
+  amount: "",
+  date: new Date().toISOString().split("T")[0],
+  description: "",
+  installments: "1",
+  is_recurring: false,
+};
 
 const Investments = () => {
   const { toast } = useToast();
@@ -95,45 +53,11 @@ const Investments = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Investment | null>(null);
   const [editingItem, setEditingItem] = useState<Investment | null>(null);
+  const [availableYears, setAvailableYears] = useState<number[]>([]);
   const [selectedYear, setSelectedYear] = useState<string>(new Date().getFullYear().toString());
   const [selectedMonth, setSelectedMonth] = useState<string>((new Date().getMonth() + 1).toString());
-  const [cardOrder, setCardOrder] = useState<FinancialCard[]>(() => {
-    const saved = localStorage.getItem('financialCardOrder');
-    return saved ? JSON.parse(saved) : [
-      { id: '1', title: 'Total de Investimentos', type: 'investment', value: 0 },
-      { id: '2', title: 'Lucro Líquido', type: 'netProfit', value: 0 },
-      { id: '3', title: 'Total de Despesas', type: 'expenses', value: 0 },
-    ];
-  });
   
-  const [formData, setFormData] = useState({
-    name: "",
-    amount: "",
-    date: new Date().toISOString().split("T")[0],
-    description: "",
-    installments: "1",
-  });
-
-  const sensors = useSensors(
-    useSensor(PointerSensor),
-    useSensor(KeyboardSensor, {
-      coordinateGetter: sortableKeyboardCoordinates,
-    })
-  );
-
-  const handleDragEnd = (event: any) => {
-    const { active, over } = event;
-
-    if (active.id !== over.id) {
-      setCardOrder((items) => {
-        const oldIndex = items.findIndex((item) => item.id === active.id);
-        const newIndex = items.findIndex((item) => item.id === over.id);
-        const newOrder = arrayMove(items, oldIndex, newIndex);
-        localStorage.setItem('financialCardOrder', JSON.stringify(newOrder));
-        return newOrder;
-      });
-    }
-  };
+  const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
   const fetchData = async () => {
     const { data: investmentsData, error: investmentsError } = await supabase
@@ -151,15 +75,23 @@ const Investments = () => {
       return;
     }
 
-    const processedInvestments = (investmentsData || []).map(inv => ({
-      ...inv,
-      installments: (inv as any).installments || 1
-    }));
+    const processedInvestments = investmentsData || [];
+    const processedExpenses = expensesData || [];
 
-    const processedExpenses = (expensesData || []).map(exp => ({
-      ...exp,
-      installments: (exp as any).installments || 1
-    }));
+    // Coletar anos únicos dos registros
+    const years = new Set<number>();
+    [...processedInvestments, ...processedExpenses].forEach(item => {
+      if (item.date) {
+        years.add(new Date(item.date).getFullYear());
+      }
+    });
+    
+    const sortedYears = Array.from(years).sort((a, b) => b - a);
+    setAvailableYears(sortedYears);
+    
+    if (sortedYears.length > 0 && !sortedYears.includes(Number(selectedYear))) {
+      setSelectedYear(sortedYears[0].toString());
+    }
 
     setInvestments(processedInvestments);
     setExpenses(processedExpenses);
@@ -173,34 +105,61 @@ const Investments = () => {
     e.preventDefault();
 
     const table = isExpenseDialog ? "expenses" : "investments";
-    const amount = Number(formData.amount) / Number(formData.installments);
-    const installmentDates = Array.from({ length: Number(formData.installments) }, (_, i) => {
-      const date = new Date(formData.date);
-      return addMonths(date, i).toISOString().split('T')[0];
-    });
+    const amount = Number(formData.amount);
+    const installments = Number(formData.installments);
+    const baseDate = new Date(formData.date);
 
-    const installments = installmentDates.map(date => ({
-      name: `${formData.name} (${installmentDates.indexOf(date) + 1}/${formData.installments})`,
-      amount,
-      date,
-      description: formData.description || null,
-      installments: Number(formData.installments),
-    }));
+    if (editingItem) {
+      // Edição simples sem parcelas
+      const { error } = await supabase
+        .from(table)
+        .update({
+          name: formData.name,
+          amount,
+          date: formData.date,
+          description: formData.description,
+          installments: 1,
+          is_recurring: formData.is_recurring,
+        })
+        .eq("id", editingItem.id);
 
-    const { error } = editingItem
-      ? await supabase
-          .from(table)
-          .update(installments[0])
-          .eq("id", editingItem.id)
-      : await supabase.from(table).insert(installments);
+      if (error) {
+        toast({
+          title: "Erro ao editar registro",
+          description: "Tente novamente mais tarde",
+          variant: "destructive",
+        });
+        return;
+      }
+    } else {
+      // Criação com possíveis parcelas
+      const installmentAmount = amount / installments;
+      const entries = [];
 
-    if (error) {
-      toast({
-        title: `Erro ao ${editingItem ? "editar" : "adicionar"} ${isExpenseDialog ? "despesa" : "investimento"}`,
-        description: "Tente novamente mais tarde",
-        variant: "destructive",
-      });
-      return;
+      for (let i = 0; i < installments; i++) {
+        const installmentDate = addMonths(baseDate, i);
+        entries.push({
+          name: installments > 1 
+            ? `${formData.name} (${i + 1}/${installments})` 
+            : formData.name,
+          amount: installmentAmount,
+          date: installmentDate.toISOString().split('T')[0],
+          description: formData.description,
+          installments: 1,
+          is_recurring: formData.is_recurring,
+        });
+      }
+
+      const { error } = await supabase.from(table).insert(entries);
+
+      if (error) {
+        toast({
+          title: "Erro ao adicionar registro",
+          description: "Tente novamente mais tarde",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     toast({
@@ -209,13 +168,7 @@ const Investments = () => {
     });
 
     setIsDialogOpen(false);
-    setFormData({
-      name: "",
-      amount: "",
-      date: new Date().toISOString().split("T")[0],
-      description: "",
-      installments: "1",
-    });
+    setFormData(INITIAL_FORM_STATE);
     setEditingItem(null);
     fetchData();
   };
@@ -227,7 +180,8 @@ const Investments = () => {
       amount: item.amount.toString(),
       date: item.date,
       description: item.description || "",
-      installments: item.installments?.toString() || "1",
+      installments: "1",
+      is_recurring: item.is_recurring,
     });
     setIsDialogOpen(true);
   };
@@ -265,6 +219,30 @@ const Investments = () => {
     fetchData();
   };
 
+  const handleCancelRecurring = async (item: Investment) => {
+    const table = isExpenseDialog ? "expenses" : "investments";
+    const { error } = await supabase
+      .from(table)
+      .update({ is_recurring: false })
+      .eq("id", item.id);
+
+    if (error) {
+      toast({
+        title: "Erro ao cancelar recorrência",
+        description: "Tente novamente mais tarde",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    toast({
+      title: "Recorrência cancelada",
+      description: "O registro não será mais recorrente",
+    });
+
+    fetchData();
+  };
+
   const getFilteredItems = (items: Investment[]) => {
     return items.filter(item => {
       const date = new Date(item.date);
@@ -274,27 +252,6 @@ const Investments = () => {
       );
     });
   };
-
-  const totalInvestment = investments.reduce(
-    (sum, inv) => sum + Number(inv.amount),
-    0
-  );
-
-  const totalExpenses = expenses.reduce(
-    (sum, exp) => sum + Number(exp.amount),
-    0
-  );
-
-  const netProfit = totalInvestment - totalExpenses;
-
-  useEffect(() => {
-    setCardOrder(cards => cards.map(card => ({
-      ...card,
-      value: card.type === 'investment' ? totalInvestment : 
-             card.type === 'expenses' ? totalExpenses :
-             card.type === 'netProfit' ? netProfit : card.value
-    })));
-  }, [totalInvestment, totalExpenses, netProfit]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -311,7 +268,13 @@ const Investments = () => {
         </div>
 
         <div className="grid grid-cols-2 gap-4 mb-8">
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setFormData(INITIAL_FORM_STATE);
+              setEditingItem(null);
+            }
+          }}>
             <DialogTrigger asChild>
               <Button onClick={() => {
                 setIsExpenseDialog(false);
@@ -358,29 +321,31 @@ const Investments = () => {
                     required
                   />
                 </div>
-                <div>
-                  <label htmlFor="installments" className="text-sm font-medium mb-1 block">
-                    Número de Parcelas
-                  </label>
-                  <Select
-                    value={formData.installments}
-                    onValueChange={(value) => setFormData({ ...formData, installments: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o número de parcelas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {monthOptions.map((month) => (
-                        <SelectItem key={month} value={month.toString()}>
-                          {month}x de R$ {formatCurrency(Number(formData.amount) / month)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!editingItem && (
+                  <div>
+                    <label htmlFor="installments" className="text-sm font-medium mb-1 block">
+                      Número de Parcelas
+                    </label>
+                    <Select
+                      value={formData.installments}
+                      onValueChange={(value) => setFormData({ ...formData, installments: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o número de parcelas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {monthOptions.map((month) => (
+                          <SelectItem key={month} value={month.toString()}>
+                            {month}x de R$ {formatCurrency(Number(formData.amount) / month)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <label htmlFor="date" className="text-sm font-medium mb-1 block">
-                    Data da Primeira Parcela
+                    {editingItem ? "Data" : "Data da Primeira Parcela"}
                   </label>
                   <Input
                     id="date"
@@ -404,6 +369,18 @@ const Investments = () => {
                     }
                   />
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="recurring"
+                    checked={formData.is_recurring}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, is_recurring: checked })
+                    }
+                  />
+                  <label htmlFor="recurring" className="text-sm font-medium">
+                    Pagamento Recorrente Mensal
+                  </label>
+                </div>
                 <Button type="submit" className="w-full">
                   {editingItem ? "Salvar" : "Adicionar"}
                 </Button>
@@ -411,7 +388,13 @@ const Investments = () => {
             </DialogContent>
           </Dialog>
 
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            setIsDialogOpen(open);
+            if (!open) {
+              setFormData(INITIAL_FORM_STATE);
+              setEditingItem(null);
+            }
+          }}>
             <DialogTrigger asChild>
               <Button onClick={() => {
                 setIsExpenseDialog(true);
@@ -428,6 +411,7 @@ const Investments = () => {
                 </DialogTitle>
               </DialogHeader>
               <form onSubmit={handleSubmit} className="space-y-4 mt-4">
+                {/* Mesmo conteúdo do formulário anterior */}
                 <div>
                   <label htmlFor="name" className="text-sm font-medium mb-1 block">
                     Nome
@@ -456,29 +440,31 @@ const Investments = () => {
                     required
                   />
                 </div>
-                <div>
-                  <label htmlFor="installments" className="text-sm font-medium mb-1 block">
-                    Número de Parcelas
-                  </label>
-                  <Select
-                    value={formData.installments}
-                    onValueChange={(value) => setFormData({ ...formData, installments: value })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o número de parcelas" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {monthOptions.map((month) => (
-                        <SelectItem key={month} value={month.toString()}>
-                          {month}x de R$ {formatCurrency(Number(formData.amount) / month)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                {!editingItem && (
+                  <div>
+                    <label htmlFor="installments" className="text-sm font-medium mb-1 block">
+                      Número de Parcelas
+                    </label>
+                    <Select
+                      value={formData.installments}
+                      onValueChange={(value) => setFormData({ ...formData, installments: value })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione o número de parcelas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {monthOptions.map((month) => (
+                          <SelectItem key={month} value={month.toString()}>
+                            {month}x de R$ {formatCurrency(Number(formData.amount) / month)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
                 <div>
                   <label htmlFor="date" className="text-sm font-medium mb-1 block">
-                    Data da Primeira Parcela
+                    {editingItem ? "Data" : "Data da Primeira Parcela"}
                   </label>
                   <Input
                     id="date"
@@ -502,6 +488,18 @@ const Investments = () => {
                     }
                   />
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Switch
+                    id="recurring"
+                    checked={formData.is_recurring}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, is_recurring: checked })
+                    }
+                  />
+                  <label htmlFor="recurring" className="text-sm font-medium">
+                    Pagamento Recorrente Mensal
+                  </label>
+                </div>
                 <Button type="submit" className="w-full">
                   {editingItem ? "Salvar" : "Adicionar"}
                 </Button>
@@ -517,7 +515,7 @@ const Investments = () => {
                 <SelectValue placeholder="Selecione o ano" />
               </SelectTrigger>
               <SelectContent>
-                {Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - 2 + i).map((year) => (
+                {availableYears.map((year) => (
                   <SelectItem key={year} value={year.toString()}>
                     {year}
                   </SelectItem>
@@ -538,20 +536,6 @@ const Investments = () => {
               </SelectContent>
             </Select>
           </div>
-
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext items={cardOrder} strategy={verticalListSortingStrategy}>
-              <div className="grid grid-cols-3 gap-4">
-                {cardOrder.map((card) => (
-                  <SortableCard key={card.id} card={card} />
-                ))}
-              </div>
-            </SortableContext>
-          </DndContext>
         </div>
 
         <div className="grid gap-4">
@@ -562,7 +546,19 @@ const Investments = () => {
             <Card key={item.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle>{item.name}</CardTitle>
+                  <div className="flex items-center gap-2">
+                    <CardTitle>{item.name}</CardTitle>
+                    {item.is_recurring && (
+                      <Button
+                        variant="outline"
+                        size="icon"
+                        onClick={() => handleCancelRecurring(item)}
+                        title="Cancelar Recorrência"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-bold">
                       R$ {formatCurrency(item.amount)}
@@ -592,6 +588,11 @@ const Investments = () => {
                 </p>
                 {item.description && (
                   <p className="text-sm">{item.description}</p>
+                )}
+                {item.is_recurring && (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Pagamento recorrente mensal
+                  </p>
                 )}
               </CardContent>
             </Card>

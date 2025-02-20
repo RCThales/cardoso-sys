@@ -17,6 +17,7 @@ export type Database = {
           description: string | null
           id: number
           installments: number | null
+          is_recurring: boolean | null
           name: string | null
         }
         Insert: {
@@ -26,6 +27,7 @@ export type Database = {
           description?: string | null
           id?: never
           installments?: number | null
+          is_recurring?: boolean | null
           name?: string | null
         }
         Update: {
@@ -35,6 +37,7 @@ export type Database = {
           description?: string | null
           id?: never
           installments?: number | null
+          is_recurring?: boolean | null
           name?: string | null
         }
         Relationships: []
@@ -79,6 +82,7 @@ export type Database = {
           description: string | null
           id: number
           installments: number | null
+          is_recurring: boolean | null
           name: string
         }
         Insert: {
@@ -88,6 +92,7 @@ export type Database = {
           description?: string | null
           id?: number
           installments?: number | null
+          is_recurring?: boolean | null
           name: string
         }
         Update: {
@@ -97,6 +102,7 @@ export type Database = {
           description?: string | null
           id?: number
           installments?: number | null
+          is_recurring?: boolean | null
           name?: string
         }
         Relationships: []
