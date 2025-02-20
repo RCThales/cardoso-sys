@@ -42,6 +42,7 @@ interface Investment {
   date: string;
   description: string | null;
   installments: number;
+  created_at: string | null;
 }
 
 interface FinancialCard {
@@ -152,13 +153,13 @@ const Investments = () => {
 
     const processedInvestments = (investmentsData || []).map(inv => ({
       ...inv,
-      installments: inv.installments || 1
-    })) as Investment[];
+      installments: (inv as any).installments || 1
+    }));
 
     const processedExpenses = (expensesData || []).map(exp => ({
       ...exp,
-      installments: exp.installments || 1
-    })) as Investment[];
+      installments: (exp as any).installments || 1
+    }));
 
     setInvestments(processedInvestments);
     setExpenses(processedExpenses);

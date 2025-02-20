@@ -16,6 +16,7 @@ export type Database = {
           date: string | null
           description: string | null
           id: number
+          installments: number | null
           name: string | null
         }
         Insert: {
@@ -24,6 +25,7 @@ export type Database = {
           date?: string | null
           description?: string | null
           id?: never
+          installments?: number | null
           name?: string | null
         }
         Update: {
@@ -32,6 +34,7 @@ export type Database = {
           date?: string | null
           description?: string | null
           id?: never
+          installments?: number | null
           name?: string | null
         }
         Relationships: []
@@ -75,6 +78,7 @@ export type Database = {
           date: string
           description: string | null
           id: number
+          installments: number | null
           name: string
         }
         Insert: {
@@ -83,6 +87,7 @@ export type Database = {
           date: string
           description?: string | null
           id?: number
+          installments?: number | null
           name: string
         }
         Update: {
@@ -91,6 +96,7 @@ export type Database = {
           date?: string
           description?: string | null
           id?: number
+          installments?: number | null
           name?: string
         }
         Relationships: []
