@@ -56,7 +56,6 @@ const Products = () => {
     setBasePrice(product.base_price.toString());
     setSizes((product.sizes || []).map((s) => s.size));
 
-    // Carregar quantidades do inventário
     const { data: inventoryData, error } = await supabase
       .from("inventory")
       .select("size, total_quantity")
@@ -90,7 +89,6 @@ const Products = () => {
         await updateProduct(selectedProduct.id, quantities);
         showToast("Sucesso", "Produto atualizado com sucesso");
       } else {
-        // Criando um novo produto
         await createProduct(quantities);
         showToast("Sucesso", "Produto adicionado com sucesso");
       }
@@ -113,9 +111,28 @@ const Products = () => {
     productId: string,
     quantities: Record<string, number>
   ) => {
-    // Verifique se houve alteração nos tamanhos
-    if (sizes.length > 0) {
-      // Excluindo os registros antigos no inventory apenas se houver alteração de tamanho
+    if (selectedProduct && selectedProduct.sizes?.length > 0 && sizes.length === 0) {
+      const { error: inventoryError } = await supabase
+        .from("inventory")
+        .upsert({
+          product_id: productId,
+          size: null,
+          total_quantity: quantities["null"] || 0,
+          rented_quantity: 0,
+        }, {
+          onConflict: "product_id,size"
+        });
+
+      if (inventoryError) throw inventoryError;
+
+      const { error: deleteError } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("product_id", productId)
+        .not("size", "is", null);
+
+      if (deleteError) throw deleteError;
+    } else if (sizes.length > 0) {
       const { error: deleteError } = await supabase
         .from("inventory")
         .delete()
@@ -124,19 +141,17 @@ const Products = () => {
       if (deleteError) throw deleteError;
     }
 
-    // Atualizando os dados do produto
     const { error: productError } = await supabase
       .from("products")
       .update({
         name,
         base_price: parseFloat(basePrice),
-        sizes: sizes.map((size) => ({ size })), // Atualizando os tamanhos
+        sizes: sizes.map((size) => ({ size })),
       })
       .eq("id", productId);
 
     if (productError) throw productError;
 
-    // Atualizando o inventário
     await updateInventory(productId, quantities);
   };
 
@@ -144,23 +159,19 @@ const Products = () => {
     productId: string,
     quantities: Record<string, number>
   ) => {
-    // Se não houver nenhum tamanho selecionado, vamos atualizar a quantidade total no inventory
     if (sizes.length === 0) {
-      console.log(quantities);
       const totalQuantity = quantities["null"] || 0;
-      console.log(totalQuantity);
       const { error: inventoryError } = await supabase
         .from("inventory")
         .update({
           total_quantity: totalQuantity,
-          rented_quantity: 0, // Atualizando para 0
+          rented_quantity: 0,
         })
-        .eq("product_id", productId) // Filtra pelo product_id
-        .is("size", null); // Filtra por size = null (produto sem size)
+        .eq("product_id", productId)
+        .is("size", null);
 
       if (inventoryError) throw inventoryError;
     } else {
-      // Se houver tamanhos, vamos atualizar para cada tamanho especificado
       for (const size of sizes) {
         const totalQuantity = quantities[size] || 0;
 
@@ -171,9 +182,9 @@ const Products = () => {
               product_id: productId,
               size,
               total_quantity: totalQuantity,
-              rented_quantity: 0, // Inicializando com 0
+              rented_quantity: 0,
             },
-            { onConflict: "product_id,size" } // Garantir que não haja duplicação
+            { onConflict: "product_id,size" }
           );
 
         if (inventoryError) throw inventoryError;
@@ -185,12 +196,11 @@ const Products = () => {
     const productCode =
       "#" + Math.random().toString(36).substring(2, 8).toUpperCase();
 
-    // Garante que o nome do produto seja convertido corretamente para um ID válido
     const productId = name
       .toLowerCase()
       .trim()
-      .replace(/\s+/g, "-") // Substitui espaços por hífens
-      .replace(/[^a-z0-9-]/g, ""); // Remove caracteres especiais
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
 
     const { data: insertedProducts, error: productError } = await supabase
       .from("products")
@@ -200,7 +210,7 @@ const Products = () => {
           name,
           base_price: parseFloat(basePrice),
           product_code: productCode,
-          sizes: sizes.map((size) => ({ size })), // Inserindo tamanhos
+          sizes: sizes.map((size) => ({ size })),
         },
       ])
       .select("id")
@@ -208,7 +218,6 @@ const Products = () => {
 
     if (productError) throw productError;
 
-    // Criando os registros do inventário
     await createInventory(insertedProducts.id, quantities);
   };
 
@@ -217,7 +226,6 @@ const Products = () => {
     quantities: Record<string, number>
   ) => {
     if (sizes.length === 0) {
-      // Se não houver tamanhos, tratamos como um tamanho único
       const totalQuantity = quantities["null"] || 0;
 
       const { error: inventoryError } = await supabase.from("inventory").upsert(
@@ -225,14 +233,13 @@ const Products = () => {
           product_id: productId,
           size: null,
           total_quantity: totalQuantity,
-          rented_quantity: 0, // Inicializando com 0
+          rented_quantity: 0,
         },
-        { onConflict: "product_id,size" } // Garantir que não haja duplicação
+        { onConflict: "product_id,size" }
       );
 
       if (inventoryError) throw inventoryError;
     } else {
-      // Se houver tamanhos, criamos um inventário para cada tamanho
       for (const size of sizes) {
         const totalQuantity = quantities[size] || 0;
 
@@ -243,9 +250,9 @@ const Products = () => {
               product_id: productId,
               size,
               total_quantity: totalQuantity,
-              rented_quantity: 0, // Inicializando com 0
+              rented_quantity: 0,
             },
-            { onConflict: "product_id,size" } // Garantir que não haja duplicação
+            { onConflict: "product_id,size" }
           );
 
         if (inventoryError) throw inventoryError;
@@ -257,13 +264,12 @@ const Products = () => {
     productId: string,
     quantities: Record<string, number>
   ) => {
-    // Apenas atualiza o produto sem mexer no inventory
     const { error: productError } = await supabase
       .from("products")
       .update({
         name,
         base_price: parseFloat(basePrice),
-        sizes: sizes.map((size) => ({ size })), // Atualizando os tamanhos
+        sizes: sizes.map((size) => ({ size })),
       })
       .eq("id", productId);
 
@@ -292,7 +298,7 @@ const Products = () => {
     if (!selectedProduct) return;
 
     try {
-      await deleteProduct(selectedProduct.id); // Exclui primeiro o produto
+      await deleteProduct(selectedProduct.id);
       showToast("Sucesso", "Produto excluído com sucesso");
       resetSelection();
       refetch();
