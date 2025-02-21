@@ -1,6 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cartStore";
-import { Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Trash2, Tag } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -14,11 +15,13 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../ui/use-toast";
 import { fetchProducts } from "@/utils/priceCalculator";
+import { useState } from "react";
 
 export const CartDrawer = () => {
   const { items, addItem, removeItem } = useCartStore();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [discount, setDiscount] = useState(0);
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -94,7 +97,17 @@ export const CartDrawer = () => {
     });
   };
 
-  const totalPrice = items.reduce((acc, item) => acc + item.total, 0);
+  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value);
+    if (!isNaN(value) && value >= 0 && value <= 100) {
+      setDiscount(value);
+    }
+  };
+
+  const hasSaleItems = items.some(item => item.is_sale);
+  const subtotal = items.reduce((acc, item) => acc + item.total, 0);
+  const discountAmount = hasSaleItems ? (subtotal * discount) / 100 : 0;
+  const totalPrice = subtotal - discountAmount;
 
   if (!products) {
     return null;
@@ -114,7 +127,7 @@ export const CartDrawer = () => {
       </SheetTrigger>
       <SheetContent>
         <SheetHeader>
-          <SheetTitle>Carrinho de Aluguel</SheetTitle>
+          <SheetTitle>Carrinho</SheetTitle>
         </SheetHeader>
         <div className="mt-4 space-y-4">
           {items.map((item) => {
@@ -126,6 +139,7 @@ export const CartDrawer = () => {
               >
                 <div className="flex justify-between items-center">
                   <span className="font-medium">
+                    {item.is_sale && <Tag className="inline-block w-4 h-4 mr-2 text-blue-500" />}
                     {product?.name}
                     {item.size && (
                       <span className="text-muted-foreground ml-2">
@@ -141,7 +155,7 @@ export const CartDrawer = () => {
                     <Trash2 className="h-4 w-4" />
                   </Button>
                 </div>
-                <div className="flex items-center justify-end space-x-2 ">
+                <div className="flex items-center justify-end space-x-2">
                   <span className="text-sm text-muted-foreground">
                     Quantidade:
                   </span>
@@ -154,8 +168,8 @@ export const CartDrawer = () => {
                     className="w-20 text-right"
                   />
                 </div>
-                <div className="space-y-2 ">
-                  <div className="flex items-center justify-end  space-x-2 ">
+                {!item.is_sale && (
+                  <div className="flex items-center justify-end space-x-2">
                     <span className="text-sm text-muted-foreground">Dias:</span>
                     <Input
                       type="number"
@@ -163,14 +177,13 @@ export const CartDrawer = () => {
                       onChange={(e) =>
                         handleDaysChange(item, parseInt(e.target.value, 10))
                       }
-                      className="w-20 text-right  ml-auto"
+                      className="w-20 text-right"
                       min={1}
                     />
                   </div>
-
-                  <div className="text-right font-medium">
-                    R${item.total.toFixed(2)}
-                  </div>
+                )}
+                <div className="text-right font-medium">
+                  R${item.total.toFixed(2)}
                 </div>
               </div>
             );
@@ -182,6 +195,24 @@ export const CartDrawer = () => {
           )}
           {items.length > 0 && (
             <div className="space-y-4">
+              {hasSaleItems && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Desconto (%)</label>
+                  <Input
+                    type="number"
+                    value={discount}
+                    onChange={handleDiscountChange}
+                    min={0}
+                    max={100}
+                    step={1}
+                  />
+                  {discount > 0 && (
+                    <div className="text-sm text-muted-foreground">
+                      Desconto: -R${discountAmount.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+              )}
               <div className="flex justify-between items-center font-medium">
                 <span>Total</span>
                 <span>R${totalPrice.toFixed(2)}</span>
@@ -190,7 +221,7 @@ export const CartDrawer = () => {
                 className="w-full"
                 onClick={() => navigate("/invoices/create")}
               >
-                Finalizar Aluguel
+                Finalizar {hasSaleItems ? "Venda" : "Aluguel"}
               </Button>
             </div>
           )}
