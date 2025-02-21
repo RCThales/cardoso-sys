@@ -1,69 +1,80 @@
-# Welcome to your Lovable project
+# 📌 Cardoso Aluguel de Muletas - Sistema de Gerenciamento
 
-## Project info
+Bem-vindo ao **Cardoso Aluguel de Muletas**! Este é um software desenvolvido para gerenciar com eficiência o aluguel de muletas, facilitando o cadastro de clientes, controle de estoque, registro de aluguéis e devoluções, além de emissão de relatórios.
 
-**URL**: https://lovable.dev/projects/3b3ddd03-bf3a-4a16-8517-c2f886a6ce3b
+## ✨ Funcionalidades
 
-## How can I edit this code?
+✅ **Cadastro de Clientes** - Registre e gerencie os dados dos clientes de forma rápida e segura.  
+✅ **Controle de Estoque** - Monitore a quantidade de muletas disponíveis para aluguel em tempo real.  
+✅ **Registro de Aluguéis** - Gerencie contratos de aluguel, incluindo datas de retirada e devolução.  
+✅ **Histórico de Locações** - Acompanhe o histórico de aluguéis de cada cliente.  
+✅ **Emissão de Relatórios** - Gere relatórios detalhados para análise de desempenho e controle financeiro.  
+✅ **Notificações Automáticas** - Lembretes de devolução e vencimento de aluguéis para clientes.  
 
-There are several ways of editing your application.
+## 🖥️ Tecnologias Utilizadas
 
-**Use Lovable**
+- **Frontend:** React.js + Tailwind CSS  
+- **Backend:** Node.js + Express.js  
+- **Banco de Dados:** PostgreSQL  
+- **Autenticação:** JWT para login seguro  
+- **Notificações:** Email via Nodemailer  
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/3b3ddd03-bf3a-4a16-8517-c2f886a6ce3b) and start prompting.
+## 🚀 Como Instalar e Executar
 
-Changes made via Lovable will be committed automatically to this repo.
+```
+# Clone este repositório:
+git clone https://github.com/seuusuario/cardoso-aluguel-muletas.git
 
-**Use your preferred IDE**
+# Acesse a pasta do projeto:
+cd cardoso-aluguel-muletas
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+# Instale as dependências:
+npm install
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+# Configure o arquivo .env com as variáveis necessárias (exemplo incluso no projeto).  
 
-Follow these steps:
+# Execute o backend:
+npm run server
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+# Execute o frontend:
+npm start
 ```
 
-**Edit a file directly in GitHub**
+## 📸 Capturas de Tela
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+### 🏠 Tela Inicial
+![Home](https://via.placeholder.com/800x400?text=Home+Screen)
 
-**Use GitHub Codespaces**
+### 📋 Cadastro de Cliente
+![Cadastro Cliente](https://via.placeholder.com/800x400?text=Cadastro+de+Cliente)
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+### 📊 Relatórios
+![Relatórios](https://via.placeholder.com/800x400?text=Relatórios)
 
-## What technologies are used for this project?
+## 🤝 Contribuindo
 
-This project is built with .
+Quer contribuir com melhorias no sistema? Siga estes passos:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+```
+# Faça um fork do projeto 🍴
+git fork https://github.com/seuusuario/cardoso-aluguel-muletas.git
 
-## How can I deploy this project?
+# Crie uma branch para sua feature 🌱
+git checkout -b minha-feature
 
-Simply open [Lovable](https://lovable.dev/projects/3b3ddd03-bf3a-4a16-8517-c2f886a6ce3b) and click on Share -> Publish.
+# Commit suas mudanças 📌
+git commit -m 'Adicionei uma nova feature'
 
-## I want to use a custom domain - is that possible?
+# Envie para o repositório 🚀
+git push origin minha-feature
+```
 
-We don't support custom domains (yet). If you want to deploy your project under your own domain then we recommend using Netlify. Visit our docs for more details: [Custom domains](https://docs.lovable.dev/tips-tricks/custom-domain/)
+Depois, abra um Pull Request 📬
+
+## 📜 Licença
+
+Este projeto está licenciado sob a [MIT License](LICENSE). 📄
+
+---
+
+💙 Feito com dedicação para a **Cardoso Aluguel de Muletas**! Se precisar de suporte, entre em contato via [email@email.com](mailto:email@email.com).
