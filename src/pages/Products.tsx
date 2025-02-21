@@ -111,36 +111,6 @@ const Products = () => {
     productId: string,
     quantities: Record<string, number>
   ) => {
-    if (selectedProduct && selectedProduct.sizes?.length > 0 && sizes.length === 0) {
-      const { error: inventoryError } = await supabase
-        .from("inventory")
-        .upsert({
-          product_id: productId,
-          size: null,
-          total_quantity: quantities["null"] || 0,
-          rented_quantity: 0,
-        }, {
-          onConflict: "product_id,size"
-        });
-
-      if (inventoryError) throw inventoryError;
-
-      const { error: deleteError } = await supabase
-        .from("inventory")
-        .delete()
-        .eq("product_id", productId)
-        .not("size", "is", null);
-
-      if (deleteError) throw deleteError;
-    } else if (sizes.length > 0) {
-      const { error: deleteError } = await supabase
-        .from("inventory")
-        .delete()
-        .eq("product_id", productId);
-
-      if (deleteError) throw deleteError;
-    }
-
     const { error: productError } = await supabase
       .from("products")
       .update({
@@ -152,23 +122,49 @@ const Products = () => {
 
     if (productError) throw productError;
 
-    await updateInventory(productId, quantities);
+    if (sizes.length === 0) {
+      const { error: deleteError } = await supabase
+        .from("inventory")
+        .delete()
+        .eq("product_id", productId);
+
+      if (deleteError) throw deleteError;
+
+      const { error: createError } = await supabase
+        .from("inventory")
+        .insert({
+          product_id: productId,
+          size: null,
+          total_quantity: 0,
+          rented_quantity: 0,
+        });
+
+      if (createError) throw createError;
+    } else {
+      await updateInventory(productId, quantities);
+    }
   };
 
   const updateInventory = async (
     productId: string,
     quantities: Record<string, number>
   ) => {
+    const { error: deleteError } = await supabase
+      .from("inventory")
+      .delete()
+      .eq("product_id", productId);
+
+    if (deleteError) throw deleteError;
+
     if (sizes.length === 0) {
-      const totalQuantity = quantities["null"] || 0;
       const { error: inventoryError } = await supabase
         .from("inventory")
-        .update({
-          total_quantity: totalQuantity,
+        .insert({
+          product_id: productId,
+          size: null,
+          total_quantity: 0,
           rented_quantity: 0,
-        })
-        .eq("product_id", productId)
-        .is("size", null);
+        });
 
       if (inventoryError) throw inventoryError;
     } else {
@@ -177,15 +173,12 @@ const Products = () => {
 
         const { error: inventoryError } = await supabase
           .from("inventory")
-          .upsert(
-            {
-              product_id: productId,
-              size,
-              total_quantity: totalQuantity,
-              rented_quantity: 0,
-            },
-            { onConflict: "product_id,size" }
-          );
+          .insert({
+            product_id: productId,
+            size,
+            total_quantity: totalQuantity,
+            rented_quantity: 0,
+          });
 
         if (inventoryError) throw inventoryError;
       }
@@ -225,18 +218,22 @@ const Products = () => {
     productId: string,
     quantities: Record<string, number>
   ) => {
-    if (sizes.length === 0) {
-      const totalQuantity = quantities["null"] || 0;
+    const { error: deleteError } = await supabase
+      .from("inventory")
+      .delete()
+      .eq("product_id", productId);
 
-      const { error: inventoryError } = await supabase.from("inventory").upsert(
-        {
+    if (deleteError) throw deleteError;
+
+    if (sizes.length === 0) {
+      const { error: inventoryError } = await supabase
+        .from("inventory")
+        .insert({
           product_id: productId,
           size: null,
-          total_quantity: totalQuantity,
+          total_quantity: 0,
           rented_quantity: 0,
-        },
-        { onConflict: "product_id,size" }
-      );
+        });
 
       if (inventoryError) throw inventoryError;
     } else {
@@ -245,15 +242,12 @@ const Products = () => {
 
         const { error: inventoryError } = await supabase
           .from("inventory")
-          .upsert(
-            {
-              product_id: productId,
-              size,
-              total_quantity: totalQuantity,
-              rented_quantity: 0,
-            },
-            { onConflict: "product_id,size" }
-          );
+          .insert({
+            product_id: productId,
+            size,
+            total_quantity: totalQuantity,
+            rented_quantity: 0,
+          });
 
         if (inventoryError) throw inventoryError;
       }
