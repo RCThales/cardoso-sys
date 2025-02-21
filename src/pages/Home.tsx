@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -20,31 +21,31 @@ const menuItems = [
     color: "bg-gradient-to-br from-purple-500 to-pink-500",
   },
   {
+    title: "Vendas",
+    description: "Calculadora de vendas",
+    icon: ShoppingBag,
+    route: "/sales",
+    color: "bg-gradient-to-br from-blue-500 to-cyan-500",
+  },
+  {
     title: "Faturas",
     description: "Lista de faturas",
     icon: LineChart,
     route: "/invoices/history",
-    color: "bg-gradient-to-br from-blue-500 to-cyan-500",
+    color: "bg-gradient-to-br from-green-500 to-emerald-500",
   },
   {
     title: "Estoque",
     description: "Controle de estoque",
     icon: Package,
     route: "/inventory",
-    color: "bg-gradient-to-br from-green-500 to-emerald-500",
+    color: "bg-gradient-to-br from-yellow-500 to-orange-500",
   },
   {
     title: "Financeiro",
     description: "Análise financeira",
     icon: DollarSign,
     route: "/financial",
-    color: "bg-gradient-to-br from-yellow-500 to-orange-500",
-  },
-  {
-    title: "Gastos",
-    description: "Controle de gastos",
-    icon: Wallet,
-    route: "/investments",
     color: "bg-gradient-to-br from-red-500 to-pink-500",
   },
   {

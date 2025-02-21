@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 
 export interface ProductSize {
@@ -8,6 +9,7 @@ export interface Product {
   id: string;
   name: string;
   base_price: number;
+  sale_price: number;
   product_code: string;
   sizes?: ProductSize[];
 }
