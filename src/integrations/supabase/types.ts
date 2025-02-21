@@ -191,7 +191,6 @@ export type Database = {
           id: string
           name: string
           product_code: string
-          sale_price: number
           sizes: Json | null
         }
         Insert: {
@@ -199,7 +198,6 @@ export type Database = {
           id: string
           name: string
           product_code: string
-          sale_price?: number
           sizes?: Json | null
         }
         Update: {
@@ -207,7 +205,6 @@ export type Database = {
           id?: string
           name?: string
           product_code?: string
-          sale_price?: number
           sizes?: Json | null
         }
         Relationships: []

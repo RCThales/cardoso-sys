@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { calculateTotalPrice } from "@/utils/priceCalculator";
 
@@ -8,9 +7,7 @@ export interface CartItem {
   days: number;
   total: number;
   size?: string;
-  base_price: number;
-  is_sale?: boolean;
-  sale_price?: number;
+  base_price: number; // Certifique-se de que as constantes estão presentes
 }
 
 interface CartStore {
@@ -30,8 +27,8 @@ export const useCartStore = create<CartStore>((set) => ({
 
       console.log(item);
       // Verifica se as constantes estão presentes
-      if (!item.base_price && !item.sale_price) {
-        console.error("Price is missing for the product:", item.productId);
+      if (!item.base_price) {
+        console.error("Base Price is missing for the product:", item.productId);
         return { items: state.items }; // Retorna o estado atual sem modificar
       }
 
@@ -42,26 +39,22 @@ export const useCartStore = create<CartStore>((set) => ({
         let updated = false;
 
         if (existingItem.quantity !== item.quantity) {
-          updatedItem.quantity = item.quantity;
+          updatedItem.quantity = item.quantity; // Atualiza a quantidade
           updated = true;
         }
 
-        if (!item.is_sale && existingItem.days !== item.days) {
-          updatedItem.days = item.days;
+        if (existingItem.days !== item.days) {
+          updatedItem.days = item.days; // Atualiza os dias
           updated = true;
         }
 
         // Recalcula o total com base na nova quantidade e dias
         if (updated) {
-          if (item.is_sale) {
-            updatedItem.total = (item.sale_price || 0) * updatedItem.quantity;
-          } else {
-            const totalPricePerUnit = calculateTotalPrice(
-              updatedItem.days,
-              updatedItem.base_price
-            );
-            updatedItem.total = totalPricePerUnit * updatedItem.quantity;
-          }
+          const totalPricePerUnit = calculateTotalPrice(
+            updatedItem.days,
+            updatedItem.base_price
+          );
+          updatedItem.total = totalPricePerUnit * updatedItem.quantity;
 
           return {
             items: state.items.map((i) =>
@@ -72,21 +65,15 @@ export const useCartStore = create<CartStore>((set) => ({
           };
         }
 
+        // Se não houver alterações, retorna o estado atual
         return { items: state.items };
       }
 
       // Se o item não existir, adiciona um novo item
-      let newTotal;
-      if (item.is_sale) {
-        newTotal = (item.sale_price || 0) * item.quantity;
-      } else {
-        const totalPricePerUnit = calculateTotalPrice(item.days, item.base_price);
-        newTotal = totalPricePerUnit * item.quantity;
-      }
-
+      const totalPricePerUnit = calculateTotalPrice(item.days, item.base_price);
       const newItem = {
         ...item,
-        total: newTotal,
+        total: totalPricePerUnit * item.quantity, // Calcula o total inicial
       };
 
       return {

@@ -3,7 +3,7 @@ import { format, parseISO } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Check, Download, Eye, Trash2, Tag } from "lucide-react";
+import { Check, Download, Eye, Trash2 } from "lucide-react";
 import { Invoice, InvoiceExtension } from "../types";
 import { cn } from "@/lib/utils";
 
@@ -34,14 +34,13 @@ export const InvoiceTableRow = ({
     <TableRow
       className={cn({
         "bg-green-50 hover:bg-green-100":
-          invoice.is_paid && (invoice.is_returned || invoice.is_sale),
+          invoice.is_paid && invoice.is_returned,
         "bg-yellow-50 hover:bg-yellow-100":
-          invoice.is_paid && !invoice.is_returned && !invoice.is_sale,
-        "bg-red-50 hover:bg-red-100": !invoice.is_paid,
+          invoice.is_paid && !invoice.is_returned,
+        "bg-red-50 hover:bg-red-100": !invoice.is_paid && !invoice.is_returned,
       })}
     >
       <TableCell>
-        {invoice.is_sale && <Tag className="inline-block w-4 h-4 mr-2 text-blue-500" />}
         {invoice.invoice_number}
         {invoice.extensions && invoice.extensions.length > 0 && (
           <div className="text-xs text-muted-foreground mt-1">
@@ -61,17 +60,13 @@ export const InvoiceTableRow = ({
       </TableCell>
       <TableCell>{invoice.client_name}</TableCell>
       <TableCell>
-        {invoice.is_sale ? (
-          "-"
-        ) : (
-          invoice.return_date && format(parseISO(invoice.return_date), "dd/MM/yyyy")
-        )}
+        {invoice.return_date && format(parseISO(invoice.return_date), "dd/MM/yyyy")}
       </TableCell>
       <TableCell className="text-right">
         R$ {formatCurrency(invoice.total)}
       </TableCell>
       <TableCell>
-        {invoice.is_paid ? (
+        {invoice.is_paid && invoice.is_returned ? (
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-600" />
             <span className="text-xs text-muted-foreground">
@@ -87,9 +82,7 @@ export const InvoiceTableRow = ({
         )}
       </TableCell>
       <TableCell>
-        {invoice.is_sale ? (
-          "-"
-        ) : invoice.is_returned ? (
+        {invoice.is_returned ? (
           <Check className="h-4 w-4 text-green-600" />
         ) : (
           <Switch
