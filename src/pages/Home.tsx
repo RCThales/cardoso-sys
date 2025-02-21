@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -42,8 +41,8 @@ const menuItems = [
     color: "bg-gradient-to-br from-yellow-500 to-orange-500",
   },
   {
-    title: "Investimentos",
-    description: "Controle de investimentos",
+    title: "Gastos",
+    description: "Controle de gastos",
     icon: Wallet,
     route: "/investments",
     color: "bg-gradient-to-br from-red-500 to-pink-500",

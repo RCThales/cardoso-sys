@@ -73,15 +73,31 @@ const FinancialDetails = () => {
       const currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const previousDate = subMonths(currentDate, 1);
 
-      const { data: investments } = await supabase
+      const { data: currentInvestments } = await supabase
         .from("investments")
         .select("*")
-        .order("date", { ascending: false });
+        .gte("date", currentDate.toISOString())
+        .lte(
+          "date",
+          new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+            0
+          ).toISOString()
+        );
 
-      const { data: expenses } = await supabase
+      const { data: currentExpenses } = await supabase
         .from("expenses")
         .select("*")
-        .order("date", { ascending: false });
+        .gte("date", currentDate.toISOString())
+        .lte(
+          "date",
+          new Date(
+            currentDate.getFullYear(),
+            currentDate.getMonth() + 1,
+            0
+          ).toISOString()
+        );
 
       const { data: currentInvoices } = await supabase
         .from("invoices")
@@ -118,12 +134,10 @@ const FinancialDetails = () => {
       const previousExpenses = previousGrossIncome * 0.2;
 
       const totalInvestment =
-        investments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
-
-      console.log("Total Investmente: " + investments);
+        currentInvestments?.reduce((sum, inv) => sum + Number(inv.amount), 0) ||
+        0;
       const totalExpenses =
-        expenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
-      console.log("Total Expenses: " + expenses);
+        currentExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
 
       const currentSummary = {
         grossIncome: currentGrossIncome,
@@ -154,7 +168,7 @@ const FinancialDetails = () => {
       );
 
       setSummary(currentSummary);
-      setInvestmentDetails(investments || []);
+      setInvestmentDetails(currentInvestments || []);
     };
 
     fetchData();

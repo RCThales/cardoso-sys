@@ -97,16 +97,26 @@ const Investments = () => {
       }
     });
 
-    const sortedYears = Array.from(years).sort((a, b) => b - a);
+    const sortedYears = Array.from(years).sort((a, b) => a - b);
     setAvailableYears(sortedYears);
 
+    let newSelectedYear = selectedYear;
     if (sortedYears.length > 0 && !sortedYears.includes(Number(selectedYear))) {
-      setSelectedYear(sortedYears[0].toString());
+      newSelectedYear = sortedYears[0].toString();
+      setSelectedYear(newSelectedYear);
     }
 
     setInvestments(processedInvestments);
     setExpenses(processedExpenses);
   };
+
+  useEffect(() => {
+    const availableMonths = getAvailableMonths(); // Get available months for selectedYear
+
+    if (!availableMonths.includes(Number(selectedMonth))) {
+      setSelectedMonth(availableMonths[0]?.toString() || ""); // Set to first available month
+    }
+  }, [selectedYear]); // Runs when selectedYear changes
 
   useEffect(() => {
     fetchData();
