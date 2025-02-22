@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cartStore";
-import { Minus, Plus, ShoppingCart, Trash2, Tag } from "lucide-react";
+import { Minus, Plus, ShoppingCart, Trash2, Tag, Calendar } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -15,13 +14,11 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "../ui/use-toast";
 import { fetchProducts } from "@/utils/priceCalculator";
-import { useState } from "react";
 
 export const CartDrawer = () => {
   const { items, addItem, removeItem } = useCartStore();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const [discount, setDiscount] = useState(0);
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -67,7 +64,9 @@ export const CartDrawer = () => {
       addItem({
         ...item,
         quantity: newQuantity,
-        total: (item.total / item.quantity) * newQuantity,
+        total: item.is_sale
+          ? (item.sale_price || 0) * newQuantity // Recalcula o total para itens em promoção
+          : (item.total / item.quantity) * newQuantity, // Recalcula o total para itens fora de promoção
       });
     }
   };
@@ -86,7 +85,9 @@ export const CartDrawer = () => {
     if (!product) return;
 
     // Recalcula o total com base no novo número de dias
-    const newTotal = product.base_price * newDays * item.quantity;
+    const newTotal = item.is_sale
+      ? (item.sale_price || 0) * item.quantity // Mantém o total para itens em promoção
+      : product.base_price * newDays * item.quantity; // Recalcula o total para itens fora de promoção
 
     addItem({
       ...item,
@@ -95,17 +96,9 @@ export const CartDrawer = () => {
     });
   };
 
-  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value);
-    if (!isNaN(value) && value >= 0 && value <= 100) {
-      setDiscount(value);
-    }
-  };
-
-  const hasSaleItems = items.some(item => item.is_sale);
+  const hasSaleItems = items.some((item) => item.is_sale);
   const subtotal = items.reduce((acc, item) => acc + item.total, 0);
-  const discountAmount = hasSaleItems ? (subtotal * discount) / 100 : 0;
-  const totalPrice = subtotal - discountAmount;
+  const totalPrice = subtotal;
 
   if (!products) {
     return null;
@@ -137,7 +130,12 @@ export const CartDrawer = () => {
               >
                 <div className="flex justify-between items-center">
                   <span className="font-medium">
-                    {item.is_sale && <Tag className="inline-block w-4 h-4 mr-2 text-blue-500" />}
+                    {item.is_sale && (
+                      <Tag className="inline-block w-4 h-4 mr-2 text-blue-500" />
+                    )}
+                    {!item.is_sale && (
+                      <Calendar className="inline-block w-4 h-4 mr-2 text-green-500" />
+                    )}
                     {product?.name}
                     {item.size && (
                       <span className="text-muted-foreground ml-2">
@@ -193,24 +191,6 @@ export const CartDrawer = () => {
           )}
           {items.length > 0 && (
             <div className="space-y-4">
-              {hasSaleItems && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium">Desconto (%)</label>
-                  <Input
-                    type="number"
-                    value={discount}
-                    onChange={handleDiscountChange}
-                    min={0}
-                    max={100}
-                    step={1}
-                  />
-                  {discount > 0 && (
-                    <div className="text-sm text-muted-foreground">
-                      Desconto: -R${discountAmount.toFixed(2)}
-                    </div>
-                  )}
-                </div>
-              )}
               <div className="flex justify-between items-center font-medium">
                 <span>Total</span>
                 <span>R${totalPrice.toFixed(2)}</span>
@@ -219,8 +199,16 @@ export const CartDrawer = () => {
                 className="w-full"
                 onClick={() => navigate("/invoices/create")}
               >
-                Finalizar {hasSaleItems ? "Venda" : "Aluguel"}
+                Finalizar Pedido
               </Button>
+              <div>
+                <Tag className="inline-block w-3 h-3 mr-2 text-blue-500" />{" "}
+                <span className="text-gray-500 text-sm">Venda</span>
+              </div>
+              <div>
+                <Calendar className="inline-block w-3 h-3 mr-2 text-green-500" />{" "}
+                <span className="text-gray-500 text-sm">Aluguel</span>
+              </div>
             </div>
           )}
         </div>

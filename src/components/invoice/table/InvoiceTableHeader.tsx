@@ -1,10 +1,10 @@
-
 import { TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const InvoiceTableHeader = () => {
   return (
     <TableHeader>
       <TableRow>
+        <TableHead>Tipo</TableHead>
         <TableHead>Nº Fatura</TableHead>
         <TableHead>Data</TableHead>
         <TableHead>Cliente</TableHead>

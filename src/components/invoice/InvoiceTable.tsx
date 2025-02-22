@@ -1,4 +1,4 @@
-import { Table, TableBody } from "../ui/table";
+import { Table, TableBody, TableCell, TableRow } from "../ui/table";
 import { Invoice } from "./types";
 import { useToast } from "../ui/use-toast";
 import { useState } from "react";
@@ -10,6 +10,7 @@ import { useWindowSize } from "@/hooks/use-window-size";
 import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
 import { InvoiceTableRow } from "./table/InvoiceTableRow";
 import { returnToInventory } from "@/services/inventoryService";
+import { cn } from "@/lib/utils"; // Certifique-se de importar a função cn
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -44,12 +45,34 @@ export const InvoiceTable = ({
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
 
+  // Função para determinar o tipo da fatura (VENDA, ALUGUEL ou HÍBRIDO)
+  const getInvoiceType = (
+    invoice: Invoice
+  ): "VENDA" | "ALUGUEL" | "HÍBRIDO" => {
+    // Filtra os itens, ignorando o item com ID "delivery-fee"
+    const filteredItems = invoice.items.filter(
+      (item) => item.productId !== "delivery-fee"
+    );
+
+    // Verifica se todos os itens filtrados são VENDA ou ALUGUEL
+    const allSales = filteredItems.every((item) => item.is_sale);
+    const allRentals = filteredItems.every((item) => !item.is_sale);
+
+    console.log(filteredItems); // Para depuração
+
+    if (allSales) {
+      return "VENDA";
+    } else if (allRentals) {
+      return "ALUGUEL";
+    } else {
+      return "HÍBRIDO";
+    }
+  };
+
   // Encontra a fatura atual com base no invoiceId
   const currentInvoice = invoiceId
     ? invoices.find((invoice) => invoice.invoice_number === invoiceId)
     : null;
-
-  console.log(invoiceId);
 
   // Filtra as faturas excluindo a fatura atual (se existir)
   const otherInvoices = invoiceId
@@ -142,6 +165,7 @@ export const InvoiceTable = ({
               key={currentInvoice.id}
               current={true}
               invoice={currentInvoice}
+              invoiceType={getInvoiceType(currentInvoice)} // Passa o tipo da fatura
               onTogglePaid={() => handlePaymentToggle(currentInvoice)}
               onToggleReturned={() => handleReturnedToggle(currentInvoice)}
               onDownload={() => onDownload(currentInvoice)}
@@ -161,6 +185,7 @@ export const InvoiceTable = ({
               key={invoice.id}
               current={false}
               invoice={invoice}
+              invoiceType={getInvoiceType(invoice)} // Passa o tipo da fatura
               onTogglePaid={() => handlePaymentToggle(invoice)}
               onToggleReturned={() => handleReturnedToggle(invoice)}
               onDownload={() => onDownload(invoice)}

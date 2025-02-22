@@ -146,6 +146,7 @@ export const SalesCalculator = () => {
       productId: selectedProduct,
       quantity,
       days,
+      is_sale: true,
       total: price * quantity,
       size: selectedSize || undefined,
       base_price: selectedProductData?.base_price,

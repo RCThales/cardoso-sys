@@ -146,6 +146,7 @@ export const RentalCalculator = () => {
       productId: selectedProduct,
       quantity,
       days,
+      is_sale: false,
       total: price * quantity,
       size: selectedSize || undefined,
       base_price: selectedProductData?.base_price,

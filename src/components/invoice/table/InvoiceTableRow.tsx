@@ -2,7 +2,15 @@ import { format, parseISO } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Check, Download, Eye, Trash2 } from "lucide-react";
+import {
+  Check,
+  Download,
+  Eye,
+  Trash2,
+  Tag,
+  Calendar,
+  Circle,
+} from "lucide-react"; // Importe os ícones necessários
 import { Invoice, InvoiceExtension } from "../types";
 import { cn } from "@/lib/utils";
 
@@ -17,6 +25,7 @@ interface InvoiceTableRowProps {
   isPaidDisabled: boolean;
   isReturnedDisabled: boolean;
   current: boolean;
+  invoiceType: "VENDA" | "ALUGUEL" | "HÍBRIDO"; // Adiciona a prop invoiceType
 }
 
 export const InvoiceTableRow = ({
@@ -30,16 +39,38 @@ export const InvoiceTableRow = ({
   current,
   isPaidDisabled,
   isReturnedDisabled,
+  invoiceType, // Recebe o tipo da fatura
 }: InvoiceTableRowProps) => {
+  // Ícone e texto com base no tipo da fatura
+  const invoiceTypeIcon =
+    invoiceType === "VENDA" ? (
+      <Tag className="h-4 w-4 text-blue-500" />
+    ) : invoiceType === "ALUGUEL" ? (
+      <Calendar className="h-4 w-4 text-green-500" />
+    ) : (
+      <Circle className="h-4 w-4 text-yellow-500" />
+    );
+
+  const invoiceTypeText =
+    invoiceType === "VENDA"
+      ? "VENDA"
+      : invoiceType === "ALUGUEL"
+      ? "ALUGUEL"
+      : "HÍBRIDO";
+
+  // Verifica se a fatura é do tipo VENDA
+  const isSale = invoiceType === "VENDA";
+
   return (
     <TableRow
       className={cn({
         // Cores de fundo padrão
         "bg-green-100 hover:bg-green-200":
-          invoice.is_paid && invoice.is_returned,
+          (invoice.is_paid && invoice.is_returned) ||
+          (isSale && invoice.is_paid), // BG verde para VENDA paga
         "bg-yellow-100 hover:bg-yellow-200":
-          invoice.is_paid && !invoice.is_returned,
-        "bg-red-100 hover:bg-red-200": !invoice.is_paid && !invoice.is_returned,
+          invoice.is_paid && !invoice.is_returned && !isSale, // BG amarelo para ALUGUEL pago
+        "bg-red-100 hover:bg-red-200": !invoice.is_paid && !invoice.is_returned, // BG vermelho para não pago
 
         // Borda da fatura atual (current)
         "border-4 shadow-lg": current, // Aplica borda e sombra
@@ -48,6 +79,14 @@ export const InvoiceTableRow = ({
         "border-green-400": current && invoice.is_paid && invoice.is_returned, // Borda verde se estiver devolvida
       })}
     >
+      {/* Nova coluna para o tipo da fatura */}
+      <TableCell>
+        <div className="flex items-center space-x-2">
+          {invoiceTypeIcon}
+          <span>{invoiceTypeText}</span>
+        </div>
+      </TableCell>
+
       <TableCell>
         {invoice.invoice_number}
         {invoice.extensions && invoice.extensions.length > 0 && (
@@ -68,14 +107,17 @@ export const InvoiceTableRow = ({
       </TableCell>
       <TableCell>{invoice.client_name}</TableCell>
       <TableCell>
-        {invoice.return_date &&
-          format(parseISO(invoice.return_date), "dd/MM/yyyy")}
+        {/* Exibe "-" se for VENDA, caso contrário, exibe a data de devolução */}
+        {isSale
+          ? "-"
+          : invoice.return_date &&
+            format(parseISO(invoice.return_date), "dd/MM/yyyy")}
       </TableCell>
       <TableCell className="text-right">
         R$ {formatCurrency(invoice.total)}
       </TableCell>
       <TableCell>
-        {invoice.is_paid && invoice.is_returned ? (
+        {invoice.is_paid && (invoice.is_returned || isSale) ? (
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-600" />
             <span className="text-xs text-muted-foreground">
@@ -91,7 +133,10 @@ export const InvoiceTableRow = ({
         )}
       </TableCell>
       <TableCell>
-        {invoice.is_returned ? (
+        {/* Exibe "-" se for VENDA, caso contrário, exibe o toggle de devolução */}
+        {isSale ? (
+          "-"
+        ) : invoice.is_returned ? (
           <Check className="h-4 w-4 text-green-600" />
         ) : (
           <Switch

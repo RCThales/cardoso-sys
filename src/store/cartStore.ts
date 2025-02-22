@@ -1,4 +1,3 @@
-
 import { create } from "zustand";
 import { calculateTotalPrice } from "@/utils/priceCalculator";
 
@@ -9,7 +8,7 @@ export interface CartItem {
   total: number;
   size?: string;
   base_price: number;
-  is_sale?: boolean;
+  is_sale: boolean; // Adiciona o campo is_sale como obrigatório
   sale_price?: number;
 }
 
@@ -24,8 +23,12 @@ export const useCartStore = create<CartStore>((set) => ({
   items: [],
   addItem: (item) =>
     set((state) => {
+      // Verifica se já existe um item com o mesmo productId, size e is_sale
       const existingItem = state.items.find(
-        (i) => i.productId === item.productId && i.size === item.size
+        (i) =>
+          i.productId === item.productId &&
+          i.size === item.size &&
+          i.is_sale === item.is_sale // Adiciona a verificação de is_sale
       );
 
       // Se o item existir, atualiza a quantidade, dias e recalcula o total
@@ -44,9 +47,16 @@ export const useCartStore = create<CartStore>((set) => ({
           updated = true;
         }
 
+        if (existingItem.sale_price !== item.sale_price) {
+          updatedItem.sale_price = item.sale_price;
+          updated = true;
+        }
+
         if (updated) {
-          if (item.is_sale) {
-            updatedItem.total = (item.sale_price || 0) * updatedItem.quantity;
+          // Recalcula o total com base no is_sale
+          if (updatedItem.is_sale) {
+            updatedItem.total =
+              (updatedItem.sale_price || 0) * updatedItem.quantity;
           } else {
             const totalPricePerUnit = calculateTotalPrice(
               updatedItem.days,
@@ -57,7 +67,9 @@ export const useCartStore = create<CartStore>((set) => ({
 
           return {
             items: state.items.map((i) =>
-              i.productId === item.productId && i.size === item.size
+              i.productId === item.productId &&
+              i.size === item.size &&
+              i.is_sale === item.is_sale // Atualiza apenas o item correspondente
                 ? updatedItem
                 : i
             ),

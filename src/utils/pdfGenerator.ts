@@ -10,13 +10,44 @@ interface ExtendedJsPDF extends jsPDF {
   };
 }
 
+// Função para determinar o tipo da fatura (VENDA, ALUGUEL ou HÍBRIDO)
+const getInvoiceType = (invoice: Invoice): "VENDA" | "ALUGUEL" | "HÍBRIDO" => {
+  // Filtra os itens, ignorando o Frete (delivery-fee)
+  const filteredItems = invoice.items.filter(
+    (item) => item.productId !== "delivery-fee"
+  );
+
+  // Verifica se todos os itens filtrados são VENDA ou ALUGUEL
+  const allSales = filteredItems.every((item) => item.is_sale);
+  const allRentals = filteredItems.every((item) => !item.is_sale);
+
+  if (allSales) {
+    return "VENDA";
+  } else if (allRentals) {
+    return "ALUGUEL";
+  } else {
+    return "HÍBRIDO";
+  }
+};
+
 export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   const doc = new jsPDF() as ExtendedJsPDF;
   const pageWidth = doc.internal.pageSize.getWidth();
 
+  // Determina o tipo da fatura
+  const invoiceType = getInvoiceType(invoice);
+
+  // Define o título com base no tipo da fatura
+  const title =
+    invoiceType === "VENDA"
+      ? "FATURA DE VENDA"
+      : invoiceType === "ALUGUEL"
+      ? "FATURA DE LOCAÇÃO"
+      : "FATURA DE LOCAÇÃO E VENDA";
+
   // Cabeçalho
   doc.setFontSize(20);
-  doc.text("FATURA DE LOCAÇÃO", pageWidth / 2, 20, { align: "center" });
+  doc.text(title, pageWidth / 2, 20, { align: "center" });
 
   // Informações da empresa
   doc.setFontSize(10);
@@ -79,38 +110,43 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   );
 
   // Tabela de Itens
-  const itemsTableData: string[][] = [];
+  const itemsTableData: RowInput[] = [];
 
   // Adiciona os itens principais
   invoice.items.forEach((item) => {
-    if (item.productId !== "delivery-fee") {
-      const description = item.size
-        ? `${item.description} (${item.size})`
-        : item.description;
-      itemsTableData.push([
-        description,
-        item.rentalDays.toString(),
-        item.quantity.toString(),
-        `R$ ${formatCurrency(item.total)}`,
-      ]);
-    }
+    const description = item.size
+      ? `${item.description} (${item.size})`
+      : item.description;
+
+    // Determina o tipo do item (VENDA, ALUGUEL ou TRANSPORTE)
+    const itemType =
+      item.productId === "delivery-fee"
+        ? "Transporte"
+        : item.is_sale
+        ? "Venda"
+        : "Aluguel";
+
+    // Exibe "-" para Dias se for VENDA ou Transporte
+    const daysDisplay =
+      item.productId === "delivery-fee" || item.is_sale
+        ? "-"
+        : item.rentalDays.toString();
+
+    // Exibe "-" para Quantidade se for Transporte
+    const quantityDisplay =
+      item.productId === "delivery-fee" ? "-" : item.quantity.toString();
+
+    itemsTableData.push([
+      itemType, // Nova coluna para o tipo
+      description,
+      daysDisplay, // Dias ajustados
+      quantityDisplay, // Quantidade ajustada
+      `R$ ${formatCurrency(item.total)}`,
+    ]);
   });
 
-  // Adiciona o frete se existir
-  const deliveryItem = invoice.items.find(
-    (item) => item.productId === "delivery-fee"
-  );
-  if (deliveryItem && deliveryItem.total > 0) {
-    itemsTableData.push([
-      "Frete",
-      "1",
-      "1",
-      `R$ ${formatCurrency(deliveryItem.total)}`,
-    ]);
-  }
-
   autoTable(doc, {
-    head: [["Descrição", "Dias", "Quantidade", "Total"]],
+    head: [["Tipo", "Descrição", "Dias", "Quantidade", "Total"]], // Nova coluna "Tipo"
     body: itemsTableData,
     startY: 105,
     theme: "grid",
@@ -148,8 +184,6 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   summaryData.push(["Subtotal", `R$ ${formatCurrency(subtotal)}`]);
 
   // Desconto (se houver)
-  console.log("subTotal: " + subtotal);
-  console.log("invoice.total: " + invoice.total);
   const discount = subtotal - invoice.total;
   if (discount > 0) {
     summaryData.push(["Desconto", `- R$ ${formatCurrency(discount)}`]);

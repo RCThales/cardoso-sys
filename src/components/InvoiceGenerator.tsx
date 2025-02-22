@@ -17,6 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { is } from "date-fns/locale";
 
 interface InvoiceGeneratorProps {
   onInvoiceCreated?: () => void;
@@ -42,6 +43,8 @@ export const InvoiceGenerator = ({
   const cartItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
 
+  console.log(cartItems);
+
   const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
@@ -55,6 +58,7 @@ export const InvoiceGenerator = ({
           productId: cartItem.productId,
           description: product?.name || "",
           quantity: cartItem.quantity,
+          is_sale: cartItem.is_sale,
           rentalDays: cartItem.days,
           price: cartItem.total / cartItem.quantity,
           total: cartItem.total,

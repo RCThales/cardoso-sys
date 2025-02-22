@@ -1,5 +1,5 @@
-
 export interface InvoiceItem {
+  is_sale: any;
   description: string;
   quantity: number;
   price: number;
@@ -42,7 +42,7 @@ export interface Invoice {
 }
 
 // Helper type for Supabase JSON conversion
-export type DatabaseInvoice = Omit<Invoice, 'extensions'> & {
+export type DatabaseInvoice = Omit<Invoice, "extensions"> & {
   extensions: InvoiceExtension[] | null;
 };
 
@@ -50,17 +50,22 @@ export type DatabaseInvoice = Omit<Invoice, 'extensions'> & {
 export const convertDatabaseInvoice = (dbInvoice: any): Invoice => {
   const invoice = {
     ...dbInvoice,
-    extensions: dbInvoice.extensions ? JSON.parse(JSON.stringify(dbInvoice.extensions)) : undefined,
-    items: Array.isArray(dbInvoice.items) ? dbInvoice.items : JSON.parse(dbInvoice.items || '[]'),
+    extensions: dbInvoice.extensions
+      ? JSON.parse(JSON.stringify(dbInvoice.extensions))
+      : undefined,
+    items: Array.isArray(dbInvoice.items)
+      ? dbInvoice.items
+      : JSON.parse(dbInvoice.items || "[]"),
   };
 
   // Calcular a data de devolução com base na data inicial e dias alugados
   const initialDate = new Date(invoice.invoice_date);
-  const totalDays = invoice.items.reduce((max, item) => Math.max(max, item.rentalDays), 0) +
+  const totalDays =
+    invoice.items.reduce((max, item) => Math.max(max, item.rentalDays), 0) +
     (invoice.extensions?.reduce((sum, ext) => sum + ext.days, 0) || 0);
-  
+
   initialDate.setDate(initialDate.getDate() + totalDays);
-  invoice.return_date = initialDate.toISOString().split('T')[0];
+  invoice.return_date = initialDate.toISOString().split("T")[0];
 
   return invoice;
 };

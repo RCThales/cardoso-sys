@@ -2,6 +2,7 @@ import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { InvoiceItem } from "./types";
+import { Tag, Calendar } from "lucide-react"; // Importe os ícones necessários
 
 interface InvoiceItemsProps {
   items: InvoiceItem[];
@@ -44,6 +45,9 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
           <thead className="bg-muted">
             <tr>
               <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
+                Tipo
+              </th>
+              <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                 Produto
               </th>
               <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
@@ -74,8 +78,22 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
                 item.description
               );
 
+              // Determina o tipo do item (VENDA ou ALUGUEL)
+              const itemType = item.is_sale ? "VENDA" : "ALUGUEL";
+              const itemIcon = item.is_sale ? (
+                <Tag className="h-4 w-4 text-blue-500" />
+              ) : (
+                <Calendar className="h-4 w-4 text-green-500" />
+              );
+
               return (
                 <tr key={index} className="border-t">
+                  <td className="px-4 py-3 align-middle">
+                    <div className="flex items-center space-x-2">
+                      {itemIcon}
+                      <span>{itemType}</span>
+                    </div>
+                  </td>
                   <td className="px-4 py-3 align-middle">{productName}</td>
                   <td className="px-4 py-3 align-middle">
                     {item.rentalDays || 1}
