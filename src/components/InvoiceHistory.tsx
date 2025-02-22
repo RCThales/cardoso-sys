@@ -8,7 +8,6 @@ import { formatCurrency } from "@/utils/formatters";
 import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
 import { saveAs } from "file-saver";
 import { generatePDF } from "@/utils/pdfGenerator";
-import { useLocation, useSearchParams } from "react-router-dom";
 
 interface InvoiceHistoryProps {
   search: string;
@@ -27,8 +26,6 @@ export const InvoiceHistory = ({
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
   const { toast } = useToast();
-  const [searchParams] = useSearchParams();
-  const highlightedInvoiceId = searchParams.get("id");
 
   useEffect(() => {
     fetchInvoices();
@@ -86,17 +83,6 @@ export const InvoiceHistory = ({
         ? dateA.getTime() - dateB.getTime()
         : dateB.getTime() - dateA.getTime();
     });
-
-    // Se houver um ID destacado, mova essa fatura para o topo
-    if (highlightedInvoiceId) {
-      const highlightedIndex = convertedInvoices.findIndex(
-        (inv) => inv.id === parseInt(highlightedInvoiceId)
-      );
-      if (highlightedIndex !== -1) {
-        const [highlightedInvoice] = convertedInvoices.splice(highlightedIndex, 1);
-        convertedInvoices.unshift(highlightedInvoice);
-      }
-    }
 
     setInvoices(convertedInvoices);
   };
