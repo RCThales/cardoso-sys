@@ -1,245 +1,136 @@
-
-import { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { motion } from "framer-motion";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Navbar } from "@/components/Navbar";
 import { Button } from "@/components/ui/button";
-import { useNavigate } from "react-router-dom";
-import { ShoppingCart, LogOut } from "lucide-react";
+import { CartDrawer } from "@/components/cart/CartDrawer";
 import { Input } from "@/components/ui/input";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { fetchProducts } from "@/utils/priceCalculator";
 import { useCartStore } from "@/store/cartStore";
-import { useToast } from "@/hooks/use-toast";
-import { CartDrawer } from "@/components/cart/CartDrawer";
-import { handleLogout } from "@/utils/Logout";
-import { fetchProducts, type Product } from "@/utils/priceCalculator";
+import { useState } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const Sales = () => {
-  const [quantity, setQuantity] = useState(1);
-  const [selectedProduct, setSelectedProduct] = useState("");
-  const [selectedSize, setSelectedSize] = useState<string>("");
-
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const { toast } = useToast();
-  const { addItem, items } = useCartStore();
-  const navigate = useNavigate();
+  const { clearCart } = useCartStore();
 
-  const { data: products } = useQuery<Product[]>({
-    queryKey: ["products"],
-    queryFn: fetchProducts,
+  const { data: products, isLoading, isError } = useQuery({
+    queryKey: ["products", search],
+    queryFn: () => fetchProducts(search),
   });
 
-  const { data: inventory } = useQuery({
-    queryKey: ["inventory"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("inventory").select("*");
-      if (error) throw error;
-      return data;
-    },
-  });
+  const handleCreateSale = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
 
-  useEffect(() => {
-    if (products && products.length > 0 && !selectedProduct) {
-      const firstProduct = products[0];
-      setSelectedProduct(firstProduct.id);
-      if (firstProduct.sizes && firstProduct.sizes.length > 0) {
-        setSelectedSize(firstProduct.sizes[0].size);
-      }
-    }
-  }, [products]);
-
-  const handleProductChange = (productId: string) => {
-    setSelectedProduct(productId);
-    const product = products?.find((p) => p.id === productId);
-    if (product?.sizes && product.sizes.length > 0) {
-      setSelectedSize(product.sizes[0].size);
-    } else {
-      setSelectedSize("");
-    }
-  };
-
-  const getAvailableQuantity = (productId: string, size?: string) => {
-    const item = inventory?.find((i) => {
-      if (size) {
-        return i.product_id === productId && i.size === size;
-      } else {
-        return i.product_id === productId && i.size === null;
-      }
-    });
-    return item ? item.total_quantity - item.rented_quantity : 0;
-  };
-
-  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = parseInt(e.target.value, 10);
-    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
-
-    if (
-      !isNaN(newQuantity) &&
-      newQuantity >= 1 &&
-      newQuantity <= availableQuantity
-    ) {
-      setQuantity(newQuantity);
-    }
-  };
-
-  const handleAddToCart = () => {
-    if (!products) return;
-
-    const availableQuantity = inventory
-      ? getAvailableQuantity(selectedProduct, selectedSize)
-      : 0;
-
-    if (quantity > availableQuantity) {
+    if (!session?.user) {
       toast({
         title: "Erro",
-        description: "Quantidade indisponível em estoque",
+        description: "Usuário não autenticado.",
         variant: "destructive",
       });
       return;
     }
 
-    const product = products.find((p) => p.id === selectedProduct);
-    if (!product) return;
+    const cartItems = useCartStore.getState().items;
+    if (cartItems.length === 0) {
+      toast({
+        title: "Erro",
+        description: "O carrinho está vazio.",
+        variant: "destructive",
+      });
+      return;
+    }
 
-    addItem({
-      productId: selectedProduct,
-      quantity,
-      days: 1,
-      total: product.sale_price * quantity,
-      size: selectedSize || undefined,
-      base_price: product.base_price,
-      is_sale: true,
-      sale_price: product.sale_price,
-    });
+    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
 
-    toast({
-      title: "Sucesso",
-      description: "Produto adicionado ao carrinho",
-    });
+    try {
+      const { data, error } = await supabase
+        .from('invoices')
+        .insert([
+          {
+            invoice_number: `SALE-${Date.now()}`,
+            client_name: 'Venda Avulsa',
+            client_cpf: '000.000.000-00',
+            client_phone: 'Não informado',
+            total: total,
+            is_paid: true,
+            is_returned: false,
+            client_address: 'Não informado',
+            client_address_number: 'Não informado',
+            client_address_complement: 'Não informado',
+            client_city: 'Não informado',
+            client_state: 'Não informado',
+            client_postal_code: 'Não informado',
+            items: cartItems,
+            invoice_date: new Date().toISOString().split('T')[0],
+            due_date: new Date().toISOString().split('T')[0],
+            payment_method: 'Dinheiro',
+            user_id: session.user.id,
+          },
+        ]);
+
+      if (error) {
+        throw new Error(error.message);
+      }
+
+      clearCart();
+      toast({
+        title: "Sucesso",
+        description: "Venda criada com sucesso!",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Erro",
+        description: `Erro ao criar venda: ${error.message}`,
+        variant: "destructive",
+      });
+    }
   };
 
-  const selectedProductData = products?.find((p) => p.id === selectedProduct);
-  const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
-  const isProductInCart = items.some(
-    (item) => item.productId === selectedProduct && item.size === selectedSize
-  );
-
-  if (!products) {
-    return <div>Carregando...</div>;
-  }
-
   return (
-    <div className="relative">
-      <div className="fixed top-2 right-4 z-50 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleLogout(navigate)}
-        >
-          <LogOut className="h-5 w-5" />
-        </Button>
-        <CartDrawer />
-      </div>
-      <Card className="w-full max-w-lg mx-auto p-8 shadow-lg animate-fade-in">
-        <div className="space-y-8">
-          <div className="text-center space-y-2">
-            <Badge variant="secondary" className="mb-2">
-              Vendas
-            </Badge>
-            <h1 className="text-4xl font-semibold tracking-tight">
-              Calcule o valor da venda
-            </h1>
-          </div>
-
-          <div className="space-y-6">
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <span className="text-sm font-medium">Produto</span>
-                <Select
-                  value={selectedProduct}
-                  onValueChange={handleProductChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name}{" "}
-                        {product.sizes && product.sizes.length > 0
-                          ? "(verificar tamanhos)"
-                          : `(${getAvailableQuantity(product.id)} disponíveis)`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectedProductData?.sizes &&
-                selectedProductData.sizes.length > 0 && (
-                  <div className="space-y-2">
-                    <span className="text-sm font-medium">Tamanho</span>
-                    <Select
-                      value={selectedSize}
-                      onValueChange={setSelectedSize}
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {selectedProductData.sizes.map((size) => (
-                          <SelectItem key={size.size} value={size.size}>
-                            {size.size} ({availableQuantity} disponíveis)
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-
-              <div className="flex justify-between items-center">
-                <span className="text-sm font-medium">Quantidade</span>
-                <Input
-                  type="number"
-                  value={quantity}
-                  onChange={handleQuantityChange}
-                  min={1}
-                  max={availableQuantity}
-                  className="w-20 text-center"
-                />
-              </div>
-            </div>
-
-            <motion.div
-              key={selectedProductData?.sale_price}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="p-6 rounded-lg bg-secondary/50"
-            >
-              <div className="text-center space-y-2">
-                <span className="text-sm text-muted-foreground">
-                  Preço Total
-                </span>
-                <div className="text-5xl font-semibold tracking-tight">
-                  R${((selectedProductData?.sale_price || 0) * quantity).toFixed(2)}
-                </div>
-              </div>
-            </motion.div>
-
-            <Button onClick={handleAddToCart} className="w-full">
-              <ShoppingCart className="mr-2 h-4 w-4" />{" "}
-              {isProductInCart ? "Atualizar Carrinho" : "Adicionar ao Carrinho"}
-            </Button>
-          </div>
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+      <Navbar />
+      <div className="container py-8">
+        <div className="flex justify-between items-center mb-6">
+          <h1 className="text-3xl font-bold tracking-tight">Página de Vendas</h1>
+          <Button onClick={() => setIsCartOpen(true)}>
+            Carrinho ({useCartStore.getState().items.length})
+          </Button>
         </div>
-      </Card>
+
+        <div className="mb-4">
+          <Input
+            placeholder="Buscar produtos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+          />
+        </div>
+
+        {isLoading ? (
+          <p>Carregando produtos...</p>
+        ) : isError ? (
+          <p>Erro ao carregar produtos.</p>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            {products?.map((product) => (
+              <div key={product.id} className="border rounded-md p-4">
+                <h2 className="text-lg font-semibold">{product.name}</h2>
+                <p className="text-gray-600">R$ {product.price}</p>
+                <Button onClick={() => useCartStore.getState().addItem(product)}>
+                  Adicionar ao carrinho
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <Button onClick={handleCreateSale} className="mt-4">
+          Finalizar Venda
+        </Button>
+
+        <CartDrawer open={isCartOpen} onOpenChange={setIsCartOpen} />
+      </div>
     </div>
   );
 };

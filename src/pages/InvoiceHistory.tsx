@@ -9,7 +9,7 @@ const InvoiceHistory = () => {
   const [search, setSearch] = useState("");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState<"all" | "paid" | "unpaid" | "returned" | "not-returned">("all");
-  const [dateSortType, setDateSortType] = useState<"invoice" | "return">("return");
+  const [dateSortType, setDateSortType] = useState<"invoice" | "return">("invoice");
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
