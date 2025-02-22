@@ -35,20 +35,6 @@ export const ClientForm = ({
           clientData={clientData}
           onClientDataChange={onClientDataChange}
         />
-
-        <div className="space-y-2 col-span-2">
-          <label className="text-sm font-medium flex items-center space-x-2">
-            <Input
-              type="checkbox"
-              className="w-4 h-4"
-              checked={clientData.isPaid}
-              onChange={(e) =>
-                onClientDataChange({ ...clientData, isPaid: e.target.checked })
-              }
-            />
-            <span>Fatura Paga</span>
-          </label>
-        </div>
       </div>
 
       <SearchClientDialog

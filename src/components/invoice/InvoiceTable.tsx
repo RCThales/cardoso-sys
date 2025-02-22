@@ -1,4 +1,3 @@
-
 import { Table, TableBody } from "../ui/table";
 import { Invoice } from "./types";
 import { useToast } from "../ui/use-toast";
@@ -14,12 +13,17 @@ import { returnToInventory } from "@/services/inventoryService";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
-  onTogglePaid: (invoiceId: number, currentStatus: boolean, method?: string) => void;
+  onTogglePaid: (
+    invoiceId: number,
+    currentStatus: boolean,
+    method?: string
+  ) => void;
   onToggleReturned: (invoiceId: number, currentStatus: boolean) => void;
   onDownload: (invoice: Invoice) => void;
   onPreview: (invoice: Invoice) => void;
   onDelete: (invoiceId: number) => void;
-  formatCurrency: (value: number | string | null | undefined) => string;
+  formatCurrency: (value: number) => string;
+  invoiceId?: string | null; // Adicione o invoiceId como uma prop opcional
 }
 
 export const InvoiceTable = ({
@@ -30,6 +34,7 @@ export const InvoiceTable = ({
   onPreview,
   onDelete,
   formatCurrency,
+  invoiceId, // Recebe o invoiceId como prop
 }: InvoiceTableProps) => {
   const { toast } = useToast();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
@@ -38,6 +43,18 @@ export const InvoiceTable = ({
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
+
+  // Encontra a fatura atual com base no invoiceId
+  const currentInvoice = invoiceId
+    ? invoices.find((invoice) => invoice.invoice_number === invoiceId)
+    : null;
+
+  console.log(invoiceId);
+
+  // Filtra as faturas excluindo a fatura atual (se existir)
+  const otherInvoices = invoiceId
+    ? invoices.filter((invoice) => invoice.invoice_number !== invoiceId)
+    : invoices;
 
   const handlePaymentToggle = (invoice: Invoice) => {
     if (invoice.is_paid) {
@@ -48,7 +65,8 @@ export const InvoiceTable = ({
     if (invoice.is_returned) {
       toast({
         title: "Ação não permitida",
-        description: "Não é possível alterar o status de pagamento após a devolução",
+        description:
+          "Não é possível alterar o status de pagamento após a devolução",
         variant: "destructive",
       });
       return;
@@ -112,13 +130,36 @@ export const InvoiceTable = ({
 
   return (
     <>
-      {showConfetti && <ReactConfetti width={width} height={height} recycle={false} />}
+      {showConfetti && (
+        <ReactConfetti width={width} height={height} recycle={false} />
+      )}
       <Table>
         <InvoiceTableHeader />
         <TableBody>
-          {invoices.map((invoice) => (
+          {/* Exibe a fatura atual destacada (se existir) */}
+          {currentInvoice && (
+            <InvoiceTableRow
+              key={currentInvoice.id}
+              current={true}
+              invoice={currentInvoice}
+              onTogglePaid={() => handlePaymentToggle(currentInvoice)}
+              onToggleReturned={() => handleReturnedToggle(currentInvoice)}
+              onDownload={() => onDownload(currentInvoice)}
+              onPreview={() => onPreview(currentInvoice)}
+              onDelete={() => handleDeleteClick(currentInvoice)}
+              formatCurrency={formatCurrency}
+              isPaidDisabled={currentInvoice.is_returned}
+              isReturnedDisabled={
+                !currentInvoice.is_paid || currentInvoice.is_returned
+              }
+            />
+          )}
+
+          {/* Exibe as outras faturas */}
+          {otherInvoices.map((invoice) => (
             <InvoiceTableRow
               key={invoice.id}
+              current={false}
               invoice={invoice}
               onTogglePaid={() => handlePaymentToggle(invoice)}
               onToggleReturned={() => handleReturnedToggle(invoice)}

@@ -1,4 +1,3 @@
-
 import { format, parseISO } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -17,6 +16,7 @@ interface InvoiceTableRowProps {
   formatCurrency: (value: number | string | null | undefined) => string;
   isPaidDisabled: boolean;
   isReturnedDisabled: boolean;
+  current: boolean;
 }
 
 export const InvoiceTableRow = ({
@@ -27,17 +27,25 @@ export const InvoiceTableRow = ({
   onPreview,
   onDelete,
   formatCurrency,
+  current,
   isPaidDisabled,
   isReturnedDisabled,
 }: InvoiceTableRowProps) => {
   return (
     <TableRow
       className={cn({
-        "bg-green-50 hover:bg-green-100":
+        // Cores de fundo padrão
+        "bg-green-100 hover:bg-green-200":
           invoice.is_paid && invoice.is_returned,
-        "bg-yellow-50 hover:bg-yellow-100":
+        "bg-yellow-100 hover:bg-yellow-200":
           invoice.is_paid && !invoice.is_returned,
-        "bg-red-50 hover:bg-red-100": !invoice.is_paid && !invoice.is_returned,
+        "bg-red-100 hover:bg-red-200": !invoice.is_paid && !invoice.is_returned,
+
+        // Borda da fatura atual (current)
+        "border-4 shadow-lg": current, // Aplica borda e sombra
+        "border-red-400": current && !invoice.is_paid, // Borda vermelha se não estiver paga
+        "border-yellow-400": current && invoice.is_paid && !invoice.is_returned, // Borda amarela se estiver paga
+        "border-green-400": current && invoice.is_paid && invoice.is_returned, // Borda verde se estiver devolvida
       })}
     >
       <TableCell>
@@ -60,7 +68,8 @@ export const InvoiceTableRow = ({
       </TableCell>
       <TableCell>{invoice.client_name}</TableCell>
       <TableCell>
-        {invoice.return_date && format(parseISO(invoice.return_date), "dd/MM/yyyy")}
+        {invoice.return_date &&
+          format(parseISO(invoice.return_date), "dd/MM/yyyy")}
       </TableCell>
       <TableCell className="text-right">
         R$ {formatCurrency(invoice.total)}

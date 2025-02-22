@@ -94,7 +94,12 @@ export const useInvoiceGeneration = () => {
       const total = calculateSubtotal();
 
       await updateInventory(items);
-      await createInvoice(items, clientData, total, user.id);
+      const invoiceCreated = await createInvoice(
+        items,
+        clientData,
+        total,
+        user.id
+      );
 
       toast({
         title: "Sucesso!",
@@ -104,6 +109,7 @@ export const useInvoiceGeneration = () => {
 
       setItems([]);
       setClientData(DEFAULT_CLIENT_DATA);
+      return invoiceCreated;
     } catch (error) {
       toast({
         title: "Erro",

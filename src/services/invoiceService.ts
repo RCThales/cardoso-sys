@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
@@ -17,11 +16,11 @@ export const createInvoice = async (
   dueDate.setDate(today.getDate() + 30);
 
   const allItems = [
-    ...items.map(item => ({
+    ...items.map((item) => ({
       ...item,
       quantity: Number(item.quantity) || 0,
       price: Number(item.price) || 0,
-      total: Number(item.total) || 0
+      total: Number(item.total) || 0,
     })),
     {
       description: "Frete",
@@ -29,8 +28,8 @@ export const createInvoice = async (
       price: clientData.deliveryFee,
       total: clientData.deliveryFee,
       productId: "delivery-fee",
-      rentalDays: 1
-    }
+      rentalDays: 1,
+    },
   ] as Json;
 
   const { error } = await supabase.from("invoices").insert({
@@ -55,4 +54,6 @@ export const createInvoice = async (
   });
 
   if (error) throw error;
+
+  return invoiceNumber;
 };

@@ -16,15 +16,16 @@ export function Navbar() {
         </Link>
       </div>
       <div className="flex items-center gap-4">
-        {location.pathname !== "/calc" && ( // Esconde o botão se a rota for /calc
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => handleLogout(navigate)}
-          >
-            <LogOut className="h-5 w-5" />
-          </Button>
-        )}
+        {location.pathname !== "/calc" &&
+          location.pathname !== "/sales" && ( // Esconde o botão se a rota for /calc
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => handleLogout(navigate)}
+            >
+              <LogOut className="h-5 w-5" />
+            </Button>
+          )}
       </div>
     </div>
   );

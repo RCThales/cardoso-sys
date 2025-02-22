@@ -107,11 +107,12 @@ export const InvoiceGenerator = ({
 
   const handleGenerateInvoice = async () => {
     if (!validateRequiredFields()) return;
-    await generateInvoice();
+    const invoiceCreated = await generateInvoice();
     clearCart();
-    //onInvoiceCreated?.();
+    //InvoiceCreated?.();
     clearSessionStorage();
-    navigate("/invoices/history");
+
+    navigate("/invoices/history?invoice_id=" + invoiceCreated);
   };
 
   const clearSessionStorage = () => {

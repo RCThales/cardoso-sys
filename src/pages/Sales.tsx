@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,6 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { CartDrawer } from "@/components/cart/CartDrawer";
 import { handleLogout } from "@/utils/Logout";
 import { fetchProducts, type Product } from "@/utils/priceCalculator";
+import { Navbar } from "@/components/Navbar";
 
 const Sales = () => {
   const [quantity, setQuantity] = useState(1);
@@ -78,7 +78,10 @@ const Sales = () => {
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newQuantity = parseInt(e.target.value, 10);
-    const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
+    const availableQuantity = getAvailableQuantity(
+      selectedProduct,
+      selectedSize
+    );
 
     if (
       !isNaN(newQuantity) &&
@@ -137,7 +140,8 @@ const Sales = () => {
 
   return (
     <div className="relative">
-      <div className="fixed top-2 right-4 z-50 flex items-center gap-2">
+      <Navbar />
+      <div className="fixed top-2 right-4 z-50 flex items-center gap-2 ">
         <Button
           variant="ghost"
           size="icon"
@@ -147,7 +151,8 @@ const Sales = () => {
         </Button>
         <CartDrawer />
       </div>
-      <Card className="w-full max-w-lg mx-auto p-8 shadow-lg animate-fade-in">
+      <br />
+      <Card className=" max-w-[85%] md:max-w-lg mx-auto p-8 shadow-lg animate-fade-in">
         <div className="space-y-8">
           <div className="text-center space-y-2">
             <Badge variant="secondary" className="mb-2">
@@ -228,7 +233,10 @@ const Sales = () => {
                   Preço Total
                 </span>
                 <div className="text-5xl font-semibold tracking-tight">
-                  R${((selectedProductData?.sale_price || 0) * quantity).toFixed(2)}
+                  R$
+                  {((selectedProductData?.sale_price || 0) * quantity).toFixed(
+                    2
+                  )}
                 </div>
               </div>
             </motion.div>

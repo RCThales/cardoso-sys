@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -14,6 +13,7 @@ interface InvoiceHistoryProps {
   sortOrder: "asc" | "desc";
   filterStatus: "all" | "paid" | "unpaid" | "returned" | "not-returned";
   dateSortType: "invoice" | "return";
+  invoiceId?: string | null; // Adicione o invoiceId como uma prop opcional
 }
 
 export const InvoiceHistory = ({
@@ -21,6 +21,7 @@ export const InvoiceHistory = ({
   sortOrder,
   filterStatus,
   dateSortType,
+  invoiceId,
 }: InvoiceHistoryProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
@@ -72,14 +73,16 @@ export const InvoiceHistory = ({
 
     // Ordenar por data
     convertedInvoices.sort((a, b) => {
-      const dateA = dateSortType === "invoice" 
-        ? new Date(a.invoice_date) 
-        : new Date(a.return_date || "");
-      const dateB = dateSortType === "invoice" 
-        ? new Date(b.invoice_date) 
-        : new Date(b.return_date || "");
+      const dateA =
+        dateSortType === "invoice"
+          ? new Date(a.invoice_date)
+          : new Date(a.return_date || "");
+      const dateB =
+        dateSortType === "invoice"
+          ? new Date(b.invoice_date)
+          : new Date(b.return_date || "");
 
-      return sortOrder === "asc" 
+      return sortOrder === "asc"
         ? dateA.getTime() - dateB.getTime()
         : dateB.getTime() - dateA.getTime();
     });
@@ -260,6 +263,7 @@ export const InvoiceHistory = ({
         onPreview={handlePreview}
         onDelete={handleDelete}
         formatCurrency={formatCurrency}
+        invoiceId={invoiceId} // Passa o invoiceId para o InvoiceTable
       />
 
       <PreviewInvoiceDialog
