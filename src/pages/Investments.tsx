@@ -58,7 +58,12 @@ const Investments = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<Investment | null>(null);
   const [editingItem, setEditingItem] = useState<Investment | null>(null);
-  const [availableYears, setAvailableYears] = useState<number[]>([]);
+  const [availableYearsInvestments, setAvailableYearsInvestments] = useState<
+    number[]
+  >([]);
+  const [availableYearsExpenses, setAvailableYearsExpenses] = useState<
+    number[]
+  >([]);
   const [selectedYear, setSelectedYear] = useState<string>(
     new Date().getFullYear().toString()
   );
@@ -90,19 +95,46 @@ const Investments = () => {
     const processedInvestments = investmentsData || [];
     const processedExpenses = expensesData || [];
 
-    const years = new Set<number>();
-    [...processedInvestments, ...processedExpenses].forEach((item) => {
+    const yearsInvestments = new Set<number>();
+    [...processedInvestments].forEach((item) => {
       if (item.date) {
-        years.add(new Date(item.date).getFullYear());
+        yearsInvestments.add(new Date(item.date).getFullYear());
       }
     });
 
-    const sortedYears = Array.from(years).sort((a, b) => a - b);
-    setAvailableYears(sortedYears);
+    const yearsExpenses = new Set<number>();
+    [...processedExpenses].forEach((item) => {
+      if (item.date) {
+        yearsExpenses.add(new Date(item.date).getFullYear());
+      }
+    });
 
+    const sortedYearsInvestments = Array.from(yearsInvestments).sort(
+      (a, b) => a - b
+    );
+    setAvailableYearsInvestments(sortedYearsInvestments);
+
+    const sortedYearsExpenses = Array.from(yearsExpenses).sort((a, b) => a - b);
+    setAvailableYearsExpenses(sortedYearsExpenses);
     let newSelectedYear = selectedYear;
-    if (sortedYears.length > 0 && !sortedYears.includes(Number(selectedYear))) {
-      newSelectedYear = sortedYears[0].toString();
+
+    if (sortedYearsInvestments.length > 0 && sortedYearsExpenses.length > 0) {
+      setSelectedYear(new Date().getFullYear().toString());
+    }
+
+    if (
+      sortedYearsInvestments.length > 0 &&
+      !sortedYearsInvestments.includes(Number(selectedYear))
+    ) {
+      newSelectedYear = sortedYearsInvestments[0].toString();
+      setSelectedYear(newSelectedYear);
+    }
+
+    if (
+      sortedYearsExpenses.length > 0 &&
+      !sortedYearsExpenses.includes(Number(selectedYear))
+    ) {
+      newSelectedYear = sortedYearsExpenses[0].toString();
       setSelectedYear(newSelectedYear);
     }
 
@@ -114,13 +146,23 @@ const Investments = () => {
     const availableMonths = getAvailableMonths(); // Get available months for selectedYear
 
     if (!availableMonths.includes(Number(selectedMonth))) {
-      setSelectedMonth(availableMonths[0]?.toString() || ""); // Set to first available month
+      setSelectedMonth(availableMonths[0]?.toString() || "");
     }
   }, [selectedYear]); // Runs when selectedYear changes
 
   useEffect(() => {
     fetchData();
   }, []);
+
+  useEffect(() => {
+    if (!availableYearsInvestments.includes(Number(selectedYear))) {
+      setSelectedYear(availableYearsInvestments[0]?.toString() || "");
+    }
+
+    if (!availableYearsExpenses.includes(Number(selectedYear))) {
+      setSelectedYear(availableYearsExpenses[0]?.toString() || "");
+    }
+  }, [viewMode]); // Add viewMode as a dependency
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -280,7 +322,6 @@ const Investments = () => {
     const items = viewMode === "expenses" ? expenses : investments;
     const availableMonths = getAvailableMonths();
 
-    console.log(availableMonths);
     // Verifica se o mês selecionado ainda está disponível
     if (!availableMonths.includes(Number(selectedMonth))) {
       // Se o mês selecionado não estiver mais disponível, atualiza para o primeiro mês disponível
@@ -679,11 +720,19 @@ const Investments = () => {
                   <SelectValue placeholder="Selecione o ano" />
                 </SelectTrigger>
                 <SelectContent>
-                  {availableYears.map((year) => (
-                    <SelectItem key={year} value={year.toString()}>
-                      {year}
-                    </SelectItem>
-                  ))}
+                  {viewMode === "investments" &&
+                    availableYearsInvestments.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
+
+                  {viewMode === "expenses" &&
+                    availableYearsExpenses.map((year) => (
+                      <SelectItem key={year} value={year.toString()}>
+                        {year}
+                      </SelectItem>
+                    ))}
                 </SelectContent>
               </Select>
 
@@ -709,6 +758,7 @@ const Investments = () => {
               {viewMode === "expenses" ? "Despesas" : "Investimentos"} do
               Período
             </h2>
+
             {/* Exibe uma mensagem se não houver itens */}
             {((investments.length === 0 && viewMode === "investments") ||
               (expenses.length === 0 && viewMode === "expenses")) && (

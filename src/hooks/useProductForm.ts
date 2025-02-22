@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import type { Product } from "@/utils/priceCalculator";
 import { useToast } from "./use-toast";
@@ -14,18 +13,20 @@ export const useProductForm = ({ onSuccess }: UseProductFormProps) => {
   const [name, setName] = useState("");
   const [basePrice, setBasePrice] = useState("");
   const [sizes, setSizes] = useState<string[]>([]);
-  const [quantities, setQuantities] = useState<Record<string, number>>({});
+
   const { toast } = useToast();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (
+    e: React.FormEvent,
+    quantities: Record<string, number>
+  ) => {
     e.preventDefault();
+
     try {
       if (selectedProduct) {
-        await productService.updateProduct(selectedProduct.id, { name, basePrice, sizes }, quantities);
-        showToast("Sucesso", "Produto atualizado com sucesso");
+        updateProduct(selectedProduct.id, quantities);
       } else {
-        await productService.createProduct({ name, basePrice, sizes }, quantities);
-        showToast("Sucesso", "Produto adicionado com sucesso");
+        createProduct(quantities);
       }
 
       resetForm();
@@ -34,10 +35,26 @@ export const useProductForm = ({ onSuccess }: UseProductFormProps) => {
       console.error("Erro ao processar o produto:", error);
       showToast(
         "Erro",
-        selectedProduct ? "Erro ao atualizar produto" : "Erro ao adicionar produto",
+        selectedProduct
+          ? "Erro ao atualizar produto"
+          : "Erro ao adicionar produto",
         "destructive"
       );
     }
+  };
+
+  const createProduct = async (quantities) => {
+    await productService.createProduct({ name, basePrice, sizes }, quantities);
+    showToast("Sucesso", "Produto atualizado com sucesso");
+  };
+
+  const updateProduct = async (productId: string, quantities) => {
+    await productService.updateProduct(
+      productId,
+      { name, basePrice, sizes },
+      quantities
+    );
+    showToast("Sucesso", "Produto atualizado com sucesso");
   };
 
   const showToast = (
@@ -54,7 +71,6 @@ export const useProductForm = ({ onSuccess }: UseProductFormProps) => {
     setName("");
     setBasePrice("");
     setSizes([]);
-    setQuantities({});
   };
 
   const handleEdit = async (product: Product) => {
@@ -76,8 +92,7 @@ export const useProductForm = ({ onSuccess }: UseProductFormProps) => {
     setBasePrice,
     sizes,
     setSizes,
-    quantities,
-    setQuantities,
+
     handleSubmit,
     handleEdit,
     resetForm,

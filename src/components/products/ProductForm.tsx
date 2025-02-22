@@ -29,6 +29,8 @@ export const ProductForm = ({
   setName,
   basePrice,
   setBasePrice,
+  setInitialQuantity,
+  initialQuantity,
   selectedProduct,
   sizes,
   setSizes,
@@ -41,6 +43,7 @@ export const ProductForm = ({
     handleAddSize,
     handleRemoveSize,
     handleQuantityChange,
+    handleQuantityChangeNoSize,
     handleDragEnd,
   } = useProductForm({
     selectedProduct,
@@ -86,34 +89,31 @@ export const ProductForm = ({
         <Input
           required
           type="number"
-          step="0.01"
           value={basePrice}
           onChange={(e) => setBasePrice(e.target.value)}
         />
       </div>
 
-      {selectedProduct && inventoryData && sizes.length === 0 && (
+      {sizes.length === 0 && (
         <div className="space-y-2">
           <label className="text-sm font-medium">
             Quantidade em Estoque Atual
           </label>
           <div className="grid gap-2">
-            {inventoryData.map((item) => (
-              <div
-                key={item.size || "default_inventory_item"}
-                className="flex justify-between items-center p-2 bg-muted rounded"
-              >
-                <span>{"Padrão"}</span>
-                <input
-                  type="number"
-                  className="w-16 p-1 text-center border rounded"
-                  value={quantities[item.size] ?? 0}
-                  onChange={(e) =>
-                    handleQuantityChange(item.size, e.target.value)
-                  }
-                />
-              </div>
-            ))}
+            <div
+              key={"default_inventory_item_add"}
+              className="flex justify-between items-center p-2 rounded"
+            >
+              <Input
+                required
+                defaultValue={0}
+                type="number"
+                min={0}
+                onChange={(e) => {
+                  handleQuantityChangeNoSize(e.target.value);
+                }}
+              />
+            </div>
           </div>
         </div>
       )}

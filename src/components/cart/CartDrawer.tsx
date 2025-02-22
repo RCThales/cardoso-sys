@@ -51,8 +51,6 @@ export const CartDrawer = () => {
   ) => {
     const availableQuantity = getAvailableQuantity(item.productId, item.size);
 
-    console.log(availableQuantity);
-
     if (newQuantity > availableQuantity) {
       toast({
         title: "Erro",

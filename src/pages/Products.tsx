@@ -1,7 +1,11 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { supabase } from "@/integrations/supabase/client";
 import type { Product } from "@/utils/priceCalculator";
 import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
@@ -39,7 +43,6 @@ const Products = () => {
     setBasePrice,
     sizes,
     setSizes,
-    quantities,
     handleSubmit,
     handleEdit,
     resetForm,
@@ -104,7 +107,7 @@ const Products = () => {
               </DialogTitle>
             </DialogHeader>
             <ProductForm
-              onSubmit={handleSubmit}
+              onSubmit={(e, quantities) => handleSubmit(e, quantities)}
               name={name}
               setName={setName}
               basePrice={basePrice}
@@ -113,7 +116,6 @@ const Products = () => {
               sizes={sizes}
               setSizes={setSizes}
               setInitialQuantity={() => {}}
-              initialQuantities={quantities}
             />
           </DialogContent>
         </Dialog>

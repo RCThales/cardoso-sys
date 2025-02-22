@@ -16,6 +16,7 @@ import FinancialDetails from "./pages/FinancialDetails";
 import Investments from "./pages/Investments";
 import Clients from "./pages/Clients";
 import ProtectedRoute from "./utils/protectedRoutes";
+import Sales from "./pages/Sales";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,14 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <InvoiceHistory />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/sales"
+            element={
+              <ProtectedRoute>
+                <Sales />
               </ProtectedRoute>
             }
           />

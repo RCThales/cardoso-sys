@@ -82,7 +82,6 @@ export const InvoiceGenerator = ({
   };
 
   const handleDiscountChange = (value: string) => {
-    console.log(value);
     setClientData({
       ...clientData,
       specialDiscount: Number(value) || 0,

@@ -44,8 +44,13 @@ export const useProductForm = ({
       newQuantities["null"] = 0;
     }
 
-    console.log(newQuantities);
     setQuantities(newQuantities);
+  };
+
+  const handleQuantityChangeNoSize = (value: string) => {
+    const quantity = Math.max(0, parseInt(value) || 0);
+    console.log(quantity);
+    setQuantities({ null: quantity });
   };
 
   const handleQuantityChange = (size: string, value: string) => {
@@ -94,7 +99,8 @@ export const useProductForm = ({
     quantities,
     handleAddSize,
     handleRemoveSize,
-    handleQuantityChange,
     handleDragEnd,
+    handleQuantityChange,
+    handleQuantityChangeNoSize,
   };
 };

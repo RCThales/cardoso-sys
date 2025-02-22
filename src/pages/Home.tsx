@@ -20,6 +20,13 @@ const menuItems = [
     color: "bg-gradient-to-br from-purple-500 to-pink-500",
   },
   {
+    title: "Vendas",
+    description: "Venda de Produtos",
+    icon: DollarSign,
+    route: "/sales",
+    color: "bg-gradient-to-br from-teal-500 to-slate-700",
+  },
+  {
     title: "Faturas",
     description: "Lista de faturas",
     icon: LineChart,
