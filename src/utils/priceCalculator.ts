@@ -8,6 +8,7 @@ export interface Product {
   id: string;
   name: string;
   base_price: number;
+  sale_price: number;
   product_code: string;
   sizes?: ProductSize[];
 }
@@ -20,6 +21,7 @@ export async function fetchProducts(): Promise<Product[]> {
     ...item,
     sizes: item.sizes ? (item.sizes as unknown as ProductSize[]) : undefined,
     base_price: item.base_price,
+    sale_price: item.sale_price,
   }));
 }
 
