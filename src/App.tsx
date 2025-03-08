@@ -4,7 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Routes, Route } from "react-router-dom";
 import Home from "./pages/Home";
-import Index from "./pages/Index";
+import Index from "./pages/Rentals";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 import InvoiceHistory from "./pages/InvoiceHistory";
@@ -17,6 +17,7 @@ import Investments from "./pages/Investments";
 import Clients from "./pages/Clients";
 import ProtectedRoute from "./utils/protectedRoutes";
 import Sales from "./pages/Sales";
+import Rentals from "./pages/Rentals";
 
 const queryClient = new QueryClient();
 
@@ -36,10 +37,10 @@ const App = () => {
             }
           />
           <Route
-            path="/calc"
+            path="/rentals"
             element={
               <ProtectedRoute>
-                <Index />
+                <Rentals />
               </ProtectedRoute>
             }
           />

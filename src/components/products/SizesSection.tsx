@@ -19,10 +19,10 @@ interface SizesSectionProps {
   sizes: string[];
   newSize: string;
   setNewSize: (size: string) => void;
-  quantities: Record<string, number>;
+  quantities: any;
   onAddSize: () => void;
   onRemoveSize: (size: string) => void;
-  onQuantityChange: (size: string, value: string) => void;
+  onQuantityChange: (quantities: Record<string, number>) => void;
   onDragEnd: (event: any) => void;
 }
 
@@ -43,6 +43,9 @@ export const SizesSection = ({
     })
   );
 
+  const handleQuantityChangeOfEachSize = (size, value) => {
+    onQuantityChange({ ...quantities, [size]: parseInt(value) });
+  };
   return (
     <div className="space-y-2">
       <label className="text-sm font-medium">Tamanhos Disponíveis</label>
@@ -69,7 +72,9 @@ export const SizesSection = ({
                 key={size}
                 size={size}
                 quantity={quantities[size] || 0}
-                onQuantityChange={(value) => onQuantityChange(size, value)}
+                onQuantityChange={(value) =>
+                  handleQuantityChangeOfEachSize(size, value)
+                }
                 onRemove={() => onRemoveSize(size)}
               />
             ))}

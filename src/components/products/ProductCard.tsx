@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,7 +10,11 @@ interface ProductCardProps {
   onDelete: (product: Product) => void;
 }
 
-export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => {
+export const ProductCard = ({
+  product,
+  onEdit,
+  onDelete,
+}: ProductCardProps) => {
   return (
     <Card className="p-6">
       <div className="flex justify-between items-start">
@@ -19,6 +22,9 @@ export const ProductCard = ({ product, onEdit, onDelete }: ProductCardProps) => 
           <h3 className="font-semibold text-lg mb-2">{product.name}</h3>
           <p className="text-muted-foreground">
             Valor base: R$ {product.base_price.toFixed(2)}
+          </p>
+          <p className="text-muted-foreground">
+            Valor de Venda: {product.sale_price.toFixed(2)}
           </p>
           <p className="text-muted-foreground">
             Código: {product.product_code}

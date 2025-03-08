@@ -16,7 +16,7 @@ const menuItems = [
     title: "Aluguel",
     description: "Calculadora de aluguéis",
     icon: Calculator,
-    route: "/calc",
+    route: "/rentals",
     color: "bg-gradient-to-br from-purple-500 to-pink-500",
   },
   {

@@ -25,8 +25,6 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/store/cartStore";
 import { useToast } from "./ui/use-toast";
-import { CartDrawer } from "./cart/CartDrawer";
-import { handleLogout } from "../utils/Logout";
 
 export const RentalCalculator = () => {
   // Estados
@@ -73,6 +71,7 @@ export const RentalCalculator = () => {
 
     if (base_price) {
       setBasePrice(base_price); // Armazena o base_price no estado
+
       setPrice(calculateTotalPrice(days, base_price));
     }
   }, [days, selectedProduct, products]);
@@ -121,7 +120,7 @@ export const RentalCalculator = () => {
 
   const handleDaysInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newDays = parseInt(e.target.value, 10);
-    if (newDays >= 1 && newDays <= 60) {
+    if (newDays >= 1 && newDays <= 180) {
       setDays(newDays);
     }
   };
@@ -170,24 +169,29 @@ export const RentalCalculator = () => {
   }
 
   return (
-    <div className="relative">
-      <div className="fixed top-2 right-4 z-50 flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => handleLogout(navigate)}
-        >
-          <LogOut className="h-5 w-5" />
-        </Button>
-        <CartDrawer />
-      </div>
-      <Card className="w-full max-w-lg mx-auto p-8 shadow-lg animate-fade-in">
-        <div className="space-y-8">
+    <div className="h-full">
+      <Card className="w-screen min-h-screen md:min-h-full h-auto md:mt-8 md:max-w-lg mx-auto p-8 shadow-lg animate-fade-in relative overflow-x-hidden">
+        <div className="absolute w-full left-0 top-0 flex">
+          <Button
+            onClick={() => navigate("/sales")}
+            className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100  border-r-[1px] rounded-t-none w-full "
+          >
+            Vendas
+          </Button>
+          <Button
+            disabled
+            className="bg-gray-200 text-black border-gray-200 hover:bg-gray-50  border-l-[1px] rounded-t-none w-full "
+          >
+            Aluguel
+          </Button>
+        </div>
+
+        <div className="space-y-8 pt-10">
           <div className="text-center space-y-2">
             <Badge variant="secondary" className="mb-2">
               ALUGUEL
             </Badge>
-            <h1 className="text-4xl font-semibold tracking-tight">
+            <h1 className="text-3xl font-semibold tracking-tight">
               Calcule o valor do aluguel
             </h1>
           </div>
@@ -275,6 +279,29 @@ export const RentalCalculator = () => {
                 className="w-full"
               />
             </div>
+            <details>
+              <summary>Hotkeys</summary>
+              <div className="grid grid-cols-2 gap-4 mt-6">
+                {[5, 7, 10, 15, 20, 30].map((days) => {
+                  // Calcula o preço total para os dias específicos
+                  const totalPrice = calculateTotalPrice(days, basePrice);
+
+                  return (
+                    <Card
+                      key={days}
+                      className="p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors"
+                      onClick={() => setDays(days)} // Define os dias ao clicar no card
+                    >
+                      <div className="font-medium">{days} dias</div>
+                      <div className="text-sm text-muted-foreground">
+                        R${totalPrice.toFixed(2)}{" "}
+                        {/* Exibe o preço total formatado */}
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </details>
 
             <motion.div
               key={price}
@@ -299,27 +326,6 @@ export const RentalCalculator = () => {
               <ShoppingCart className="mr-2 h-4 w-4" />{" "}
               {isProductInCart ? "Atualizar Carrinho" : "Adicionar ao Carrinho"}
             </Button>
-
-            <div className="grid grid-cols-2 gap-4 mt-6">
-              {[5, 7, 10, 15, 20, 30].map((days) => {
-                // Calcula o preço total para os dias específicos
-                const totalPrice = calculateTotalPrice(days, basePrice);
-
-                return (
-                  <Card
-                    key={days}
-                    className="p-4 text-center cursor-pointer hover:bg-secondary/50 transition-colors"
-                    onClick={() => setDays(days)} // Define os dias ao clicar no card
-                  >
-                    <div className="font-medium">{days} dias</div>
-                    <div className="text-sm text-muted-foreground">
-                      R${totalPrice.toFixed(2)}{" "}
-                      {/* Exibe o preço total formatado */}
-                    </div>
-                  </Card>
-                );
-              })}
-            </div>
           </div>
         </div>
       </Card>

@@ -32,6 +32,7 @@ export const useInvoiceGeneration = () => {
         quantity: 1,
         price: 0,
         total: 0,
+        is_sale: false,
         productId: "",
         rentalDays: 1,
       },

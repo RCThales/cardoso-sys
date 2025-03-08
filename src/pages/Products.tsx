@@ -34,18 +34,23 @@ const Products = () => {
 
   const {
     isOpen,
-    setIsOpen,
+    toggleProductDialog,
     selectedProduct,
     setSelectedProduct,
     name,
     setName,
     basePrice,
     setBasePrice,
+    salePrice,
+    setSalePrice,
     sizes,
     setSizes,
+    quantity,
+    setQuantity,
+    quantities,
+    setQuantities,
     handleSubmit,
     handleEdit,
-    resetForm,
   } = useProductForm({
     onSuccess: refetch,
   });
@@ -82,7 +87,7 @@ const Products = () => {
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
       <div className="container py-8">
-        <ProductsHeader onNewProduct={() => setIsOpen(true)} />
+        <ProductsHeader onNewProduct={() => toggleProductDialog()} />
         <ProductSearch searchTerm={searchTerm} onSearch={setSearchTerm} />
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -99,21 +104,27 @@ const Products = () => {
           ))}
         </div>
 
-        <Dialog open={isOpen} onOpenChange={setIsOpen}>
-          <DialogContent>
+        <Dialog open={isOpen} onOpenChange={toggleProductDialog}>
+          <DialogContent className="min-w-[100vw] w-screen h-screen overflow-y-scroll md:max-h-[95vh] md:w-auto md:h-auto md:min-w-[500px] flex flex-col justify-start ">
             <DialogHeader>
               <DialogTitle>
                 {selectedProduct ? "Editar Produto" : "Novo Produto"}
               </DialogTitle>
             </DialogHeader>
             <ProductForm
-              onSubmit={(e, quantities) => handleSubmit(e, quantities)}
+              onSubmit={(e) => handleSubmit(e)}
               name={name}
               setName={setName}
               basePrice={basePrice}
               setBasePrice={setBasePrice}
               selectedProduct={selectedProduct}
+              salePrice={salePrice}
+              setSalePrice={setSalePrice}
               sizes={sizes}
+              quantity={quantity}
+              setQuantity={setQuantity}
+              quantities={quantities}
+              setQuantities={setQuantities}
               setSizes={setSizes}
               setInitialQuantity={() => {}}
             />

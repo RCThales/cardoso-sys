@@ -1,11 +1,5 @@
-
 import { useEffect, useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -51,7 +45,9 @@ export const SearchClientDialog = ({
     setLoading(true);
     const { data, error } = await supabase
       .from("invoices")
-      .select("client_name, client_cpf, client_phone, client_address, client_address_number, client_address_complement, client_city, client_state, client_postal_code")
+      .select(
+        "client_name, client_cpf, client_phone, client_address, client_address_number, client_address_complement, client_city, client_state, client_postal_code"
+      )
       .or(`client_name.ilike.%${search}%,client_cpf.ilike.%${search}%`)
       .order("client_name")
       .limit(10);
@@ -68,7 +64,9 @@ export const SearchClientDialog = ({
 
     // Remove duplicatas baseado no CPF
     const uniqueClients = data.reduce((acc: ClientSearchResult[], current) => {
-      const exists = acc.find(client => client.client_cpf === current.client_cpf);
+      const exists = acc.find(
+        (client) => client.client_cpf === current.client_cpf
+      );
       if (!exists) {
         acc.push(current);
       }

@@ -216,28 +216,54 @@ export const InvoiceHistory = ({
 
   // Função para atualizar o estoque de um item específico
   const updateItemInventory = async (item: any) => {
-    const { data: inventoryItem, error: inventoryError } = await supabase
-      .from("inventory")
-      .select("rented_quantity")
-      .eq("product_id", item.productId)
-      .single();
+    if (item.is_sale) {
+      const { data: inventoryItem, error: inventoryError } = await supabase
+        .from("inventory")
+        .select("total_quantity")
+        .eq("product_id", item.productId)
+        .single();
 
-    if (inventoryError || !inventoryItem) {
-      throw new Error(`Erro ao buscar estoque para ${item.productId}`);
-    }
+      if (inventoryError || !inventoryItem) {
+        throw new Error(`Erro ao buscar estoque para ${item.productId}`);
+      }
 
-    const newRentedQuantity = Math.max(
-      0,
-      inventoryItem.rented_quantity - item.quantity
-    );
+      const newTotalQuantity = Math.max(
+        0,
+        inventoryItem.total_quantity + item.quantity
+      );
 
-    const { error: updateError } = await supabase
-      .from("inventory")
-      .update({ rented_quantity: newRentedQuantity })
-      .eq("product_id", item.productId);
+      const { error: updateError } = await supabase
+        .from("inventory")
+        .update({ total_quantity: newTotalQuantity })
+        .eq("product_id", item.productId);
 
-    if (updateError) {
-      throw new Error(`Erro ao atualizar estoque para ${item.productId}`);
+      if (updateError) {
+        throw new Error(`Erro ao atualizar estoque para ${item.productId}`);
+      }
+    } else {
+      const { data: inventoryItem, error: inventoryError } = await supabase
+        .from("inventory")
+        .select("rented_quantity")
+        .eq("product_id", item.productId)
+        .single();
+
+      if (inventoryError || !inventoryItem) {
+        throw new Error(`Erro ao buscar estoque para ${item.productId}`);
+      }
+
+      const newRentedQuantity = Math.max(
+        0,
+        inventoryItem.rented_quantity - item.quantity
+      );
+
+      const { error: updateError } = await supabase
+        .from("inventory")
+        .update({ rented_quantity: newRentedQuantity })
+        .eq("product_id", item.productId);
+
+      if (updateError) {
+        throw new Error(`Erro ao atualizar estoque para ${item.productId}`);
+      }
     }
   };
 

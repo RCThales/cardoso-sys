@@ -3,23 +3,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useProductForm } from "./useProductForm";
 import { SizesSection } from "./SizesSection";
-import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { calculateTotalPrice } from "@/utils/priceCalculator";
+import { useState } from "react";
+import { Slider } from "@/components/ui/slider";
 
 interface ProductFormProps {
-  onSubmit: (
-    e: React.FormEvent,
-    quantities: Record<string, number>
-  ) => Promise<void>;
+  onSubmit: (e: React.FormEvent) => Promise<void>;
   name: string;
   setName: (name: string) => void;
   basePrice: string;
   setBasePrice: (price: string) => void;
+  salePrice: string;
+  setSalePrice: (price: string) => void;
   selectedProduct: Product | null;
   sizes: string[];
   setSizes: (sizes: string[]) => void;
   setInitialQuantity: (quantity: string) => void;
-  initialQuantity?: string;
+  quantity?: string;
+  setQuantity: (quantity: string) => void;
+  quantities?: any;
+  setQuantities?: (quantities: any) => void;
   initialQuantities?: Record<string, number>;
 }
 
@@ -29,8 +32,12 @@ export const ProductForm = ({
   setName,
   basePrice,
   setBasePrice,
-  setInitialQuantity,
-  initialQuantity,
+  salePrice,
+  setSalePrice,
+  quantity,
+  setQuantity,
+  quantities,
+  setQuantities,
   selectedProduct,
   sizes,
   setSizes,
@@ -39,11 +46,8 @@ export const ProductForm = ({
   const {
     newSize,
     setNewSize,
-    quantities,
     handleAddSize,
     handleRemoveSize,
-    handleQuantityChange,
-    handleQuantityChangeNoSize,
     handleDragEnd,
   } = useProductForm({
     selectedProduct,
@@ -52,45 +56,100 @@ export const ProductForm = ({
     initialQuantities,
   });
 
-  // Buscar quantidade em estoque atual
-  const { data: inventoryData } = useQuery({
-    queryKey: ["inventory", selectedProduct?.id],
-    queryFn: async () => {
-      if (!selectedProduct) return null;
-
-      const { data, error } = await supabase
-        .from("inventory")
-        .select("size, total_quantity")
-        .eq("product_id", selectedProduct.id);
-
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!selectedProduct,
-  });
-
+  const [days, setDays] = useState(1);
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(e, quantities);
+    onSubmit(e);
   };
-
+  const handleDaysChange = (value: number[]) => {
+    setDays(value[0]);
+  };
+  const handleDaysInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newDays = parseInt(e.target.value, 10);
+    if (newDays >= 1 && newDays <= 180) {
+      setDays(newDays);
+    }
+  };
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form
+      onSubmit={handleSubmit}
+      className="space-y-4 flex flex-col h-full justify-start"
+    >
+      <div className="space-y-2 relative">
         <label className="text-sm font-medium">Nome do Produto</label>
-        <Input
-          required
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-        />
+        <div className="relative h-fit">
+          <Input
+            placeholder="Ex: Muleta Axilar"
+            required
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="pr-8"
+          />
+          {name && (
+            <button
+              onClick={() => setName("")}
+              type="button"
+              className="absolute right-2 top-1/2 -translate-y-1/2"
+            >
+              &#10005;
+            </button>
+          )}
+        </div>
       </div>
       <div className="space-y-2">
         <label className="text-sm font-medium">Valor Base</label>
         <Input
           required
           type="number"
+          step="any"
+          placeholder="Ex: 10,50"
+          min={0}
           value={basePrice}
           onChange={(e) => setBasePrice(e.target.value)}
+        />
+        <details>
+          <summary className="text-sm font-medium">Cálculos de aluguel</summary>
+          <br />
+          <div className="flex w-full justify-evenly items-center">
+            <div className="flex justify-center items-center gap-2">
+              <input
+                type="number"
+                value={days}
+                onChange={handleDaysInputChange}
+                min={1}
+                max={180}
+                className="w-16 text-center border p-2 rounded-md "
+              />{" "}
+              <span className="text-sm font-medium">
+                {days === 1 ? " dia" : " dias"}
+              </span>
+            </div>
+            <span className="w-full h-[1px] rounded-full bg-gray-300 mx-10"></span>
+            <p className="text-lg font-medium">
+              ${calculateTotalPrice(days, parseFloat(basePrice)).toFixed(2)}
+            </p>
+          </div>
+          <br />
+          <Slider
+            value={[days]}
+            onValueChange={handleDaysChange}
+            min={1}
+            max={180}
+            step={1}
+            className="w-full"
+          />
+        </details>
+      </div>
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Valor de Venda</label>
+        <Input
+          required
+          type="number"
+          step="any"
+          placeholder="Ex: 10,50"
+          min={0}
+          value={salePrice}
+          onChange={(e) => setSalePrice(e.target.value)}
         />
       </div>
 
@@ -106,11 +165,12 @@ export const ProductForm = ({
             >
               <Input
                 required
-                defaultValue={0}
+                placeholder="Ex: 25"
                 type="number"
+                value={quantity}
                 min={0}
                 onChange={(e) => {
-                  handleQuantityChangeNoSize(e.target.value);
+                  setQuantity(e.target.value);
                 }}
               />
             </div>
@@ -125,10 +185,11 @@ export const ProductForm = ({
         quantities={quantities}
         onAddSize={handleAddSize}
         onRemoveSize={handleRemoveSize}
-        onQuantityChange={handleQuantityChange}
+        onQuantityChange={setQuantities}
         onDragEnd={handleDragEnd}
       />
-      <Button type="submit" className="w-full">
+      <span className="h-full"></span>
+      <Button type="submit" className="w-full ">
         {selectedProduct ? "Atualizar Produto" : "Adicionar Produto"}
       </Button>
     </form>

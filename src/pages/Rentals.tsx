@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
 
-const Index = () => {
+const Rentals = () => {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
@@ -61,11 +61,11 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
       <Navbar />
-      <div className="container py-8">
+      <div className="h-full">
         <RentalCalculator />
       </div>
     </div>
   );
 };
 
-export default Index;
+export default Rentals;

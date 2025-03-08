@@ -47,17 +47,6 @@ export const useProductForm = ({
     setQuantities(newQuantities);
   };
 
-  const handleQuantityChangeNoSize = (value: string) => {
-    const quantity = Math.max(0, parseInt(value) || 0);
-    console.log(quantity);
-    setQuantities({ null: quantity });
-  };
-
-  const handleQuantityChange = (size: string, value: string) => {
-    const quantity = Math.max(0, parseInt(value) || 0);
-    setQuantities((prev) => ({ ...prev, [size]: quantity }));
-  };
-
   const handleDragEnd = async (event: {
     active: { id: string };
     over: { id: string };
@@ -100,7 +89,5 @@ export const useProductForm = ({
     handleAddSize,
     handleRemoveSize,
     handleDragEnd,
-    handleQuantityChange,
-    handleQuantityChangeNoSize,
   };
 };

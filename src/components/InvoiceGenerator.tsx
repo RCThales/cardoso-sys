@@ -124,7 +124,7 @@ export const InvoiceGenerator = ({
   };
 
   const handleBack = () => {
-    navigate("/calc");
+    navigate("/rentals");
   };
 
   const isFormValid = useMemo(
