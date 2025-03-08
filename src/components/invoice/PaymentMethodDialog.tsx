@@ -66,7 +66,7 @@ export const PaymentMethodDialog = ({
         </DialogHeader>
         <Tabs defaultValue="Cartão" value={method} onValueChange={setMethod}>
           <TabsList className="grid grid-cols-3 gap-4">
-            <TabsTrigger value="card">
+            <TabsTrigger value="Cartão">
               <CreditCard className="h-4 w-4 mr-2" />
               Cartão
             </TabsTrigger>

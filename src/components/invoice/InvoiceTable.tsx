@@ -158,6 +158,7 @@ export const InvoiceTable = ({
       )}
       <Table>
         <InvoiceTableHeader />
+        {invoices.length === 0 && <p className="pt-4">No Invoices</p>}
         <TableBody>
           {/* Exibe a fatura atual destacada (se existir) */}
           {currentInvoice && (

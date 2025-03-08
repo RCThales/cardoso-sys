@@ -75,8 +75,11 @@ export const InvoiceTableRow = ({
         // Borda da fatura atual (current)
         "border-4 shadow-lg": current, // Aplica borda e sombra
         "border-red-400": current && !invoice.is_paid, // Borda vermelha se não estiver paga
-        "border-yellow-400": current && invoice.is_paid && !invoice.is_returned, // Borda amarela se estiver paga
-        "border-green-400": current && invoice.is_paid && invoice.is_returned, // Borda verde se estiver devolvida
+        "border-yellow-400":
+          current && invoice.is_paid && !invoice.is_returned && !isSale, // Borda amarela se estiver paga
+        "border-green-400":
+          (current && invoice.is_paid && invoice.is_returned) ||
+          (current && invoice.is_paid && isSale), // Borda verde se estiver devolvida
       })}
     >
       {/* Nova coluna para o tipo da fatura */}
