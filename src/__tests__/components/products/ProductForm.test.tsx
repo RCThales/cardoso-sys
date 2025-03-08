@@ -5,7 +5,7 @@ import { vi } from 'vitest';
 import { ProductForm } from '@/components/products/ProductForm';
 
 // Mock the useProductForm hook
-vi.mock('./useProductForm', () => ({
+vi.mock('@/components/products/useProductForm', () => ({
   useProductForm: vi.fn(() => ({
     newSize: '',
     setNewSize: vi.fn(),
