@@ -1,3 +1,4 @@
+
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
@@ -8,16 +9,11 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    fs: {
-      allow: ["."],
-    },
-  },
-  build: {
-    assetsInlineLimit: 0, // Disable asset inline handling
   },
   plugins: [
     react(),
-    mode === "development" && componentTagger(),
+    mode === 'development' &&
+    componentTagger(),
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
@@ -32,14 +28,14 @@ export default defineConfig(({ mode }) => ({
             src: "/favicon.svg",
             sizes: "512x512",
             type: "image/svg+xml",
-            purpose: "any",
+            purpose: "any"
           },
           {
             src: "/favicon.svg",
             sizes: "512x512",
             type: "image/svg+xml",
-            purpose: "maskable",
-          },
+            purpose: "maskable"
+          }
         ],
       },
     }),
