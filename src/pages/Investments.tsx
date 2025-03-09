@@ -204,7 +204,7 @@ const Investments = () => {
 
       // Handle editing
       if (editingItem) {
-        if (activeTab === "recurring") {
+        if (activeTab === "recurrings") {  // Fixed comparison from "recurring" to "recurrings"
           // Update recurring item
           const { error } = await supabase
             .from("recurring")
@@ -243,7 +243,7 @@ const Investments = () => {
         });
       } else {
         // Handle new item
-        if (activeTab === "recurring") {
+        if (activeTab === "recurrings") {  // Fixed comparison from "recurring" to "recurrings"
           // Add recurring item - no installments
           const { error } = await supabase
             .from("recurring")
@@ -330,7 +330,7 @@ const Investments = () => {
           ? "expenses" 
           : "recurring";
 
-      if (activeTab === "recurring") {
+      if (activeTab === "recurrings") {  // Fixed comparison from "recurring" to "recurrings"
         // Simple delete for recurring items
         const { error } = await supabase
           .from(table)
