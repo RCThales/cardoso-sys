@@ -47,7 +47,8 @@ export const FinancialCard = ({
       };
     }
 
-    if (previousValue === 0) {
+    // If previous value was zero but current value isn't
+    if (previousValue === 0 && value !== 0) {
       return { 
         icon: ArrowUp, 
         color: "text-green-500", 
@@ -55,7 +56,23 @@ export const FinancialCard = ({
       };
     }
 
-    const percentageChange = ((value - previousValue) / previousValue) * 100;
+    // If previous value was negative and current is positive or vice versa
+    // we need special handling for these cases
+    if ((previousValue < 0 && value >= 0) || (previousValue >= 0 && value < 0)) {
+      // Calculate the absolute change
+      const absoluteChange = Math.abs(value - previousValue);
+      const icon = value > previousValue ? ArrowUp : ArrowDown;
+      const color = value > previousValue ? "text-green-500" : "text-red-500";
+      
+      return {
+        icon,
+        color,
+        value: value > previousValue ? `+${absoluteChange.toFixed(1)}` : `-${absoluteChange.toFixed(1)}`
+      };
+    }
+
+    // Standard percentage calculation
+    const percentageChange = ((value - previousValue) / Math.abs(previousValue)) * 100;
     
     if (percentageChange === 0) {
       return { 

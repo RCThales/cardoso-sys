@@ -1,15 +1,15 @@
-
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
-import { format, subMonths } from "date-fns";
+import { useParams, useNavigate } from "react-router-dom";
+import { format, subMonths, addMonths, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Navbar } from "@/components/Navbar";
-import { DollarSign, TrendingDown, TrendingUp, LineChart, CalendarRange } from "lucide-react";
+import { DollarSign, TrendingDown, TrendingUp, LineChart, CalendarRange, ChevronLeft, ChevronRight } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { FinancialCard } from "@/components/financial/FinancialCard";
 import { FinancialHeader } from "@/components/financial/FinancialHeader";
 import { FinancialDetailsDialog } from "@/components/financial/FinancialDetailsDialog";
+import { Button } from "@/components/ui/button";
 
 type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 
@@ -30,6 +30,7 @@ interface DetailsItem {
 
 const FinancialDetails = () => {
   const { year, month } = useParams();
+  const navigate = useNavigate();
   const [summary, setSummary] = useState<FinancialSummary>({
     grossIncome: 0,
     netProfit: 0,
@@ -56,6 +57,20 @@ const FinancialDetails = () => {
         { locale: ptBR }
       )
     : "";
+
+  const navigateToMonth = (direction: 'previous' | 'next') => {
+    if (!year || !month) return;
+    
+    const currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+    const newDate = direction === 'previous' 
+      ? subMonths(currentDate, 1)
+      : addMonths(currentDate, 1);
+    
+    const newYear = newDate.getFullYear();
+    const newMonth = newDate.getMonth() + 1;
+    
+    navigate(`/financial/${newYear}/${newMonth}`);
+  };
 
   const getInvestmentDetails = (
     investments: Array<{ name: string; amount: number }>
@@ -104,7 +119,6 @@ const FinancialDetails = () => {
       const currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const previousDate = subMonths(currentDate, 1);
 
-      // Fetch current month data
       const { data: currentInvestments } = await supabase
         .from("investments")
         .select("*")
@@ -148,7 +162,6 @@ const FinancialDetails = () => {
           ).toISOString()
         );
 
-      // Fetch previous month data
       const { data: previousInvestments } = await supabase
         .from("investments")
         .select("*")
@@ -192,13 +205,10 @@ const FinancialDetails = () => {
           ).toISOString()
         );
 
-      // Process and store details for dialogs
       setInvestmentDetails(currentInvestments || []);
       setExpenseDetails(currentExpenses || []);
       
-      // Filter recurring items to only include active ones for this month
       const filteredCurrentRecurring = currentRecurring?.filter(item => {
-        // Include if it has no cancellation date or if cancellation date is after current month's end
         return !item.recurring_cancellation_date || 
           new Date(item.recurring_cancellation_date) >= 
             new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
@@ -206,7 +216,6 @@ const FinancialDetails = () => {
       
       setRecurringDetails(filteredCurrentRecurring || []);
 
-      // Calculate current month summary
       const currentGrossIncome = currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
       const totalInvestment = currentInvestments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
       const totalExpenses = currentExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
@@ -224,9 +233,7 @@ const FinancialDetails = () => {
           : 0,
       };
 
-      // Calculate previous month summary for comparison
       const filteredPreviousRecurring = previousRecurring?.filter(item => {
-        // Include if it has no cancellation date or if cancellation date is after previous month's end
         return !item.recurring_cancellation_date || 
           new Date(item.recurring_cancellation_date) >= 
             new Date(previousDate.getFullYear(), previousDate.getMonth() + 1, 0);
@@ -237,7 +244,6 @@ const FinancialDetails = () => {
       const prevTotalExpenses = previousExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
       const prevTotalRecurring = filteredPreviousRecurring?.reduce((sum, rec) => sum + Number(rec.amount), 0) || 0;
 
-      // Only set previousSummary if there's data from previous month
       if (previousInvoices && previousInvoices.length > 0) {
         setPreviousSummary({
           grossIncome: previousGrossIncome,
@@ -270,6 +276,27 @@ const FinancialDetails = () => {
           expenseDetails={getExpenseDetails(expenseDetails)}
           investmentDetails={getInvestmentDetails(investmentDetails)}
         />
+        
+        <div className="flex justify-between items-center mb-6">
+          <Button 
+            variant="outline" 
+            onClick={() => navigateToMonth('previous')}
+            className="flex items-center gap-1"
+          >
+            <ChevronLeft className="h-4 w-4" />
+            Mês Anterior
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            onClick={() => navigateToMonth('next')}
+            className="flex items-center gap-1"
+          >
+            Próximo Mês
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        
         <div className="pb-3 font-medium text-lg">Faturamento</div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <FinancialCard
