@@ -54,7 +54,7 @@ describe('ProductForm Component', () => {
   });
 
   test('does not show quantity input when sizes are provided', () => {
-    render(<ProductForm {...defaultProps, sizes: ['P', 'M', 'G']} />);
+    render(<ProductForm {...defaultProps} sizes={['P', 'M', 'G']} />);
     
     expect(screen.queryByLabelText('Quantidade em Estoque Atual')).not.toBeInTheDocument();
   });

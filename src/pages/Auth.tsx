@@ -1,38 +1,55 @@
-
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardHeader, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Camera, Eye, EyeOff, X } from "lucide-react";
+import { Eye, EyeOff, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import Webcam from "react-webcam";
+import HCaptcha from "@hcaptcha/react-hcaptcha"; // Import hCaptcha
 
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [showCamera, setShowCamera] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const webcamRef = useRef<Webcam>(null);
+  const [captchaToken, setCaptchaToken] = useState(""); // Store hCaptcha token
+
+  const captcha = useRef<any>();
+
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
+
+    if (!captchaToken) {
+      toast({
+        title: "Erro ao fazer login",
+        description: "Por favor, verifique o CAPTCHA.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
+      console.log(password);
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
+        options: {
+          captcha_token: captchaToken, // Pass the hCaptcha token to Supabase
+        },
       });
 
       if (error) throw error;
 
-      navigate("/");
-    } catch (error: any) {
+      captcha.current.resetCaptcha();
+
+      navigate("/"); // Navigate to the home page after successful login
+    } catch (error) {
       toast({
         title: "Erro ao fazer login",
         description: "Verifique suas credenciais e tente novamente.",
@@ -42,19 +59,6 @@ const Auth = () => {
       setLoading(false);
     }
   };
-
-  const capture = useCallback(() => {
-    if (webcamRef.current) {
-      const imageSrc = webcamRef.current.getScreenshot();
-      if (imageSrc) {
-        toast({
-          title: "Foto capturada com sucesso",
-          description: "Funcionalidade em desenvolvimento",
-        });
-        setShowCamera(false);
-      }
-    }
-  }, [toast]);
 
   const clearEmail = () => {
     setEmail("");
@@ -68,10 +72,8 @@ const Auth = () => {
     setShowPassword(!showPassword);
   };
 
-  const videoConstraints = {
-    width: 320,
-    height: 240,
-    facingMode: "user"
+  const handleCaptchaChange = (token) => {
+    setCaptchaToken(token); // Store the token from hCaptcha
   };
 
   return (
@@ -79,9 +81,9 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <img 
-              src="/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png" 
-              alt="Cardoso Logo" 
+            <img
+              src="/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png"
+              alt="Cardoso Logo"
               className="h-28 w-auto"
             />
           </div>
@@ -90,112 +92,76 @@ const Auth = () => {
           </p>
         </CardHeader>
         <CardContent>
-          {showCamera ? (
-            <div className="space-y-4">
-              <div className="relative">
-                <Webcam
-                  audio={false}
-                  ref={webcamRef}
-                  screenshotFormat="image/jpeg"
-                  videoConstraints={videoConstraints}
-                  className="w-full rounded-lg"
-                />
-                <div className="absolute bottom-4 left-0 right-0 flex justify-center space-x-2">
-                  <Button onClick={capture} className="bg-white/80 hover:bg-white">
-                    <Camera className="h-4 w-4 mr-2" />
-                    Capturar
-                  </Button>
-                  <Button 
-                    variant="secondary" 
-                    onClick={() => setShowCamera(false)}
-                    className="bg-white/80 hover:bg-white"
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <div className="space-y-2 relative">
+              <Input
+                type="email"
+                placeholder="Email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+              {email && (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="absolute right-2 -top-1/2 transform translate-y-1/2 h-8 w-8"
+                  onClick={clearEmail}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              )}
             </div>
-          ) : (
-            <form onSubmit={handleLogin} className="space-y-4">
-              <div className="space-y-2 relative">
-                <Input
-                  type="email"
-                  placeholder="Email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-                {email && (
+            <div className="space-y-2 relative">
+              <Input
+                type={showPassword ? "text" : "password"}
+                placeholder="Senha"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+              <div className="absolute right-2 -top-1/2 transform translate-y-1/2 flex">
+                {password && (
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2 h-8 w-8"
-                    onClick={clearEmail}
+                    className="h-8 w-8 mr-1"
+                    onClick={clearPassword}
                   >
                     <X className="h-4 w-4" />
                   </Button>
                 )}
-              </div>
-              <div className="space-y-2 relative">
-                <Input
-                  type={showPassword ? "text" : "password"}
-                  placeholder="Senha"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-                <div className="absolute right-2 top-1/2 transform -translate-y-1/2 flex">
-                  {password && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 mr-1"
-                      onClick={clearPassword}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8"
+                  onClick={togglePasswordVisibility}
+                >
+                  {showPassword ? (
+                    <EyeOff className="h-4 w-4" />
+                  ) : (
+                    <Eye className="h-4 w-4" />
                   )}
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={togglePasswordVisibility}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
-                    ) : (
-                      <Eye className="h-4 w-4" />
-                    )}
-                  </Button>
-                </div>
+                </Button>
               </div>
-              <Button type="submit" className="w-full" disabled={loading}>
-                {loading ? "Entrando..." : "Entrar"}
-              </Button>
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Ou
-                  </span>
-                </div>
-              </div>
-              <Button
-                type="button"
-                className="w-full"
-                variant="outline"
-                onClick={() => setShowCamera(true)}
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Login com Reconhecimento Facial
-              </Button>
-            </form>
-          )}
+            </div>
+
+            {/* Add hCaptcha widget */}
+            <div className="hcaptcha">
+              <HCaptcha
+                ref={captcha}
+                sitekey="9b8cf42a-ec68-4e5a-a5a0-daba92fa2a9a"
+                onVerify={handleCaptchaChange} // Get the token when hCaptcha is solved
+              />
+            </div>
+
+            <Button type="submit" className="w-full" disabled={loading}>
+              {loading ? "Entrando..." : "Entrar"}
+            </Button>
+          </form>
         </CardContent>
       </Card>
     </div>
