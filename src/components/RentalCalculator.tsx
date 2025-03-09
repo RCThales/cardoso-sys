@@ -173,16 +173,16 @@ export const RentalCalculator = () => {
       <Card className="w-screen min-h-screen md:min-h-full h-auto md:mt-8 md:max-w-lg mx-auto p-8 shadow-lg animate-fade-in relative overflow-x-hidden">
         <div className="absolute w-full left-0 top-0 flex">
           <Button
-            onClick={() => navigate("/sales")}
-            className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100  border-r-[1px] rounded-t-none w-full "
-          >
-            Vendas
-          </Button>
-          <Button
             disabled
             className="bg-gray-200 text-black border-gray-200 hover:bg-gray-50  border-l-[1px] rounded-t-none w-full "
           >
             Aluguel
+          </Button>
+          <Button
+            onClick={() => navigate("/sales")}
+            className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100  border-r-[1px] rounded-t-none w-full "
+          >
+            Vendas
           </Button>
         </div>
 
