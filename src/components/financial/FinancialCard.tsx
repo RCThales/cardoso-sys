@@ -11,7 +11,7 @@ interface FinancialCardProps {
   description: string;
   icon: LucideIcon;
   iconColor: string;
-  details?: { description: string; amount: number }[];
+  details?: { name: string; description: string; amount: number }[];
   showDetails?: boolean;
   onCardClick?: () => void;
 }
@@ -88,7 +88,7 @@ export const FinancialCard = ({
       <Card
         className={
           showDetails
-            ? "cursor-pointer hover:bg-accent/50 transition-colors"
+            ? "cursor-pointer hover:bg-accent/50 transition-colors "
             : ""
         }
         onClick={showDetails ? handleCardClick : undefined}

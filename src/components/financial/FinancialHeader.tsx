@@ -16,8 +16,12 @@ interface FinancialHeaderProps {
     invoiceCount: number;
     averageTicket: number;
   };
-  expenseDetails: Array<{ description: string; amount: number }>;
-  investmentDetails: Array<{ description: string; amount: number }>;
+  expenseDetails: Array<{ name: string; description: string; amount: number }>;
+  investmentDetails: Array<{
+    name: string;
+    description: string;
+    amount: number;
+  }>;
 }
 
 export const FinancialHeader = ({

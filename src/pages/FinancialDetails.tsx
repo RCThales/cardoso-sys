@@ -35,6 +35,7 @@ interface FinancialSummary {
 interface DetailsItem {
   name: string;
   amount: number;
+  description: string;
   date: string;
   recurring_cancellation_date?: string | null;
 }
@@ -59,7 +60,7 @@ const FinancialDetails = () => {
   const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
   const [activeDetailsTitle, setActiveDetailsTitle] = useState("");
   const [activeDetails, setActiveDetails] = useState<
-    { description: string; amount: number }[]
+    { name: string; description: string; amount: number }[]
   >([]);
   const [activeTotal, setActiveTotal] = useState(0);
 
@@ -87,19 +88,21 @@ const FinancialDetails = () => {
   };
 
   const getInvestmentDetails = (
-    investments: Array<{ name: string; amount: number }>
+    investments: Array<{ name: string; description: string; amount: number }>
   ) => {
     return investments.map((inv) => ({
-      description: inv.name,
+      name: inv.name,
+      description: inv.description,
       amount: Number(inv.amount),
     }));
   };
 
   const getExpenseDetails = (
-    expenses: Array<{ name: string; amount: number }>
+    expenses: Array<{ name: string; description: string; amount: number }>
   ) => {
     return expenses.map((exp) => ({
-      description: exp.name,
+      name: exp.name,
+      description: exp.description,
       amount: Number(exp.amount),
     }));
   };
@@ -146,6 +149,7 @@ const FinancialDetails = () => {
       })
       .map((rec) => {
         return {
+          name: rec.name,
           description: rec.description,
           amount: Number(rec.amount),
         };
@@ -154,7 +158,7 @@ const FinancialDetails = () => {
 
   const handleShowDetails = (
     title: string,
-    details: { description: string; amount: number }[],
+    details: { name: string; description: string; amount: number }[],
     total: number
   ) => {
     setActiveDetailsTitle(title);
@@ -263,8 +267,7 @@ const FinancialDetails = () => {
         currentRecurring?.length > 0
           ? getRecurringDetails(currentRecurring, year, month) // Chama a função para filtrar detalhes
           : []; // Caso não haja nenhum item de recorrência, retorna um array vazio
-
-      setRecurringDetails(filteredCurrentRecurring); // Atualiza o estado
+      console.log("aaa", currentRecurring);
 
       setRecurringDetails(filteredCurrentRecurring || []);
 

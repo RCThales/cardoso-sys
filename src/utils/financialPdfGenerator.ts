@@ -17,6 +17,7 @@ interface FinancialSummary {
 }
 
 interface ExpenseDetail {
+  name: string;
   description: string;
   amount: number;
 }

@@ -1,5 +1,4 @@
-
-import { 
+import {
   Dialog,
   DialogContent,
   DialogHeader,
@@ -34,17 +33,14 @@ export const AddInvestmentDialog = ({
   dialogTitle,
 }: AddInvestmentDialogProps) => {
   return (
-    <Dialog 
-      open={open} 
-      onOpenChange={onOpenChange}
-    >
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button>
           <Plus className="mr-2 h-4 w-4" />
           {buttonLabel}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="max-w-[95vw] md:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{dialogTitle}</DialogTitle>
         </DialogHeader>
