@@ -1,14 +1,15 @@
+
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Navbar } from "@/components/Navbar";
-import { DollarSign, TrendingDown, TrendingUp, LineChart } from "lucide-react";
+import { DollarSign, TrendingDown, TrendingUp, LineChart, CalendarRange } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { FinancialCard } from "@/components/financial/FinancialCard";
 import { FinancialHeader } from "@/components/financial/FinancialHeader";
-import { Separator } from "@radix-ui/react-select";
+import { FinancialDetailsDialog } from "@/components/financial/FinancialDetailsDialog";
 
 type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 
@@ -17,8 +18,14 @@ interface FinancialSummary {
   netProfit: number;
   totalExpenses: number;
   totalInvestment: number;
+  totalRecurring: number;
   invoiceCount: number;
   averageTicket: number;
+}
+
+interface DetailsItem {
+  name: string;
+  amount: number;
 }
 
 const FinancialDetails = () => {
@@ -28,17 +35,19 @@ const FinancialDetails = () => {
     netProfit: 0,
     totalExpenses: 0,
     totalInvestment: 0,
+    totalRecurring: 0,
     invoiceCount: 0,
     averageTicket: 0,
   });
   const [previousSummary, setPreviousSummary] =
     useState<FinancialSummary | null>(null);
-  const [investmentDetails, setInvestmentDetails] = useState<
-    Array<{ name: string; amount: number }>
-  >([]);
-  const [expenseDetails, setExpenseDetails] = useState<
-    Array<{ name: string; amount: number }>
-  >([]);
+  const [investmentDetails, setInvestmentDetails] = useState<DetailsItem[]>([]);
+  const [expenseDetails, setExpenseDetails] = useState<DetailsItem[]>([]);
+  const [recurringDetails, setRecurringDetails] = useState<DetailsItem[]>([]);
+  const [detailsDialogOpen, setDetailsDialogOpen] = useState(false);
+  const [activeDetailsTitle, setActiveDetailsTitle] = useState("");
+  const [activeDetails, setActiveDetails] = useState<{ description: string; amount: number }[]>([]);
+  const [activeTotal, setActiveTotal] = useState(0);
 
   const monthName = month
     ? format(
@@ -66,6 +75,28 @@ const FinancialDetails = () => {
     }));
   };
 
+  const getRecurringDetails = (
+    recurrings: Array<{ name: string; amount: number; recurring_cancellation_date?: string | null }>
+  ) => {
+    return recurrings
+      .filter(rec => !rec.recurring_cancellation_date)
+      .map((rec) => ({
+        description: rec.name,
+        amount: Number(rec.amount),
+      }));
+  };
+
+  const handleShowDetails = (
+    title: string, 
+    details: { description: string; amount: number }[], 
+    total: number
+  ) => {
+    setActiveDetailsTitle(title);
+    setActiveDetails(details);
+    setActiveTotal(total);
+    setDetailsDialogOpen(true);
+  };
+
   useEffect(() => {
     const fetchData = async () => {
       if (!year || !month) return;
@@ -73,6 +104,7 @@ const FinancialDetails = () => {
       const currentDate = new Date(parseInt(year), parseInt(month) - 1, 1);
       const previousDate = subMonths(currentDate, 1);
 
+      // Fetch current month data
       const { data: currentInvestments } = await supabase
         .from("investments")
         .select("*")
@@ -99,6 +131,10 @@ const FinancialDetails = () => {
           ).toISOString()
         );
 
+      const { data: currentRecurring } = await supabase
+        .from("recurring")
+        .select("*");
+
       const { data: currentInvoices } = await supabase
         .from("invoices")
         .select("*")
@@ -111,6 +147,37 @@ const FinancialDetails = () => {
             0
           ).toISOString()
         );
+
+      // Fetch previous month data
+      const { data: previousInvestments } = await supabase
+        .from("investments")
+        .select("*")
+        .gte("date", previousDate.toISOString())
+        .lte(
+          "date",
+          new Date(
+            previousDate.getFullYear(),
+            previousDate.getMonth() + 1,
+            0
+          ).toISOString()
+        );
+
+      const { data: previousExpenses } = await supabase
+        .from("expenses")
+        .select("*")
+        .gte("date", previousDate.toISOString())
+        .lte(
+          "date",
+          new Date(
+            previousDate.getFullYear(),
+            previousDate.getMonth() + 1,
+            0
+          ).toISOString()
+        );
+
+      const { data: previousRecurring } = await supabase
+        .from("recurring")
+        .select("*");
 
       const { data: previousInvoices } = await supabase
         .from("invoices")
@@ -125,50 +192,69 @@ const FinancialDetails = () => {
           ).toISOString()
         );
 
-      const currentGrossIncome =
-        currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
-      const previousGrossIncome =
-        previousInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
-      0.2;
+      // Process and store details for dialogs
+      setInvestmentDetails(currentInvestments || []);
+      setExpenseDetails(currentExpenses || []);
+      
+      // Filter recurring items to only include active ones for this month
+      const filteredCurrentRecurring = currentRecurring?.filter(item => {
+        // Include if it has no cancellation date or if cancellation date is after current month's end
+        return !item.recurring_cancellation_date || 
+          new Date(item.recurring_cancellation_date) >= 
+            new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+      }) || [];
+      
+      setRecurringDetails(filteredCurrentRecurring || []);
 
-      const previousExpenses = previousGrossIncome * 0.2;
-
-      const totalInvestment =
-        currentInvestments?.reduce((sum, inv) => sum + Number(inv.amount), 0) ||
-        0;
-      const totalExpenses =
-        currentExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
+      // Calculate current month summary
+      const currentGrossIncome = currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+      const totalInvestment = currentInvestments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
+      const totalExpenses = currentExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
+      const totalRecurring = filteredCurrentRecurring?.reduce((sum, rec) => sum + Number(rec.amount), 0) || 0;
 
       const currentSummary = {
         grossIncome: currentGrossIncome,
-        netProfit: currentGrossIncome - totalExpenses - totalInvestment,
+        netProfit: currentGrossIncome - totalExpenses - totalInvestment - totalRecurring,
         totalExpenses,
         totalInvestment,
+        totalRecurring,
         invoiceCount: currentInvoices?.length || 0,
         averageTicket: currentInvoices?.length
           ? currentGrossIncome / currentInvoices.length
           : 0,
       };
 
-      // Só define previousSummary se houver dados do mês anterior
-      setPreviousSummary(
-        previousInvoices && previousInvoices.length > 0
-          ? {
-              grossIncome: previousGrossIncome,
-              netProfit:
-                previousGrossIncome - previousExpenses - totalInvestment,
-              totalExpenses,
-              totalInvestment,
-              invoiceCount: previousInvoices.length,
-              averageTicket: previousInvoices.length
-                ? previousGrossIncome / previousInvoices.length
-                : 0,
-            }
-          : null
-      );
+      // Calculate previous month summary for comparison
+      const filteredPreviousRecurring = previousRecurring?.filter(item => {
+        // Include if it has no cancellation date or if cancellation date is after previous month's end
+        return !item.recurring_cancellation_date || 
+          new Date(item.recurring_cancellation_date) >= 
+            new Date(previousDate.getFullYear(), previousDate.getMonth() + 1, 0);
+      }) || [];
+
+      const previousGrossIncome = previousInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+      const prevTotalInvestment = previousInvestments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
+      const prevTotalExpenses = previousExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
+      const prevTotalRecurring = filteredPreviousRecurring?.reduce((sum, rec) => sum + Number(rec.amount), 0) || 0;
+
+      // Only set previousSummary if there's data from previous month
+      if (previousInvoices && previousInvoices.length > 0) {
+        setPreviousSummary({
+          grossIncome: previousGrossIncome,
+          netProfit: previousGrossIncome - prevTotalExpenses - prevTotalInvestment - prevTotalRecurring,
+          totalExpenses: prevTotalExpenses,
+          totalInvestment: prevTotalInvestment,
+          totalRecurring: prevTotalRecurring,
+          invoiceCount: previousInvoices.length,
+          averageTicket: previousInvoices.length
+            ? previousGrossIncome / previousInvoices.length
+            : 0,
+        });
+      } else {
+        setPreviousSummary(null);
+      }
 
       setSummary(currentSummary);
-      setInvestmentDetails(currentInvestments || []);
     };
 
     fetchData();
@@ -222,6 +308,11 @@ const FinancialDetails = () => {
             iconColor="text-red-500"
             showDetails
             details={getExpenseDetails(expenseDetails)}
+            onCardClick={() => handleShowDetails(
+              "Despesas", 
+              getExpenseDetails(expenseDetails), 
+              summary.totalExpenses
+            )}
           />
           <FinancialCard
             title="Investimentos"
@@ -232,8 +323,36 @@ const FinancialDetails = () => {
             iconColor="text-blue-500"
             showDetails
             details={getInvestmentDetails(investmentDetails)}
+            onCardClick={() => handleShowDetails(
+              "Investimentos", 
+              getInvestmentDetails(investmentDetails), 
+              summary.totalInvestment
+            )}
+          />
+          <FinancialCard
+            title="Despesas Recorrentes"
+            value={summary.totalRecurring}
+            previousValue={previousSummary?.totalRecurring}
+            description="Gastos mensais fixos"
+            icon={CalendarRange}
+            iconColor="text-amber-500"
+            showDetails
+            details={getRecurringDetails(recurringDetails)}
+            onCardClick={() => handleShowDetails(
+              "Despesas Recorrentes", 
+              getRecurringDetails(recurringDetails), 
+              summary.totalRecurring
+            )}
           />
         </div>
+
+        <FinancialDetailsDialog
+          open={detailsDialogOpen}
+          onOpenChange={setDetailsDialogOpen}
+          title={activeDetailsTitle}
+          details={activeDetails}
+          total={activeTotal}
+        />
       </div>
     </div>
   );

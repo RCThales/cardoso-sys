@@ -14,6 +14,7 @@ interface FinancialCardProps {
   iconColor: string;
   details?: { description: string; amount: number }[];
   showDetails?: boolean;
+  onCardClick?: () => void;
 }
 
 export const FinancialCard = ({
@@ -25,6 +26,7 @@ export const FinancialCard = ({
   iconColor,
   details,
   showDetails = false,
+  onCardClick,
 }: FinancialCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -47,9 +49,9 @@ export const FinancialCard = ({
 
     if (previousValue === 0) {
       return { 
-        icon: Circle, 
-        color: "text-gray-400", 
-        value: "0%" 
+        icon: ArrowUp, 
+        color: "text-green-500", 
+        value: "Novo" 
       };
     }
 
@@ -79,11 +81,19 @@ export const FinancialCard = ({
   const comparison = getPercentageChange();
   const ComparisonIcon = comparison.icon;
 
+  const handleCardClick = () => {
+    if (onCardClick) {
+      onCardClick();
+    } else if (showDetails && details) {
+      setIsDialogOpen(true);
+    }
+  };
+
   return (
     <>
       <Card 
         className={showDetails ? "cursor-pointer hover:bg-accent/50 transition-colors" : ""}
-        onClick={() => showDetails && setIsDialogOpen(true)}
+        onClick={showDetails ? handleCardClick : undefined}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -101,7 +111,7 @@ export const FinancialCard = ({
         </CardContent>
       </Card>
 
-      {showDetails && details && (
+      {!onCardClick && showDetails && details && (
         <FinancialDetailsDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}

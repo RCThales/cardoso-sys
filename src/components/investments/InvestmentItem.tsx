@@ -34,6 +34,8 @@ export const InvestmentItem = ({
   onCancelRecurring,
   isRecurring = false 
 }: InvestmentItemProps) => {
+  const isCancelled = item.recurring_cancellation_date !== null && item.recurring_cancellation_date !== undefined;
+  
   return (
     <Card key={item.id}>
       <CardHeader>
@@ -59,7 +61,7 @@ export const InvestmentItem = ({
             >
               <Trash className="h-4 w-4" />
             </Button>
-            {isRecurring && onCancelRecurring && !item.recurring_cancellation_date && (
+            {isRecurring && onCancelRecurring && !isCancelled && (
               <Button
                 variant="outline"
                 onClick={() => onCancelRecurring(item)}
@@ -79,11 +81,11 @@ export const InvestmentItem = ({
         {item.description && (
           <p className="text-sm">{item.description}</p>
         )}
-        {isRecurring && item.recurring_cancellation_date && (
+        {isRecurring && isCancelled && (
           <div className="mt-2 flex items-center">
             <Ban className="h-4 w-4 mr-2 text-destructive" />
             <Badge variant="outline" className="text-destructive border-destructive">
-              Recorrência cancelada em {format(parseISO(item.recurring_cancellation_date), "dd/MM/yyyy", { locale: ptBR })}
+              Recorrência cancelada em {format(parseISO(item.recurring_cancellation_date!), "dd/MM/yyyy", { locale: ptBR })}
             </Badge>
           </div>
         )}
