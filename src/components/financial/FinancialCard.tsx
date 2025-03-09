@@ -1,4 +1,3 @@
-
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowDown, ArrowUp, Circle, LucideIcon } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
@@ -32,66 +31,44 @@ export const FinancialCard = ({
 
   const getPercentageChange = () => {
     if (previousValue === null || previousValue === undefined) {
-      return { 
-        icon: Circle, 
-        color: "text-gray-400", 
-        value: "0%" 
-      };
-    }
-
-    if (previousValue === 0 && value === 0) {
-      return { 
-        icon: Circle, 
-        color: "text-gray-400", 
-        value: "0%" 
-      };
-    }
-
-    // If previous value was zero but current value isn't
-    if (previousValue === 0 && value !== 0) {
-      return { 
-        icon: ArrowUp, 
-        color: "text-green-500", 
-        value: "Novo" 
-      };
-    }
-
-    // If previous value was negative and current is positive or vice versa
-    // we need special handling for these cases
-    if ((previousValue < 0 && value >= 0) || (previousValue >= 0 && value < 0)) {
-      // Calculate the absolute change
-      const absoluteChange = Math.abs(value - previousValue);
-      const icon = value > previousValue ? ArrowUp : ArrowDown;
-      const color = value > previousValue ? "text-green-500" : "text-red-500";
-      
       return {
-        icon,
-        color,
-        value: value > previousValue ? `+${absoluteChange.toFixed(1)}` : `-${absoluteChange.toFixed(1)}`
+        icon: Circle,
+        color: "text-gray-400",
+        value: "0%",
       };
     }
 
-    // Standard percentage calculation
-    const percentageChange = ((value - previousValue) / Math.abs(previousValue)) * 100;
-    
+    // Se previousValue for 0 e o valor atual for diferente de 0, indicamos "Novo"
+    if (previousValue === 0) {
+      return {
+        icon: ArrowUp,
+        color: "text-green-500",
+        value: "Novo",
+      };
+    }
+
+    // Cálculo correto da variação percentual
+    const percentageChange =
+      ((value - previousValue) / Math.abs(previousValue)) * 100;
+
     if (percentageChange === 0) {
-      return { 
-        icon: Circle, 
-        color: "text-gray-400", 
-        value: "0%" 
+      return {
+        icon: Circle,
+        color: "text-gray-400",
+        value: "0%",
       };
     }
 
     return percentageChange > 0
-      ? { 
-          icon: ArrowUp, 
-          color: "text-green-500", 
-          value: `+${percentageChange.toFixed(1)}%` 
+      ? {
+          icon: ArrowUp,
+          color: "text-green-500",
+          value: `+${percentageChange.toFixed(1)}%`,
         }
-      : { 
-          icon: ArrowDown, 
-          color: "text-red-500", 
-          value: `${percentageChange.toFixed(1)}%` 
+      : {
+          icon: ArrowDown,
+          color: "text-red-500",
+          value: `${percentageChange.toFixed(1)}%`,
         };
   };
 
@@ -108,14 +85,20 @@ export const FinancialCard = ({
 
   return (
     <>
-      <Card 
-        className={showDetails ? "cursor-pointer hover:bg-accent/50 transition-colors" : ""}
+      <Card
+        className={
+          showDetails
+            ? "cursor-pointer hover:bg-accent/50 transition-colors"
+            : ""
+        }
         onClick={showDetails ? handleCardClick : undefined}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
           <div className="flex items-center gap-2">
-            <div className={`flex items-center ${comparison.color} text-sm font-medium`}>
+            <div
+              className={`flex items-center ${comparison.color} text-sm font-medium`}
+            >
               <ComparisonIcon className="h-4 w-4 mr-1" />
               {comparison.value}
             </div>
