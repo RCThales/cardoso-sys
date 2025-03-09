@@ -54,7 +54,6 @@ const INITIAL_FORM_STATE = {
   date: new Date().toISOString().split("T")[0],
   description: "",
   installments: "1",
-  is_recurring: false,
 };
 
 const Investments = () => {
@@ -64,7 +63,7 @@ const Investments = () => {
   const [recurrings, setRecurrings] = useState<Recurring[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isExpenseDialog, setIsExpenseDialog] = useState(false);
-  const [isDeleteDialogOpen, seewIsDeleteDialogOpen] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<
     Investment | Recurring | null
   >(null);
@@ -426,21 +425,20 @@ const Investments = () => {
     fetchData();
   };
 
-  const handleEdit = (item: Investment) => {
+  const handleEdit = (item: Investment | Recurring) => {
     setEditingItem(item);
     setFormData({
       name: item.name,
       amount: item.amount.toString(),
       date: item.date,
       description: item.description || "",
-      installments: "1",
-      is_recurring: item.is_recurring,
+      installments: "installments" in item ? item.installments.toString() : "1",
     });
     setIsDialogOpen(true);
     setIsExpenseDialog(viewMode === "expenses"); // Define se é uma despesa ou investimento
   };
 
-  const handleDeleteClick = (item: Investment) => {
+  const handleDeleteClick = (item: Investment | Recurring) => {
     setItemToDelete(item);
     setIsDeleteDialogOpen(true);
   };
@@ -521,7 +519,7 @@ const Investments = () => {
     }
   };
 
-  const handleCancelRecurring = async (item: Investment) => {
+  const handleCancelRecurring = async (item: Investment | Recurring) => {
     const table = ""; // Corrigido para usar viewMode
     const { error } = await supabase
       .from(table)
@@ -545,7 +543,7 @@ const Investments = () => {
     fetchData();
   };
 
-  const getFilteredItems = (items: Investment[]) => {
+  const getFilteredItems = (items: (Investment | Recurring)[]) => {
     return items.filter((item) => {
       const date = new Date(item.date);
       return (
@@ -1085,7 +1083,7 @@ const Investments = () => {
           {getFilteredItems(
             viewMode === "expenses"
               ? expenses
-              : viewMode === "recurring"
+              : viewMode === "recurrings"
               ? recurrings
               : investments
           ).map((item) => (
