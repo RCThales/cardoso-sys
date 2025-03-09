@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/components/ui/use-toast";
@@ -57,19 +56,16 @@ export const useInvestments = () => {
 
   const fetchData = async () => {
     try {
-      // Fetch investments
       const { data: investmentsData, error: investmentsError } = await supabase
         .from("investments")
         .select("*")
         .order("date", { ascending: false });
 
-      // Fetch expenses
       const { data: expensesData, error: expensesError } = await supabase
         .from("expenses")
         .select("*")
         .order("date", { ascending: false });
 
-      // Fetch recurring items
       const { data: recurringData, error: recurringError } = await supabase
         .from("recurring")
         .select("*")
@@ -91,7 +87,6 @@ export const useInvestments = () => {
       const processedExpenses = expensesData || [];
       const processedRecurring = recurringData || [];
 
-      // Calculate available years for investments
       const yearsInvestments = new Set<number>();
       processedInvestments.forEach((item) => {
         if (item.date) {
@@ -100,7 +95,6 @@ export const useInvestments = () => {
       });
       setAvailableYearsInvestments(Array.from(yearsInvestments).sort((a, b) => a - b));
 
-      // Calculate available years for expenses
       const yearsExpenses = new Set<number>();
       processedExpenses.forEach((item) => {
         if (item.date) {
@@ -109,7 +103,6 @@ export const useInvestments = () => {
       });
       setAvailableYearsExpenses(Array.from(yearsExpenses).sort((a, b) => a - b));
 
-      // Calculate available years for recurring
       const yearsRecurrings = new Set<number>();
       processedRecurring.forEach((item) => {
         if (item.date) {
@@ -118,12 +111,10 @@ export const useInvestments = () => {
       });
       setAvailableYearsRecurrings(Array.from(yearsRecurrings).sort((a, b) => a - b));
 
-      // Update state with fetched data
       setInvestments(processedInvestments);
       setExpenses(processedExpenses);
       setRecurrings(processedRecurring);
 
-      // Set default year if none is selected
       const currentYear = new Date().getFullYear();
       if (!selectedYear) {
         setSelectedYear(currentYear.toString());
@@ -143,7 +134,6 @@ export const useInvestments = () => {
   }, []);
 
   useEffect(() => {
-    // Update selected month when year changes to ensure it's valid
     const availableMonths = getAvailableMonths();
     if (availableMonths.length > 0 && !availableMonths.includes(Number(selectedMonth))) {
       setSelectedMonth(availableMonths[0].toString());
@@ -158,17 +148,14 @@ export const useInvestments = () => {
       const installments = Number(formData.installments);
       const baseDate = new Date(formData.date);
       
-      // Determine which table to use based on active tab
       const table = activeTab === "investments" 
         ? "investments" 
         : activeTab === "expenses" 
           ? "expenses" 
           : "recurring";
 
-      // Handle editing
       if (editingItem) {
         if (activeTab === "recurrings") {
-          // Update recurring item
           const { error } = await supabase
             .from("recurring")
             .update({
@@ -183,7 +170,6 @@ export const useInvestments = () => {
             throw error;
           }
         } else {
-          // Update investments or expenses
           const { error } = await supabase
             .from(table)
             .update({
@@ -205,9 +191,7 @@ export const useInvestments = () => {
           description: `${activeTab === "expenses" ? "A despesa" : activeTab === "investments" ? "O investimento" : "O gasto recorrente"} foi atualizado com sucesso`,
         });
       } else {
-        // Handle new item
         if (activeTab === "recurrings") {
-          // Add recurring item - no installments
           const { error } = await supabase
             .from("recurring")
             .insert([{
@@ -221,7 +205,6 @@ export const useInvestments = () => {
             throw error;
           }
         } else {
-          // Add investments or expenses with installments
           const entries = [];
 
           for (let i = 0; i < installments; i++) {
@@ -233,7 +216,7 @@ export const useInvestments = () => {
               amount: installments > 1 ? amount / installments : amount,
               date: installmentDate.toISOString().split("T")[0],
               description: formData.description,
-              installments: 1, // Each entry is marked as one installment
+              installments: 1,
             });
           }
 
@@ -250,7 +233,6 @@ export const useInvestments = () => {
         });
       }
 
-      // Reset form and refresh data
       setIsDialogOpen(false);
       setFormData(INITIAL_FORM_STATE);
       setEditingItem(null);
@@ -294,7 +276,6 @@ export const useInvestments = () => {
           : "recurring";
 
       if (activeTab === "recurrings") {
-        // Simple delete for recurring items
         const { error } = await supabase
           .from(table)
           .delete()
@@ -304,10 +285,8 @@ export const useInvestments = () => {
           throw error;
         }
       } else {
-        // For investments and expenses, check for installments
         const baseName = itemToDelete.name.replace(/\s*\(\d+\/\d+\)$/, "").trim();
 
-        // Find related installments
         const { data: relatedItems, error: fetchError } = await supabase
           .from(table)
           .select("*")
@@ -317,7 +296,6 @@ export const useInvestments = () => {
           throw fetchError;
         }
 
-        // Delete all related installments
         if (relatedItems && relatedItems.length > 0) {
           const idsToDelete = relatedItems.map(item => item.id);
           const { error: deleteError } = await supabase
@@ -443,6 +421,7 @@ export const useInvestments = () => {
     setIsDeleteDialogOpen,
     itemToDelete,
     editingItem,
+    setEditingItem,
     handleSubmit,
     handleEdit,
     handleDeleteClick,
