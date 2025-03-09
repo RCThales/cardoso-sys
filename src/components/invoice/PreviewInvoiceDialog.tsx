@@ -37,11 +37,11 @@ export const PreviewInvoiceDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-3xl">
+      <DialogContent className="max-w-[95vw] md:max-w-[800px]">
         <DialogHeader>
           <DialogTitle>Visualizar Fatura</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-x-auto">
           <div className="grid grid-cols-2 gap-4">
             <div>
               <h3 className="font-semibold">Cliente</h3>

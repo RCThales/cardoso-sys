@@ -34,7 +34,15 @@ interface Investment {
   date: string;
   description: string | null;
   installments: number;
-  is_recurring: boolean;
+  created_at: string | null;
+}
+
+interface Recurring {
+  id: number;
+  name: string;
+  amount: number;
+  date: string;
+  description: string | null;
   created_at: string | null;
 }
 
@@ -53,11 +61,16 @@ const Investments = () => {
   const { toast } = useToast();
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [expenses, setExpenses] = useState<Investment[]>([]);
+  const [recurrings, setRecurrings] = useState<Recurring[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isExpenseDialog, setIsExpenseDialog] = useState(false);
-  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
-  const [itemToDelete, setItemToDelete] = useState<Investment | null>(null);
-  const [editingItem, setEditingItem] = useState<Investment | null>(null);
+  const [isDeleteDialogOpen, seewIsDeleteDialogOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState<
+    Investment | Recurring | null
+  >(null);
+  const [editingItem, setEditingItem] = useState<Investment | Recurring | null>(
+    null
+  );
   const [availableYearsInvestments, setAvailableYearsInvestments] = useState<
     number[]
   >([]);
@@ -70,9 +83,9 @@ const Investments = () => {
   const [selectedMonth, setSelectedMonth] = useState<string>(
     (new Date().getMonth() + 1).toString()
   );
-  const [viewMode, setViewMode] = useState<"investments" | "expenses">(
-    "investments"
-  );
+  const [viewMode, setViewMode] = useState<
+    "investments" | "expenses" | "recurrings"
+  >("investments");
 
   const [formData, setFormData] = useState(INITIAL_FORM_STATE);
 
@@ -87,6 +100,11 @@ const Investments = () => {
       .select("*")
       .order("date", { ascending: false });
 
+    const { data: recurringData, error: recurringError } = await supabase
+      .from("recurring") // Corrigido para "expenses" (se o nome da tabela estiver errado no Supabase, ajuste aqui)
+      .select("*")
+      .order("date", { ascending: false });
+
     if (investmentsError || expensesError) {
       console.error("Error fetching data:", investmentsError || expensesError);
       return;
@@ -94,6 +112,7 @@ const Investments = () => {
 
     const processedInvestments = investmentsData || [];
     const processedExpenses = expensesData || [];
+    const processedRecurring = recurringData || [];
 
     const yearsInvestments = new Set<number>();
     [...processedInvestments].forEach((item) => {
@@ -106,6 +125,13 @@ const Investments = () => {
     [...processedExpenses].forEach((item) => {
       if (item.date) {
         yearsExpenses.add(new Date(item.date).getFullYear());
+      }
+    });
+
+    const yearsRecurring = new Set<number>();
+    [...processedRecurring].forEach((item) => {
+      if (item.date) {
+        yearsRecurring.add(new Date(item.date).getFullYear());
       }
     });
 
@@ -140,6 +166,7 @@ const Investments = () => {
 
     setInvestments(processedInvestments);
     setExpenses(processedExpenses);
+    setRecurrings(processedRecurring);
   };
 
   useEffect(() => {
@@ -167,33 +194,82 @@ const Investments = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const table = isExpenseDialog ? "expenses" : "investments";
     const amount = Number(formData.amount);
     const installments = Number(formData.installments);
     const baseDate = new Date(formData.date);
 
+    //EDITING
     if (editingItem) {
-      const { error } = await supabase
-        .from(table)
-        .update({
-          name: formData.name,
-          amount,
-          date: formData.date,
-          description: formData.description,
-          installments: 1,
-          is_recurring: formData.is_recurring,
-        })
-        .eq("id", editingItem.id);
+      let table = null;
+      table = isExpenseDialog ? "expenses" : "investments";
 
-      if (error) {
+      if (formData.is_recurring) {
+        const { error: deleteError } = await supabase
+          .from(table)
+          .delete()
+          .eq("id", editingItem.id); // Deleta o registro da tabela atual
+
+        if (deleteError) {
+          toast({
+            title: "Erro ao deletar registro",
+            description: "Tente novamente mais tarde",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error: insertError } = await supabase
+          .from("recurring") // Insere os dados na tabela `recurring`
+          .insert([
+            {
+              name: formData.name,
+              amount: amount,
+              date: formData.date,
+              description: formData.description,
+            },
+          ]);
+
+        if (insertError) {
+          toast({
+            title: "Erro ao mover para recorrência",
+            description: "Tente novamente mais tarde",
+            variant: "destructive",
+          });
+          return;
+        }
+
         toast({
-          title: "Erro ao editar registro",
-          description: "Tente novamente mais tarde",
-          variant: "destructive",
+          title: "Registro movido para recorrência",
+          description:
+            "O registro foi movido para a tabela de recorrências com sucesso.",
         });
-        return;
+      } else {
+        const { error } = await supabase
+          .from(table)
+          .update({
+            name: formData.name,
+            amount,
+            date: formData.date,
+            description: formData.description,
+            installments: 1,
+          })
+          .eq("id", editingItem.id);
+
+        if (error) {
+          toast({
+            title: "Erro ao editar registro",
+            description: "Tente novamente mais tarde",
+            variant: "destructive",
+          });
+          return;
+        }
       }
-    } else {
+    }
+    //ADDING
+    else {
+      let table = null;
+
+      table = isExpenseDialog ? "expenses" : "investments";
       const installmentAmount = amount / installments;
       const entries = [];
 
@@ -208,7 +284,6 @@ const Investments = () => {
           date: installmentDate.toISOString().split("T")[0],
           description: formData.description,
           installments: 1,
-          is_recurring: formData.is_recurring,
         });
       }
 
@@ -229,6 +304,118 @@ const Investments = () => {
         editingItem ? "editado" : "adicionado"
       }`,
       description: `${isExpenseDialog ? "A despesa" : "O investimento"} foi ${
+        editingItem ? "atualizado" : "registrado"
+      } com sucesso`,
+    });
+
+    setIsDialogOpen(false);
+    setFormData(INITIAL_FORM_STATE);
+    setEditingItem(null);
+    fetchData();
+  };
+
+  const handleSubmitRecurring = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const amount = Number(formData.amount);
+    const baseDate = new Date(formData.date);
+
+    //EDITING
+    if (editingItem) {
+      let table = null;
+      table = isExpenseDialog ? "expenses" : "investments";
+
+      if (formData.is_recurring) {
+        const { error: deleteError } = await supabase
+          .from(table)
+          .delete()
+          .eq("id", editingItem.id); // Deleta o registro da tabela atual
+
+        if (deleteError) {
+          toast({
+            title: "Erro ao deletar registro",
+            description: "Tente novamente mais tarde",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        const { error: insertError } = await supabase
+          .from("recurring") // Insere os dados na tabela `recurring`
+          .insert([
+            {
+              name: formData.name,
+              amount: amount,
+              date: formData.date,
+              description: formData.description,
+            },
+          ]);
+
+        if (insertError) {
+          toast({
+            title: "Erro ao mover para recorrência",
+            description: "Tente novamente mais tarde",
+            variant: "destructive",
+          });
+          return;
+        }
+
+        toast({
+          title: "Registro movido para recorrência",
+          description:
+            "O registro foi movido para a tabela de recorrências com sucesso.",
+        });
+      } else {
+        const { error } = await supabase
+          .from(table)
+          .update({
+            name: formData.name,
+            amount,
+            date: formData.date,
+            description: formData.description,
+            installments: 1,
+          })
+          .eq("id", editingItem.id);
+
+        if (error) {
+          toast({
+            title: "Erro ao editar registro",
+            description: "Tente novamente mais tarde",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+    }
+    //ADDING
+    else {
+      let table = null;
+
+      table = "recurring";
+      const recurringExpense = {
+        name: formData.name,
+        amount: parseFloat(formData.amount),
+        date: baseDate.toISOString().split("T")[0],
+        description: formData.description,
+      };
+
+      console.log(recurringExpense);
+
+      const { error } = await supabase.from(table).insert(recurringExpense);
+
+      if (error) {
+        toast({
+          title: "Erro ao adicionar registro recorrente",
+          description: "Tente novamente mais tarde",
+          variant: "destructive",
+        });
+        return;
+      }
+    }
+
+    toast({
+      title: `${"Gasto recorrente"} ${editingItem ? "editado" : "adicionado"}`,
+      description: `${"O Gasto recorrente"} foi ${
         editingItem ? "atualizado" : "registrado"
       } com sucesso`,
     });
@@ -335,7 +522,7 @@ const Investments = () => {
   };
 
   const handleCancelRecurring = async (item: Investment) => {
-    const table = viewMode === "expenses" ? "expenses" : "investments"; // Corrigido para usar viewMode
+    const table = ""; // Corrigido para usar viewMode
     const { error } = await supabase
       .from(table)
       .update({ is_recurring: false })
@@ -413,6 +600,12 @@ const Investments = () => {
           >
             Despesas
           </Button>
+          <Button
+            variant={viewMode === "recurrings" ? "default" : "outline"}
+            onClick={() => setViewMode("recurrings")}
+          >
+            Recorrentes
+          </Button>
         </div>
 
         <div className="mb-8">
@@ -481,7 +674,7 @@ const Investments = () => {
                       required
                     />
                   </div>
-                  {!editingItem && (
+                  {!formData.is_recurring && (
                     <div>
                       <label
                         htmlFor="installments"
@@ -509,6 +702,7 @@ const Investments = () => {
                       </Select>
                     </div>
                   )}
+
                   <div>
                     <label
                       htmlFor="date"
@@ -526,6 +720,7 @@ const Investments = () => {
                       required
                     />
                   </div>
+
                   <div>
                     <label
                       htmlFor="description"
@@ -627,7 +822,7 @@ const Investments = () => {
                       required
                     />
                   </div>
-                  {!editingItem && (
+                  {!formData.is_recurring && (
                     <div>
                       <label
                         htmlFor="installments"
@@ -655,6 +850,7 @@ const Investments = () => {
                       </Select>
                     </div>
                   )}
+
                   <div>
                     <label
                       htmlFor="date"
@@ -672,6 +868,7 @@ const Investments = () => {
                       required
                     />
                   </div>
+
                   <div>
                     <label
                       htmlFor="description"
@@ -709,11 +906,124 @@ const Investments = () => {
               </DialogContent>
             </Dialog>
           )}
+
+          {viewMode === "recurrings" && (
+            <Dialog
+              open={isDialogOpen}
+              onOpenChange={(open) => {
+                setIsDialogOpen(open);
+                if (!open) {
+                  setFormData(INITIAL_FORM_STATE);
+                  setEditingItem(null);
+                }
+              }}
+            >
+              <DialogTrigger asChild>
+                <Button
+                  onClick={() => {
+                    setIsExpenseDialog(true);
+                    setIsDialogOpen(true);
+                  }}
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Nova Gasto Recorrente
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>
+                    {editingItem ? "Editar Despesa" : "Adicionar Despesa"}
+                  </DialogTitle>
+                </DialogHeader>
+                <form
+                  onSubmit={handleSubmitRecurring}
+                  className="space-y-4 mt-4"
+                >
+                  <div>
+                    <label
+                      htmlFor="name"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Nome
+                    </label>
+                    <Input
+                      id="name"
+                      value={formData.name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, name: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="amount"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Valor Total
+                    </label>
+                    <Input
+                      id="amount"
+                      type="number"
+                      step="0.01"
+                      value={formData.amount}
+                      onChange={(e) =>
+                        setFormData({ ...formData, amount: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="date"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      {editingItem ? "Data" : "Data da Primeira Parcela"}
+                    </label>
+                    <Input
+                      id="date"
+                      type="date"
+                      value={formData.date}
+                      onChange={(e) =>
+                        setFormData({ ...formData, date: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label
+                      htmlFor="description"
+                      className="text-sm font-medium mb-1 block"
+                    >
+                      Descrição
+                    </label>
+                    <Input
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <Button type="submit" className="w-full">
+                    {editingItem ? "Salvar" : "Adicionar"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+          )}
         </div>
         <div className="mb-8">
           {/* Exibe os dropdowns apenas se houver itens */}
           {((investments.length > 0 && viewMode === "investments") ||
-            (expenses.length > 0 && viewMode === "expenses")) && (
+            (expenses.length > 0 && viewMode === "expenses") ||
+            (recurrings.length > 0 && viewMode === "recurrings")) && (
             <div className="flex gap-4 mb-4">
               <Select value={selectedYear} onValueChange={setSelectedYear}>
                 <SelectTrigger className="w-[180px]">
@@ -761,7 +1071,8 @@ const Investments = () => {
 
             {/* Exibe uma mensagem se não houver itens */}
             {((investments.length === 0 && viewMode === "investments") ||
-              (expenses.length === 0 && viewMode === "expenses")) && (
+              (expenses.length === 0 && viewMode === "expenses") ||
+              (recurrings.length === 0 && viewMode === "recurrings")) && (
               <div className="text-center py-8">
                 <p className="text-muted-foreground">
                   {viewMode === "expenses" ? "Nenhuma" : "Nenhum"}{" "}
@@ -772,23 +1083,17 @@ const Investments = () => {
             )}
           </div>
           {getFilteredItems(
-            viewMode === "expenses" ? expenses : investments
+            viewMode === "expenses"
+              ? expenses
+              : viewMode === "recurring"
+              ? recurrings
+              : investments
           ).map((item) => (
             <Card key={item.id}>
               <CardHeader>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <CardTitle>{item.name}</CardTitle>
-                    {item.is_recurring && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => handleCancelRecurring(item)}
-                        title="Cancelar Recorrência"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </Button>
-                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-lg font-bold">
@@ -820,18 +1125,13 @@ const Investments = () => {
                 {item.description && (
                   <p className="text-sm">{item.description}</p>
                 )}
-                {item.is_recurring && (
-                  <p className="text-sm text-muted-foreground mt-2">
-                    Pagamento recorrente mensal
-                  </p>
-                )}
               </CardContent>
             </Card>
           ))}
         </div>
 
         <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-[95vw] md:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Confirmar exclusão</DialogTitle>
               <DialogDescription>

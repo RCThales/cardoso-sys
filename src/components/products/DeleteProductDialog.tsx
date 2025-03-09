@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -24,11 +23,12 @@ export const DeleteProductDialog = ({
 }: DeleteProductDialogProps) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-[95vw] md:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Confirmar exclusão</DialogTitle>
           <DialogDescription>
-            Tem certeza que deseja excluir o produto {productName}? Esta ação não pode ser desfeita.
+            Tem certeza que deseja excluir o produto {productName}? Esta ação
+            não pode ser desfeita.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>

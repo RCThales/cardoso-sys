@@ -43,7 +43,7 @@ export const DeleteInvoiceDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-[95vw] md:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Confirmar exclusão</DialogTitle>
           <DialogDescription>
