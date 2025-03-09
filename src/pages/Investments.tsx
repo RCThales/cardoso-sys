@@ -3,6 +3,7 @@ import { Navbar } from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
 import { DeleteRecurringDialog } from "@/components/investments/DeleteRecurringDialog";
+import { CancelRecurringDialog } from "@/components/investments/CancelRecurringDialog";
 import { AddInvestmentDialog } from "@/components/investments/AddInvestmentDialog";
 import { FilterBar } from "@/components/investments/FilterBar";
 import { InvestmentsList } from "@/components/investments/InvestmentsList";
@@ -22,13 +23,18 @@ const Investments = () => {
     setIsDialogOpen,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
+    isCancelRecurringDialogOpen,
+    setIsCancelRecurringDialogOpen,
     itemToDelete,
+    itemToCancelRecurring,
     editingItem,
-    setEditingItem, // This was missing in the destructuring
+    setEditingItem,
     handleSubmit,
     handleEdit,
     handleDeleteClick,
     handleConfirmDelete,
+    handleCancelRecurringClick,
+    handleConfirmCancelRecurring,
     getFilteredItems,
     getAvailableMonths,
     getAvailableYears,
@@ -158,6 +164,8 @@ const Investments = () => {
               items={getFilteredItems()}
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
+              onCancelRecurring={activeTab === "recurrings" ? handleCancelRecurringClick : undefined}
+              isRecurring={activeTab === "recurrings"}
             />
           </div>
         </div>
@@ -179,6 +187,16 @@ const Investments = () => {
             onOpenChange={setIsDeleteDialogOpen}
             onConfirm={handleConfirmDelete}
             itemName={itemToDelete?.name || ""}
+          />
+        )}
+
+        {/* Cancel recurring dialog */}
+        {activeTab === "recurrings" && (
+          <CancelRecurringDialog
+            open={isCancelRecurringDialogOpen}
+            onOpenChange={setIsCancelRecurringDialogOpen}
+            onConfirm={handleConfirmCancelRecurring}
+            itemName={itemToCancelRecurring?.name || ""}
           />
         )}
       </div>

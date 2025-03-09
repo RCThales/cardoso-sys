@@ -13,6 +13,7 @@ interface FinancialItem {
   description: string | null;
   installments?: number;
   created_at: string | null;
+  recurring_cancellation_date?: string | null;
 }
 
 interface FormData {
@@ -40,7 +41,9 @@ export const useInvestments = () => {
   const [recurrings, setRecurrings] = useState<FinancialItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isCancelRecurringDialogOpen, setIsCancelRecurringDialogOpen] = useState(false);
   const [itemToDelete, setItemToDelete] = useState<FinancialItem | null>(null);
+  const [itemToCancelRecurring, setItemToCancelRecurring] = useState<FinancialItem | null>(null);
   const [editingItem, setEditingItem] = useState<FinancialItem | null>(null);
   const [availableYearsInvestments, setAvailableYearsInvestments] = useState<number[]>([]);
   const [availableYearsExpenses, setAvailableYearsExpenses] = useState<number[]>([]);
@@ -327,6 +330,44 @@ export const useInvestments = () => {
     }
   };
 
+  const handleCancelRecurringClick = (item: FinancialItem) => {
+    setItemToCancelRecurring(item);
+    setIsCancelRecurringDialogOpen(true);
+  };
+
+  const handleConfirmCancelRecurring = async (date: Date) => {
+    if (!itemToCancelRecurring) return;
+
+    try {
+      const { error } = await supabase
+        .from("recurring")
+        .update({
+          recurring_cancellation_date: date.toISOString().split('T')[0]
+        })
+        .eq("id", itemToCancelRecurring.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Recorrência cancelada",
+        description: "A recorrência foi cancelada com sucesso",
+      });
+
+      setIsCancelRecurringDialogOpen(false);
+      setItemToCancelRecurring(null);
+      fetchData();
+    } catch (error) {
+      console.error("Error in handleConfirmCancelRecurring:", error);
+      toast({
+        title: "Erro ao cancelar recorrência",
+        description: "Ocorreu um erro ao cancelar a recorrência. Tente novamente mais tarde.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const getFilteredItems = () => {
     let items: FinancialItem[] = [];
     
@@ -419,13 +460,18 @@ export const useInvestments = () => {
     setIsDialogOpen,
     isDeleteDialogOpen,
     setIsDeleteDialogOpen,
+    isCancelRecurringDialogOpen,
+    setIsCancelRecurringDialogOpen,
     itemToDelete,
+    itemToCancelRecurring,
     editingItem,
     setEditingItem,
     handleSubmit,
     handleEdit,
     handleDeleteClick,
     handleConfirmDelete,
+    handleCancelRecurringClick,
+    handleConfirmCancelRecurring,
     getFilteredItems,
     getAvailableMonths,
     getAvailableYears,

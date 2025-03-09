@@ -214,6 +214,7 @@ export type Database = {
           description: string | null
           id: number
           name: string | null
+          recurring_cancellation_date: string | null
         }
         Insert: {
           amount?: number | null
@@ -222,6 +223,7 @@ export type Database = {
           description?: string | null
           id?: number
           name?: string | null
+          recurring_cancellation_date?: string | null
         }
         Update: {
           amount?: number | null
@@ -230,6 +232,7 @@ export type Database = {
           description?: string | null
           id?: number
           name?: string | null
+          recurring_cancellation_date?: string | null
         }
         Relationships: []
       }

@@ -1,7 +1,7 @@
 
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash, Edit } from "lucide-react";
+import { Trash, Edit, Ban } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
   Card, 
@@ -10,6 +10,7 @@ import {
   CardContent 
 } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/formatters";
+import { Badge } from "@/components/ui/badge";
 
 interface InvestmentItemProps {
   item: {
@@ -18,12 +19,21 @@ interface InvestmentItemProps {
     amount: number;
     date: string;
     description: string | null;
+    recurring_cancellation_date?: string | null;
   };
   onEdit: (item: any) => void;
   onDelete: (item: any) => void;
+  onCancelRecurring?: (item: any) => void;
+  isRecurring?: boolean;
 }
 
-export const InvestmentItem = ({ item, onEdit, onDelete }: InvestmentItemProps) => {
+export const InvestmentItem = ({ 
+  item, 
+  onEdit, 
+  onDelete, 
+  onCancelRecurring,
+  isRecurring = false 
+}: InvestmentItemProps) => {
   return (
     <Card key={item.id}>
       <CardHeader>
@@ -49,6 +59,14 @@ export const InvestmentItem = ({ item, onEdit, onDelete }: InvestmentItemProps) 
             >
               <Trash className="h-4 w-4" />
             </Button>
+            {isRecurring && onCancelRecurring && !item.recurring_cancellation_date && (
+              <Button
+                variant="outline"
+                onClick={() => onCancelRecurring(item)}
+              >
+                Cancelar recorrência
+              </Button>
+            )}
           </div>
         </div>
       </CardHeader>
@@ -60,6 +78,14 @@ export const InvestmentItem = ({ item, onEdit, onDelete }: InvestmentItemProps) 
         </p>
         {item.description && (
           <p className="text-sm">{item.description}</p>
+        )}
+        {isRecurring && item.recurring_cancellation_date && (
+          <div className="mt-2 flex items-center">
+            <Ban className="h-4 w-4 mr-2 text-destructive" />
+            <Badge variant="outline" className="text-destructive border-destructive">
+              Recorrência cancelada em {format(parseISO(item.recurring_cancellation_date), "dd/MM/yyyy", { locale: ptBR })}
+            </Badge>
+          </div>
         )}
       </CardContent>
     </Card>
