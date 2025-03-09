@@ -24,6 +24,7 @@ const Investments = () => {
     setIsDeleteDialogOpen,
     itemToDelete,
     editingItem,
+    setEditingItem, // This was missing in the destructuring
     handleSubmit,
     handleEdit,
     handleDeleteClick,
