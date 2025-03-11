@@ -14,6 +14,13 @@ import {
 
 const menuItems = [
   {
+    title: "WhatsApp",
+    description: "Abrir chat",
+    icon: Smartphone,
+    route: "https://web.whatsapp.com/",
+    color: "bg-gradient-to-br from-green-500 to-emerald-500",
+  },
+  {
     title: "Aluguel",
     description: "Calculadora de aluguéis",
     icon: Calculator,
@@ -69,17 +76,10 @@ const menuItems = [
     route: "/clients",
     color: "bg-gradient-to-br from-purple-500 to-indigo-500",
   },
-  {
-    title: "WhatsApp",
-    description: "Abrir chat",
-    icon: Smartphone,
-    route: "https://web.whatsapp.com/",
-    color: "bg-gradient-to-br from-green-500 to-emerald-500",
-  },
 ] as const;
 
 const openWhatsApp = () => {
-  window.open("https://web.whatsapp.com/send?phone=5599999999999");
+  window.open("whatsapp://");
 };
 
 const Home = () => {
