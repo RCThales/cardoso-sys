@@ -152,7 +152,7 @@ export const SalesCalculator = () => {
             disabled
             className="bg-gray-200 text-black border-gray-200 hover:bg-gray-50  border-l-[1px] rounded-t-none w-full "
           >
-            Vendas
+            Venda
           </Button>
         </div>
         <div className="space-y-8 pt-10">

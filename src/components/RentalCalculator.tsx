@@ -182,7 +182,7 @@ export const RentalCalculator = () => {
             onClick={() => navigate("/sales")}
             className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100  border-r-[1px] rounded-t-none w-full "
           >
-            Vendas
+            Venda
           </Button>
         </div>
 
