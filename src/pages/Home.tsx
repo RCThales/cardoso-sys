@@ -9,6 +9,7 @@ import {
   DollarSign,
   Wallet,
   Users,
+  Smartphone,
 } from "lucide-react";
 
 const menuItems = [
@@ -38,7 +39,7 @@ const menuItems = [
     description: "Controle de estoque",
     icon: Package,
     route: "/inventory",
-    color: "bg-gradient-to-br from-green-500 to-emerald-500",
+    color: "bg-gradient-to-br from-red-500 to-red-700",
   },
   {
     title: "Financeiro",
@@ -59,16 +60,27 @@ const menuItems = [
     description: "Gerenciamento de produtos",
     icon: ShoppingBag,
     route: "/products",
-    color: "bg-gradient-to-br from-purple-500 to-indigo-500",
+    color: "bg-gradient-to-br from-teal-500 to-emerald-500",
   },
   {
     title: "Clientes",
     description: "Gerenciamento de clientes",
     icon: Users,
     route: "/clients",
-    color: "bg-gradient-to-br from-teal-500 to-emerald-500",
+    color: "bg-gradient-to-br from-purple-500 to-indigo-500",
+  },
+  {
+    title: "WhatsApp",
+    description: "Abrir chat",
+    icon: Smartphone,
+    route: "https://web.whatsapp.com/",
+    color: "bg-gradient-to-br from-green-500 to-emerald-500",
   },
 ] as const;
+
+const openWhatsApp = () => {
+  window.open("https://web.whatsapp.com/send?phone=5599999999999");
+};
 
 const Home = () => {
   const navigate = useNavigate();
@@ -86,7 +98,11 @@ const Home = () => {
             <Card
               key={item.title}
               className={`cursor-pointer hover:scale-105 transition-transform ${item.color}`}
-              onClick={() => navigate(item.route)}
+              onClick={
+                item.title === "WhatsApp"
+                  ? openWhatsApp
+                  : () => navigate(item.route)
+              }
             >
               <div className="p-6 flex flex-col h-full text-white">
                 <div className="flex-grow flex items-center justify-center">
