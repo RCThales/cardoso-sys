@@ -1,3 +1,4 @@
+
 import { Input } from "../../ui/input";
 import { formatCPF, formatPhone } from "@/utils/formatters";
 import { ClientData } from "../types/clientForm";
@@ -14,7 +15,7 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Info } from "lucide-react";
 
 interface PersonalInfoProps {
   clientData: ClientData;
@@ -36,6 +37,7 @@ export const PersonalInfo = ({
   const [confirmedCPF, setConfirmedCPF] = useState<string | null>(null);
   const [showLoyaltyAlert, setShowLoyaltyAlert] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
+  const [originalClientData, setOriginalClientData] = useState<ClientData | null>(null);
 
   useEffect(() => {
     const storedData = sessionStorage.getItem("clientData");
@@ -72,7 +74,7 @@ export const PersonalInfo = ({
 
     const { data, error } = await supabase
       .from("invoices")
-      .select("client_name, id")
+      .select("client_name, id, client_phone, client_address, client_address_number, client_address_complement, client_city, client_state, client_postal_code")
       .eq("client_cpf", cpf);
 
     if (error) {
@@ -87,6 +89,23 @@ export const PersonalInfo = ({
     if (data && data.length > 0) {
       setExistingClientName(data[0].client_name);
       setOrderCount(data.length);
+      
+      // Store original client data for comparison when saving
+      setOriginalClientData({
+        name: data[0].client_name,
+        cpf: cpf,
+        phone: data[0].client_phone,
+        address: data[0].client_address,
+        addressNumber: data[0].client_address_number || "",
+        addressComplement: data[0].client_address_complement || "",
+        city: data[0].client_city,
+        state: data[0].client_state,
+        postalCode: data[0].client_postal_code,
+        isPaid: false,
+        deliveryFee: 0,
+        specialDiscount: 0,
+      });
+      
       setShowCPFConfirm(true);
       if (data.length % 10 === 0) {
         setShowLoyaltyAlert(true);
@@ -104,7 +123,24 @@ export const PersonalInfo = ({
 
   const handleCPFConfirm = () => {
     setConfirmedCPF(clientData.cpf);
-    onClientDataChange({ ...clientData, name: existingClientName });
+    
+    // When confirming the CPF, also load all the client data
+    if (originalClientData) {
+      onClientDataChange({ 
+        ...originalClientData,
+        isPaid: clientData.isPaid,
+        deliveryFee: clientData.deliveryFee,
+        specialDiscount: clientData.specialDiscount
+      });
+      
+      // Notify user that client data was loaded
+      toast({
+        title: "Dados do cliente carregados",
+        description: "Os dados do cliente foram carregados automaticamente. Qualquer alteração será salva na próxima fatura.",
+        duration: 5000,
+      });
+    }
+    
     setShowCPFConfirm(false);
   };
 
