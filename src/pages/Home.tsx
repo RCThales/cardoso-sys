@@ -83,12 +83,26 @@ const openWhatsApp = () => {
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
 
   if (isAndroid) {
+    // Attempt to open WhatsApp Business on Android
     window.location.href =
-      "intent://send/#Intent;scheme=whatsapp;package=com.whatsapp;end;";
+      "intent://send/#Intent;scheme=whatsapp;package=com.whatsapp.w4b;end;";
+
+    // Fallback to regular WhatsApp if WhatsApp Business isn't installed
+    setTimeout(() => {
+      window.location.href =
+        "intent://send/#Intent;scheme=whatsapp;package=com.whatsapp;end;";
+    }, 500); // Adjust the timeout if necessary
   } else if (isIOS) {
+    // Attempt to open WhatsApp Business on iOS
     window.location.href = "whatsapp://";
+
+    // Fallback to regular WhatsApp if WhatsApp Business isn't installed
+    setTimeout(() => {
+      window.location.href = "whatsapp://";
+    }, 500); // Adjust the timeout if necessary
   } else {
-    window.location.href = "whatsapp://";
+    // Open WhatsApp Web as a fallback
+    window.location.href = "https://wa.me/";
   }
 };
 
