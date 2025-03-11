@@ -1,3 +1,4 @@
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowDown, ArrowUp, Circle, LucideIcon } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
@@ -39,11 +40,20 @@ export const FinancialCard = ({
     }
 
     // Se previousValue for 0 e o valor atual for diferente de 0, indicamos "Novo"
-    if (previousValue === 0) {
+    if (previousValue === 0 && value > 0) {
       return {
         icon: ArrowUp,
         color: "text-green-500",
         value: "Novo",
+      };
+    }
+
+    // Se ambos valores forem 0, não há variação
+    if (previousValue === 0 && value === 0) {
+      return {
+        icon: Circle,
+        color: "text-gray-400",
+        value: "0%",
       };
     }
 
@@ -78,20 +88,22 @@ export const FinancialCard = ({
   const handleCardClick = () => {
     if (onCardClick) {
       onCardClick();
-    } else if (showDetails && details) {
+    } else if (showDetails && details && details.length > 0) {
       setIsDialogOpen(true);
     }
   };
+
+  const hasDetails = details && details.length > 0;
 
   return (
     <>
       <Card
         className={
-          showDetails
-            ? "cursor-pointer hover:bg-accent/50 transition-colors "
+          showDetails && hasDetails
+            ? "cursor-pointer hover:bg-accent/50 transition-colors"
             : ""
         }
-        onClick={showDetails ? handleCardClick : undefined}
+        onClick={showDetails && hasDetails ? handleCardClick : undefined}
       >
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -108,10 +120,15 @@ export const FinancialCard = ({
         <CardContent>
           <div className="text-2xl font-bold">R$ {formatCurrency(value)}</div>
           <p className="text-xs text-muted-foreground">{description}</p>
+          {showDetails && !hasDetails && (
+            <p className="text-xs text-muted-foreground mt-2 italic">
+              Não há registros para este período
+            </p>
+          )}
         </CardContent>
       </Card>
 
-      {!onCardClick && showDetails && details && (
+      {!onCardClick && showDetails && hasDetails && (
         <FinancialDetailsDialog
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, subMonths, addMonths, parseISO } from "date-fns";
@@ -108,49 +109,41 @@ const FinancialDetails = () => {
   };
 
   const getRecurringDetails = (recurrings, year, month) => {
+    if (!year || !month || !recurrings || recurrings.length === 0) {
+      return [];
+    }
+
+    const targetYear = parseInt(year);
+    const targetMonth = parseInt(month);
+
     return recurrings
       .filter((rec) => {
-        const startDate = rec.date ? new Date(rec.date) : new Date(); // Fallback para a data atual
-        const endDate = rec.recurring_cancellation_date
-          ? new Date(rec.recurring_cancellation_date)
+        // Parse dates
+        const startDate = rec.date ? new Date(rec.date) : null;
+        const endDate = rec.recurring_cancellation_date 
+          ? new Date(rec.recurring_cancellation_date) 
           : null;
 
-        // Verifica se as datas são válidas
+        // Skip if dates are invalid
         if (!startDate || isNaN(startDate.getTime())) {
           console.error(`Invalid start date: ${rec.date}`);
-          return false; // Ignora o item se a data for inválida
+          return false;
         }
 
-        if (endDate && isNaN(endDate.getTime())) {
-          console.error(`Invalid end date: ${rec.recurring_cancellation_date}`);
-          return false; // Ignora o item se a data de cancelamento for inválida
-        }
+        // Target month's first and last day
+        const targetMonthStart = new Date(targetYear, targetMonth - 1, 1);
+        const targetMonthEnd = new Date(targetYear, targetMonth, 0);
 
-        const targetMonthStart = new Date(year, month - 1, 1);
-        const targetMonthEnd = new Date(year, month, 0);
-
-        // A data de cobrança para o recorrente no mês alvo é no mesmo dia de startDate
-        const billingDate = new Date(year, month - 1, startDate.getDate());
-
-        // Normaliza as datas (zera horas, minutos, segundos)
-        startDate.setHours(0, 0, 0, 0);
-        targetMonthStart.setHours(0, 0, 0, 0);
-        targetMonthEnd.setHours(0, 0, 0, 0);
-        billingDate.setHours(0, 0, 0, 0);
-        if (endDate) endDate.setHours(0, 0, 0, 0);
-
-        // A recorrência é válida para o mês se:
-        // 1. Já começou até o fim do mês alvo;
-        // 2. Se houver data de cancelamento, ela deve ser >= billingDate (o dia de cobrança).
-        const isValid =
-          startDate <= targetMonthEnd && (!endDate || endDate >= billingDate);
-
-        return isValid;
+        // Recurring is valid if:
+        // 1. It started on or before the target month's end
+        // 2. It wasn't cancelled, or was cancelled after the start of the target month
+        return startDate <= targetMonthEnd && 
+               (!endDate || endDate >= targetMonthStart);
       })
       .map((rec) => {
         return {
           name: rec.name,
-          description: rec.description,
+          description: rec.description || "",
           amount: Number(rec.amount),
         };
       });
@@ -262,15 +255,11 @@ const FinancialDetails = () => {
 
       setInvestmentDetails(currentInvestments || []);
       setExpenseDetails(currentExpenses || []);
+      setRecurringDetails(currentRecurring || []);
 
-      const filteredCurrentRecurring =
-        currentRecurring?.length > 0
-          ? getRecurringDetails(currentRecurring, year, month) // Chama a função para filtrar detalhes
-          : []; // Caso não haja nenhum item de recorrência, retorna um array vazio
-      console.log("aaa", currentRecurring);
-
-      setRecurringDetails(filteredCurrentRecurring || []);
-
+      // Process recurring items for the current month
+      const filteredCurrentRecurring = getRecurringDetails(currentRecurring, year, month);
+      
       const currentGrossIncome =
         currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
 
@@ -280,11 +269,10 @@ const FinancialDetails = () => {
       const totalExpenses =
         currentExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
 
-      const totalRecurring =
-        filteredCurrentRecurring?.reduce(
-          (sum, rec) => sum + Number(rec.amount),
-          0
-        ) || 0;
+      const totalRecurring = filteredCurrentRecurring.reduce(
+        (sum, rec) => sum + Number(rec.amount),
+        0
+      );
 
       const currentSummary = {
         grossIncome: currentGrossIncome,
@@ -299,18 +287,11 @@ const FinancialDetails = () => {
           : 0,
       };
 
-      const filteredPreviousRecurring =
-        previousRecurring?.filter((item) => {
-          return (
-            !item.recurring_cancellation_date ||
-            new Date(item.recurring_cancellation_date) >=
-              new Date(
-                previousDate.getFullYear(),
-                previousDate.getMonth() + 1,
-                0
-              )
-          );
-        }) || [];
+      // Process recurring items for the previous month
+      const filteredPreviousRecurring = getRecurringDetails(previousRecurring, 
+        previousDate.getFullYear(), 
+        previousDate.getMonth() + 1
+      );
 
       const previousGrossIncome =
         previousInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
@@ -323,11 +304,10 @@ const FinancialDetails = () => {
       const prevTotalExpenses =
         previousExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) ||
         0;
-      const prevTotalRecurring =
-        filteredPreviousRecurring?.reduce(
-          (sum, rec) => sum + Number(rec.amount),
-          0
-        ) || 0;
+      const prevTotalRecurring = filteredPreviousRecurring.reduce(
+        (sum, rec) => sum + Number(rec.amount),
+        0
+      );
 
       if (previousInvoices && previousInvoices.length > 0) {
         setPreviousSummary({
@@ -451,11 +431,7 @@ const FinancialDetails = () => {
           />
           <FinancialCard
             title="Despesas Recorrentes"
-            value={
-              getRecurringDetails(recurringDetails, year, month).length > 0
-                ? summary.totalRecurring
-                : 0
-            }
+            value={summary.totalRecurring}
             previousValue={previousSummary?.totalRecurring}
             description="Gastos mensais fixos"
             icon={CalendarRange}
