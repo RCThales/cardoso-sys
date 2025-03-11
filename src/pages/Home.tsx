@@ -79,7 +79,17 @@ const menuItems = [
 ] as const;
 
 const openWhatsApp = () => {
-  window.open("whatsapp://");
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+
+  if (isAndroid) {
+    window.location.href =
+      "intent://send/#Intent;scheme=whatsapp;package=com.whatsapp;end;";
+  } else if (isIOS) {
+    window.location.href = "whatsapp://";
+  } else {
+    window.location.href = "whatsapp://";
+  }
 };
 
 const Home = () => {
