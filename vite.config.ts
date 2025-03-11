@@ -18,7 +18,7 @@ export default defineConfig(({ mode }) => ({
         name: "CARDOSO SYS",
         short_name: "CARDOSO",
         description: "Sistema de gestão Cardoso",
-        theme_color: "#ffffff",
+        theme_color: "#007bff",
         background_color: "#ffffff",
         display: "standalone",
         id: "com.cardoso.sys",
