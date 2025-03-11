@@ -221,11 +221,19 @@ export const InvoiceHistory = ({
   // Função para atualizar o estoque de um item específico
   const updateItemInventory = async (item: any) => {
     if (item.is_sale) {
-      const { data: inventoryItem, error: inventoryError } = await supabase
+      let query = supabase
         .from("inventory")
         .select("total_quantity")
-        .eq("product_id", item.productId)
-        .single();
+        .eq("product_id", item.productId);
+
+      if (item.size !== null && item.size !== undefined) {
+        query = query.eq("size", item.size);
+      }
+
+      const { data: inventoryItem, error: inventoryError } =
+        await query.single();
+
+      console.log(inventoryItem);
 
       if (inventoryError || !inventoryItem) {
         throw new Error(`Erro ao buscar estoque para ${item.productId}`);
@@ -236,20 +244,32 @@ export const InvoiceHistory = ({
         inventoryItem.total_quantity + item.quantity
       );
 
-      const { error: updateError } = await supabase
+      let updateQuery = supabase
         .from("inventory")
         .update({ total_quantity: newTotalQuantity })
         .eq("product_id", item.productId);
+
+      if (item.size !== null && item.size !== undefined) {
+        updateQuery = updateQuery.eq("size", item.size);
+      }
+
+      const { error: updateError } = await updateQuery;
 
       if (updateError) {
         throw new Error(`Erro ao atualizar estoque para ${item.productId}`);
       }
     } else {
-      const { data: inventoryItem, error: inventoryError } = await supabase
+      let query = supabase
         .from("inventory")
         .select("rented_quantity")
-        .eq("product_id", item.productId)
-        .single();
+        .eq("product_id", item.productId);
+
+      if (item.size !== null && item.size !== undefined) {
+        query = query.eq("size", item.size);
+      }
+
+      const { data: inventoryItem, error: inventoryError } =
+        await query.single();
 
       if (inventoryError || !inventoryItem) {
         throw new Error(`Erro ao buscar estoque para ${item.productId}`);
@@ -260,10 +280,16 @@ export const InvoiceHistory = ({
         inventoryItem.rented_quantity - item.quantity
       );
 
-      const { error: updateError } = await supabase
+      let updateQuery = supabase
         .from("inventory")
         .update({ rented_quantity: newRentedQuantity })
         .eq("product_id", item.productId);
+
+      if (item.size !== null && item.size !== undefined) {
+        updateQuery = updateQuery.eq("size", item.size);
+      }
+
+      const { error: updateError } = await updateQuery;
 
       if (updateError) {
         throw new Error(`Erro ao atualizar estoque para ${item.productId}`);
@@ -302,9 +328,12 @@ export const InvoiceHistory = ({
         />
       ) : (
         <div className="text-center p-8 border rounded-lg bg-muted/20">
-          <h3 className="text-lg font-medium mb-2">Nenhuma fatura encontrada</h3>
+          <h3 className="text-lg font-medium mb-2">
+            Nenhuma fatura encontrada
+          </h3>
           <p className="text-muted-foreground">
-            Não foram encontradas faturas que correspondam aos critérios de busca e filtros selecionados.
+            Não foram encontradas faturas que correspondam aos critérios de
+            busca e filtros selecionados.
           </p>
         </div>
       )}
