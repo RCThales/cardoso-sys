@@ -39,7 +39,7 @@ export const InventoryAdjustModal = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md max-w-[120px]">
+      <DialogContent className="max-w-[95vw] md:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Ajustar Quantidade - {product?.name}</DialogTitle>
         </DialogHeader>

@@ -1,4 +1,3 @@
-
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import {
@@ -28,25 +27,33 @@ const Products = () => {
   // Subscribe to real-time changes in the products and inventory tables
   useEffect(() => {
     const productsChannel = supabase
-      .channel('products-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'products' 
-      }, () => {
-        setRefreshTrigger(prev => prev + 1);
-      })
+      .channel("products-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "products",
+        },
+        () => {
+          setRefreshTrigger((prev) => prev + 1);
+        }
+      )
       .subscribe();
 
     const inventoryChannel = supabase
-      .channel('inventory-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'inventory' 
-      }, () => {
-        setRefreshTrigger(prev => prev + 1);
-      })
+      .channel("inventory-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "inventory",
+        },
+        () => {
+          setRefreshTrigger((prev) => prev + 1);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -137,7 +144,7 @@ const Products = () => {
         </div>
 
         <Dialog open={isOpen} onOpenChange={toggleProductDialog}>
-          <DialogContent className="min-w-[100vw] w-screen h-screen overflow-y-scroll md:max-h-[95vh] md:w-auto md:h-auto md:min-w-[500px] flex flex-col justify-start ">
+          <DialogContent className="min-w-[95vw] w-[95vw] h-[90vh] overflow-y-scroll md:max-h-[95vh] md:w-auto md:h-auto md:min-w-[500px] flex flex-col justify-start ">
             <DialogHeader>
               <DialogTitle>
                 {selectedProduct ? "Editar Produto" : "Novo Produto"}

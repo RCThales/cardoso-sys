@@ -1,16 +1,15 @@
-
 import { format, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Trash, Edit, Ban } from "lucide-react";
+import { Trash, Edit, Ban, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { 
-  Card, 
-  CardHeader, 
-  CardTitle, 
-  CardContent 
-} from "@/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { formatCurrency } from "@/utils/formatters";
 import { Badge } from "@/components/ui/badge";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface InvestmentItemProps {
   item: {
@@ -27,31 +26,29 @@ interface InvestmentItemProps {
   isRecurring?: boolean;
 }
 
-export const InvestmentItem = ({ 
-  item, 
-  onEdit, 
-  onDelete, 
+export const InvestmentItem = ({
+  item,
+  onEdit,
+  onDelete,
   onCancelRecurring,
-  isRecurring = false 
+  isRecurring = false,
 }: InvestmentItemProps) => {
-  const isCancelled = item.recurring_cancellation_date !== null && item.recurring_cancellation_date !== undefined;
-  
+  const isCancelled =
+    item.recurring_cancellation_date !== null &&
+    item.recurring_cancellation_date !== undefined;
+
   return (
     <Card key={item.id}>
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between flex-wrap">
           <div className="flex items-center gap-2">
             <CardTitle>{item.name}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold">
-              R$ {formatCurrency(item.amount)}
+              R${formatCurrency(item.amount)}
             </span>
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() => onEdit(item)}
-            >
+            <Button variant="outline" size="icon" onClick={() => onEdit(item)}>
               <Edit className="h-4 w-4" />
             </Button>
             <Button
@@ -62,12 +59,18 @@ export const InvestmentItem = ({
               <Trash className="h-4 w-4" />
             </Button>
             {isRecurring && onCancelRecurring && !isCancelled && (
-              <Button
-                variant="outline"
-                onClick={() => onCancelRecurring(item)}
-              >
-                Cancelar recorrência
-              </Button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    onClick={() => onCancelRecurring(item)}
+                  >
+                    <XCircle className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Cancelar Recorrência</TooltipContent>
+              </Tooltip>
             )}
           </div>
         </div>
@@ -78,14 +81,22 @@ export const InvestmentItem = ({
             locale: ptBR,
           })}
         </p>
-        {item.description && (
-          <p className="text-sm">{item.description}</p>
-        )}
+        {item.description && <p className="text-sm">{item.description}</p>}
         {isRecurring && isCancelled && (
           <div className="mt-2 flex items-center">
             <Ban className="h-4 w-4 mr-2 text-destructive" />
-            <Badge variant="outline" className="text-destructive border-destructive">
-              Recorrência cancelada em {format(parseISO(item.recurring_cancellation_date!), "dd/MM/yyyy", { locale: ptBR })}
+            <Badge
+              variant="outline"
+              className="text-destructive border-destructive"
+            >
+              Recorrência cancelada em{" "}
+              {format(
+                parseISO(item.recurring_cancellation_date!),
+                "dd/MM/yyyy",
+                {
+                  locale: ptBR,
+                }
+              )}
             </Badge>
           </div>
         )}
