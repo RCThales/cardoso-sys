@@ -10,7 +10,7 @@ import { useWindowSize } from "@/hooks/use-window-size";
 import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
 import { InvoiceTableRow } from "./table/InvoiceTableRow";
 import { returnToInventory } from "@/services/inventoryService";
-import { cn } from "@/lib/utils"; // Certifique-se de importar a função cn
+import { cn } from "@/lib/utils";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -24,7 +24,7 @@ interface InvoiceTableProps {
   onPreview: (invoice: Invoice) => void;
   onDelete: (invoiceId: number) => void;
   formatCurrency: (value: number) => string;
-  invoiceId?: string | null; // Adicione o invoiceId como uma prop opcional
+  invoiceId?: string | null;
 }
 
 export const InvoiceTable = ({
@@ -35,7 +35,7 @@ export const InvoiceTable = ({
   onPreview,
   onDelete,
   formatCurrency,
-  invoiceId, // Recebe o invoiceId como prop
+  invoiceId,
 }: InvoiceTableProps) => {
   const { toast } = useToast();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
@@ -158,7 +158,6 @@ export const InvoiceTable = ({
       )}
       <Table>
         <InvoiceTableHeader />
-        {invoices.length === 0 && <p className="pt-4">No Invoices</p>}
         <TableBody>
           {/* Exibe a fatura atual destacada (se existir) */}
           {currentInvoice && (
@@ -166,7 +165,7 @@ export const InvoiceTable = ({
               key={currentInvoice.id}
               current={true}
               invoice={currentInvoice}
-              invoiceType={getInvoiceType(currentInvoice)} // Passa o tipo da fatura
+              invoiceType={getInvoiceType(currentInvoice)}
               onTogglePaid={() => handlePaymentToggle(currentInvoice)}
               onToggleReturned={() => handleReturnedToggle(currentInvoice)}
               onDownload={() => onDownload(currentInvoice)}
@@ -186,7 +185,7 @@ export const InvoiceTable = ({
               key={invoice.id}
               current={false}
               invoice={invoice}
-              invoiceType={getInvoiceType(invoice)} // Passa o tipo da fatura
+              invoiceType={getInvoiceType(invoice)}
               onTogglePaid={() => handlePaymentToggle(invoice)}
               onToggleReturned={() => handleReturnedToggle(invoice)}
               onDownload={() => onDownload(invoice)}

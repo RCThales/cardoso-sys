@@ -26,6 +26,7 @@ export const InvoiceHistory = ({
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -33,6 +34,7 @@ export const InvoiceHistory = ({
   }, [search, sortOrder, filterStatus, dateSortType]);
 
   const fetchInvoices = async () => {
+    setLoading(true);
     let query = supabase.from("invoices").select("*");
 
     // Aplicar filtros de status
@@ -66,6 +68,7 @@ export const InvoiceHistory = ({
         description: error.message,
         variant: "destructive",
       });
+      setLoading(false);
       return;
     }
 
@@ -88,6 +91,7 @@ export const InvoiceHistory = ({
     });
 
     setInvoices(convertedInvoices);
+    setLoading(false);
   };
 
   const handleTogglePaid = async (
@@ -281,16 +285,29 @@ export const InvoiceHistory = ({
 
   return (
     <>
-      <InvoiceTable
-        invoices={invoices}
-        onTogglePaid={handleTogglePaid}
-        onToggleReturned={handleToggleReturned}
-        onDownload={handleDownload}
-        onPreview={handlePreview}
-        onDelete={handleDelete}
-        formatCurrency={formatCurrency}
-        invoiceId={invoiceId} // Passa o invoiceId para o InvoiceTable
-      />
+      {loading ? (
+        <div className="flex justify-center items-center p-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
+        </div>
+      ) : invoices.length > 0 ? (
+        <InvoiceTable
+          invoices={invoices}
+          onTogglePaid={handleTogglePaid}
+          onToggleReturned={handleToggleReturned}
+          onDownload={handleDownload}
+          onPreview={handlePreview}
+          onDelete={handleDelete}
+          formatCurrency={formatCurrency}
+          invoiceId={invoiceId}
+        />
+      ) : (
+        <div className="text-center p-8 border rounded-lg bg-muted/20">
+          <h3 className="text-lg font-medium mb-2">Nenhuma fatura encontrada</h3>
+          <p className="text-muted-foreground">
+            Não foram encontradas faturas que correspondam aos critérios de busca e filtros selecionados.
+          </p>
+        </div>
+      )}
 
       <PreviewInvoiceDialog
         invoice={previewInvoice}

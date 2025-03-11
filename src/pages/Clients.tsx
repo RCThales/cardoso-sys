@@ -77,6 +77,8 @@ const Clients = () => {
     }
   });
 
+  const hasClients = clients && clients.length > 0;
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -112,7 +114,7 @@ const Clients = () => {
                       Carregando...
                     </TableCell>
                   </TableRow>
-                ) : (
+                ) : hasClients ? (
                   clients?.map((client) => (
                     <TableRow key={client.cpf}>
                       <TableCell className="font-medium">{client.name}</TableCell>
@@ -135,6 +137,17 @@ const Clients = () => {
                       </TableCell>
                     </TableRow>
                   ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={6} className="h-32 text-center">
+                      <div className="flex flex-col items-center justify-center">
+                        <h3 className="text-lg font-medium mb-2">Nenhum cliente encontrado</h3>
+                        <p className="text-muted-foreground max-w-md">
+                          Não foram encontrados clientes que correspondam aos critérios de busca ou ainda não existem clientes cadastrados.
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
                 )}
               </TableBody>
             </Table>
