@@ -19,7 +19,6 @@ import { FinancialCard } from "@/components/financial/FinancialCard";
 import { FinancialHeader } from "@/components/financial/FinancialHeader";
 import { FinancialDetailsDialog } from "@/components/financial/FinancialDetailsDialog";
 import { Button } from "@/components/ui/button";
-import { title } from "process";
 
 type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 
@@ -64,6 +63,7 @@ const FinancialDetails = () => {
     { name: string; description: string; amount: number }[]
   >([]);
   const [activeTotal, setActiveTotal] = useState(0);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const monthName = month
     ? format(
@@ -116,6 +116,10 @@ const FinancialDetails = () => {
     const targetYear = parseInt(year);
     const targetMonth = parseInt(month);
 
+    // Target month's first and last day
+    const targetMonthStart = new Date(targetYear, targetMonth - 1, 1);
+    const targetMonthEnd = new Date(targetYear, targetMonth, 0);
+
     return recurrings
       .filter((rec) => {
         // Parse dates
@@ -129,10 +133,6 @@ const FinancialDetails = () => {
           console.error(`Invalid start date: ${rec.date}`);
           return false;
         }
-
-        // Target month's first and last day
-        const targetMonthStart = new Date(targetYear, targetMonth - 1, 1);
-        const targetMonthEnd = new Date(targetYear, targetMonth, 0);
 
         // Recurring is valid if:
         // 1. It started on or before the target month's end
@@ -159,6 +159,60 @@ const FinancialDetails = () => {
     setActiveTotal(total);
     setDetailsDialogOpen(true);
   };
+
+  // Subscribe to real-time changes in the database tables
+  useEffect(() => {
+    const investmentsChannel = supabase
+      .channel('investments-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'investments' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    const expensesChannel = supabase
+      .channel('expenses-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'expenses' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    const recurringChannel = supabase
+      .channel('recurring-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'recurring' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    const invoicesChannel = supabase
+      .channel('invoices-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'invoices' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    return () => {
+      investmentsChannel.unsubscribe();
+      expensesChannel.unsubscribe();
+      recurringChannel.unsubscribe();
+      invoicesChannel.unsubscribe();
+    };
+  }, []);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -333,7 +387,7 @@ const FinancialDetails = () => {
     };
 
     fetchData();
-  }, [year, month]);
+  }, [year, month, refreshTrigger]);
 
   return (
     <div className="min-h-screen bg-background">

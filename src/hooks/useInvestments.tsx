@@ -56,6 +56,48 @@ export const useInvestments = () => {
   );
   const [activeTab, setActiveTab] = useState<ActiveTab>("investments");
   const [formData, setFormData] = useState<FormData>(INITIAL_FORM_STATE);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
+
+  useEffect(() => {
+    const investmentsChannel = supabase
+      .channel('investments-changes-manage')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'investments' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    const expensesChannel = supabase
+      .channel('expenses-changes-manage')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'expenses' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    const recurringChannel = supabase
+      .channel('recurring-changes-manage')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'recurring' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    return () => {
+      investmentsChannel.unsubscribe();
+      expensesChannel.unsubscribe();
+      recurringChannel.unsubscribe();
+    };
+  }, []);
 
   const fetchData = async () => {
     try {
@@ -134,7 +176,7 @@ export const useInvestments = () => {
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [refreshTrigger]);
 
   useEffect(() => {
     const availableMonths = getAvailableMonths();
@@ -239,7 +281,6 @@ export const useInvestments = () => {
       setIsDialogOpen(false);
       setFormData(INITIAL_FORM_STATE);
       setEditingItem(null);
-      fetchData();
     } catch (error) {
       console.error("Error in handleSubmit:", error);
       toast({
@@ -319,7 +360,6 @@ export const useInvestments = () => {
 
       setIsDeleteDialogOpen(false);
       setItemToDelete(null);
-      fetchData();
     } catch (error) {
       console.error("Error in handleConfirmDelete:", error);
       toast({
@@ -357,7 +397,6 @@ export const useInvestments = () => {
 
       setIsCancelRecurringDialogOpen(false);
       setItemToCancelRecurring(null);
-      fetchData();
     } catch (error) {
       console.error("Error in handleConfirmCancelRecurring:", error);
       toast({

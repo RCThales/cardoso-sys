@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import type { Product } from "@/utils/priceCalculator";
 import { useToast } from "./use-toast";
@@ -22,15 +23,11 @@ export const useProductForm = ({ onSuccess }: UseProductFormProps) => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    console.log(quantity);
-
-    console.log(quantities);
-
     try {
       if (selectedProduct) {
-        updateProduct(selectedProduct.id);
+        await updateProduct(selectedProduct.id);
       } else {
-        createProduct(quantities);
+        await createProduct(quantities);
       }
 
       resetForm();
@@ -67,33 +64,46 @@ export const useProductForm = ({ onSuccess }: UseProductFormProps) => {
 
       if (error.code === "23505") {
         showToast("Erro", "Produto com mesmo nome ou ID ja existe.");
+      } else {
+        throw error;
       }
     }
   };
 
   const updateProduct = async (productId: string) => {
-    if (sizes.length === 0) {
-      await productService.updateProductWithoutSizes(
-        productId,
-        { name, basePrice, sizes, salePrice },
-        quantity
-      );
-    } else {
-      await productService.updateProductWithSizes(
-        productId,
-        { name, basePrice, sizes, salePrice },
-        quantities
-      );
-    }
+    try {
+      if (sizes.length === 0) {
+        await productService.updateProductWithoutSizes(
+          productId,
+          { name, basePrice, sizes, salePrice },
+          quantity
+        );
+      } else {
+        await productService.updateProductWithSizes(
+          productId,
+          { name, basePrice, sizes, salePrice },
+          quantities
+        );
+      }
 
-    showToast("Sucesso", "Produto atualizado com sucesso");
+      showToast("Sucesso", "Produto atualizado com sucesso");
+    } catch (error) {
+      console.error("Erro ao atualizar produto:", error);
+      throw error;
+    }
   };
 
   const getInventoryQuantities = async (productId: string) => {
-    const quantites = await productService.getInventoryQuantityWithSizes(
-      productId
-    );
-    return quantites;
+    try {
+      const quantities = await productService.getInventoryQuantityWithSizes(
+        productId
+      );
+      return quantities;
+    } catch (error) {
+      console.error("Erro ao obter quantidades do inventário:", error);
+      showToast("Erro", "Erro ao obter quantidades do inventário", "destructive");
+      return {};
+    }
   };
 
   const showToast = (
@@ -116,20 +126,25 @@ export const useProductForm = ({ onSuccess }: UseProductFormProps) => {
   };
 
   const handleEdit = async (product: Product) => {
-    if (product?.sizes?.length === 0) {
-      const quantity = await getInventoryQuantities(product.id);
-      const quantityValue = quantity["null"].toString();
-      setQuantity(quantityValue);
-    } else {
-      const quantities = await getInventoryQuantities(product.id);
-      setQuantities(quantities);
+    try {
+      if (product?.sizes?.length === 0) {
+        const quantity = await getInventoryQuantities(product.id);
+        const quantityValue = quantity["null"]?.toString() || "0";
+        setQuantity(quantityValue);
+      } else {
+        const quantities = await getInventoryQuantities(product.id);
+        setQuantities(quantities);
+      }
+      setSelectedProduct(product);
+      setName(product.name);
+      setBasePrice(product.base_price.toString());
+      setSalePrice(product.sale_price.toString());
+      setSizes((product.sizes || []).map((s) => s.size));
+      setIsOpen(true);
+    } catch (error) {
+      console.error("Erro ao editar produto:", error);
+      showToast("Erro", "Erro ao carregar dados do produto", "destructive");
     }
-    setSelectedProduct(product);
-    setName(product.name);
-    setBasePrice(product.base_price.toString());
-    setSalePrice(product.sale_price.toString());
-    setSizes((product.sizes || []).map((s) => s.size));
-    setIsOpen(true);
   };
 
   const toggleProductDialog = () => {

@@ -2,7 +2,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowDown, ArrowUp, Circle, LucideIcon } from "lucide-react";
 import { formatCurrency } from "@/utils/formatters";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { FinancialDetailsDialog } from "./FinancialDetailsDialog";
 
 interface FinancialCardProps {
@@ -29,6 +29,14 @@ export const FinancialCard = ({
   onCardClick,
 }: FinancialCardProps) => {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [currentDetails, setCurrentDetails] = useState(details || []);
+
+  // Update the details when they change from props
+  useEffect(() => {
+    if (details) {
+      setCurrentDetails(details);
+    }
+  }, [details]);
 
   const getPercentageChange = () => {
     if (previousValue === null || previousValue === undefined) {
@@ -88,12 +96,12 @@ export const FinancialCard = ({
   const handleCardClick = () => {
     if (onCardClick) {
       onCardClick();
-    } else if (showDetails && details && details.length > 0) {
+    } else if (showDetails && currentDetails && currentDetails.length > 0) {
       setIsDialogOpen(true);
     }
   };
 
-  const hasDetails = details && details.length > 0;
+  const hasDetails = currentDetails && currentDetails.length > 0;
 
   return (
     <>
@@ -133,7 +141,7 @@ export const FinancialCard = ({
           open={isDialogOpen}
           onOpenChange={setIsDialogOpen}
           title={title}
-          details={details}
+          details={currentDetails}
           total={value}
         />
       )}

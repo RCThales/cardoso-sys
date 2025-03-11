@@ -1,3 +1,4 @@
+
 import { useQuery } from "@tanstack/react-query";
 import { Navbar } from "@/components/Navbar";
 import {
@@ -15,16 +16,47 @@ import { ProductSearch } from "@/components/products/ProductSearch";
 import { ProductsHeader } from "@/components/products/ProductsHeader";
 import { useProductForm } from "@/hooks/useProductForm";
 import { productService } from "@/services/productService";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 const Products = () => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const { toast } = useToast();
 
+  // Subscribe to real-time changes in the products and inventory tables
+  useEffect(() => {
+    const productsChannel = supabase
+      .channel('products-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'products' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    const inventoryChannel = supabase
+      .channel('inventory-changes')
+      .on('postgres_changes', { 
+        event: '*', 
+        schema: 'public', 
+        table: 'inventory' 
+      }, () => {
+        setRefreshTrigger(prev => prev + 1);
+      })
+      .subscribe();
+
+    return () => {
+      productsChannel.unsubscribe();
+      inventoryChannel.unsubscribe();
+    };
+  }, []);
+
   const { data: products, refetch } = useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", refreshTrigger],
     queryFn: async () => {
       const { data, error } = await supabase.from("products").select("*");
       if (error) throw error;
