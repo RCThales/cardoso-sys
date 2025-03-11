@@ -82,6 +82,14 @@ export const InvoiceTableRow = ({
           (current && invoice.is_paid && isSale), // Borda verde se estiver devolvida
       })}
     >
+      <TableCell>{invoice.client_name}</TableCell>
+      <TableCell>
+        {/* Exibe "-" se for VENDA, caso contrário, exibe a data de devolução */}
+        {isSale
+          ? "-"
+          : invoice.return_date &&
+            format(parseISO(invoice.return_date), "dd/MM/yyyy")}
+      </TableCell>
       {/* Nova coluna para o tipo da fatura */}
       <TableCell>
         <div className="flex items-center space-x-2">
@@ -108,14 +116,7 @@ export const InvoiceTableRow = ({
       <TableCell>
         {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
       </TableCell>
-      <TableCell>{invoice.client_name}</TableCell>
-      <TableCell>
-        {/* Exibe "-" se for VENDA, caso contrário, exibe a data de devolução */}
-        {isSale
-          ? "-"
-          : invoice.return_date &&
-            format(parseISO(invoice.return_date), "dd/MM/yyyy")}
-      </TableCell>
+
       <TableCell className="text-right">
         R$ {formatCurrency(invoice.total)}
       </TableCell>

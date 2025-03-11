@@ -99,7 +99,14 @@ export const RentalCalculator = () => {
   };
 
   const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newQuantity = parseInt(e.target.value, 10);
+    const newValue = e.target.value;
+
+    if (newValue === "") {
+      setQuantity(0); // Considera 0 quando vazio
+      return;
+    }
+
+    const newQuantity = parseInt(newValue, 10);
     const availableQuantity = getAvailableQuantity(
       selectedProduct,
       selectedSize
@@ -107,7 +114,7 @@ export const RentalCalculator = () => {
 
     if (
       !isNaN(newQuantity) &&
-      newQuantity >= 1 &&
+      newQuantity >= 0 &&
       newQuantity <= availableQuantity
     ) {
       setQuantity(newQuantity);
@@ -232,11 +239,17 @@ export const RentalCalculator = () => {
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        {selectedProductData.sizes.map((size) => (
-                          <SelectItem key={size.size} value={size.size}>
-                            {size.size} ({availableQuantity} disponíveis)
-                          </SelectItem>
-                        ))}
+                        {selectedProductData.sizes.map((size) => {
+                          const quantityForSize = getAvailableQuantity(
+                            selectedProduct,
+                            size.size
+                          );
+                          return (
+                            <SelectItem key={size.size} value={size.size}>
+                              {size.size} ({quantityForSize} disponíveis)
+                            </SelectItem>
+                          );
+                        })}
                       </SelectContent>
                     </Select>
                   </div>
@@ -246,9 +259,14 @@ export const RentalCalculator = () => {
                 <span className="text-sm font-medium">Quantidade</span>
                 <Input
                   type="number"
-                  value={quantity}
+                  value={quantity === 0 ? "" : quantity} // Permite campo vazio temporariamente
                   onChange={handleQuantityChange}
-                  min={1}
+                  onBlur={() => {
+                    if (quantity === 0) {
+                      setQuantity(1); // Se estiver vazio ao perder o foco, volta para 1
+                    }
+                  }}
+                  min={0} // Permite 0 temporariamente
                   max={availableQuantity}
                   className="w-20 text-center"
                 />
@@ -257,11 +275,30 @@ export const RentalCalculator = () => {
               <div className="flex justify-between items-center">
                 <span className="text-sm font-medium">Duração do Aluguel</span>
                 <div className="flex items-center space-x-2">
-                  <input
+                  <Input
                     type="number"
-                    value={days}
-                    onChange={handleDaysInputChange}
-                    min={1}
+                    value={days === 0 ? "" : days} // Permite campo vazio temporariamente
+                    onChange={(e) => {
+                      const newValue = e.target.value;
+                      if (newValue === "") {
+                        setDays(0); // Temporariamente vazio
+                        return;
+                      }
+                      const newDays = parseInt(newValue, 10);
+                      if (newDays >= 1 && newDays <= 180) {
+                        setDays(newDays);
+                      }
+                    }}
+                    onBlur={() => {
+                      if (days === 0) {
+                        setDays(1); // Se estiver vazio ao perder o foco, volta para 1
+                      }
+                      setPrice(
+                        calculateTotalPrice(days || 1, basePrice || 0) *
+                          quantity
+                      );
+                    }}
+                    min={0} // Permite 0 temporariamente
                     max={180}
                     className="w-16 text-center border p-2 rounded-md"
                   />
@@ -314,10 +351,11 @@ export const RentalCalculator = () => {
                   Preço Total
                 </span>
                 <div className="text-5xl font-semibold tracking-tight">
-                  R${(price * quantity).toFixed(2)}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  {price / days <= 2 && "Melhor valor!"}
+                  {quantity === 0 || days === 0 ? (
+                    <div className="animate-pulse bg-gray-300 h-10 w-32 mx-auto rounded-md" />
+                  ) : (
+                    `R$${(price * quantity).toFixed(2)}`
+                  )}
                 </div>
               </div>
             </motion.div>
