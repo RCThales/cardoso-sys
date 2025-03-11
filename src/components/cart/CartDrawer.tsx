@@ -1,3 +1,4 @@
+
 import { Button } from "@/components/ui/button";
 import { useCartStore } from "@/store/cartStore";
 import { Minus, Plus, ShoppingCart, Trash2, Tag, Calendar } from "lucide-react";
@@ -125,7 +126,7 @@ export const CartDrawer = () => {
             const product = products?.find((p) => p.id === item.productId);
             return (
               <div
-                key={`${item.productId}-${item.size}`}
+                key={`${item.productId}-${item.size}-${item.is_sale ? 'sale' : 'rental'}`}
                 className="flex flex-col space-y-2 p-4 border rounded-lg"
               >
                 <div className="flex justify-between items-center">
@@ -146,7 +147,7 @@ export const CartDrawer = () => {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => removeItem(item.productId, item.size)}
+                    onClick={() => removeItem(item.productId, item.size, item.is_sale)}
                   >
                     <Trash2 className="h-4 w-4" />
                   </Button>

@@ -1,3 +1,4 @@
+
 import { create } from "zustand";
 import { calculateTotalPrice } from "@/utils/priceCalculator";
 
@@ -15,7 +16,7 @@ export interface CartItem {
 interface CartStore {
   items: CartItem[];
   addItem: (item: CartItem) => void;
-  removeItem: (productId: string, size?: string) => void;
+  removeItem: (productId: string, size?: string, is_sale?: boolean) => void;
   clearCart: () => void;
 }
 
@@ -91,10 +92,19 @@ export const useCartStore = create<CartStore>((set) => ({
         items: [...state.items, newItem],
       };
     }),
-  removeItem: (productId, size) =>
+  removeItem: (productId, size, is_sale) =>
     set((state) => ({
       items: state.items.filter(
-        (item) => !(item.productId === productId && item.size === size)
+        (item) => {
+          // If is_sale parameter is provided, use it for filtering
+          if (is_sale !== undefined) {
+            return !(item.productId === productId && 
+                    item.size === size && 
+                    item.is_sale === is_sale);
+          }
+          // Backward compatibility: if is_sale is not provided, just filter by productId and size
+          return !(item.productId === productId && item.size === size);
+        }
       ),
     })),
   clearCart: () => set({ items: [] }),
