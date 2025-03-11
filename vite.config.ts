@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
       registerType: "autoUpdate",
       manifest: {
         name: "CARDOSO SYS",
-        short_name: "CARDOSO",
+        short_name: "CARDOSO SYS",
         description: "Sistema de gestão Cardoso",
         theme_color: "#007bff",
         background_color: "#ffffff",
