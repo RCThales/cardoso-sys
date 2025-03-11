@@ -21,6 +21,7 @@ export default defineConfig(({ mode }) => ({
         theme_color: "#ffffff",
         background_color: "#ffffff",
         display: "standalone",
+        id: "com.cardoso.sys",
         screenshots: [
           {
             src: "/screenshot-wide.png",
