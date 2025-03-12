@@ -12,6 +12,7 @@ interface FinancialSummary {
   totalExpenses: number;
   netProfit: number;
   totalInvestment: number;
+  totalRecurring: number;
   invoiceCount: number;
   averageTicket: number;
 }
@@ -26,7 +27,8 @@ export const generateFinancialPDF = async (
   summary: FinancialSummary,
   monthName: string,
   expenseDetails: ExpenseDetail[],
-  investmentDetails: ExpenseDetail[]
+  investmentDetails: ExpenseDetail[],
+  recurringDetails: ExpenseDetail[]
 ): Promise<Blob> => {
   const doc = new jsPDF();
   const pageWidth = doc.internal.pageSize.getWidth();
@@ -63,6 +65,8 @@ export const generateFinancialPDF = async (
   const data = [
     ["Receita Bruta", `R$ ${formatCurrency(summary.grossIncome)}`],
     ["Despesas", `R$ ${formatCurrency(summary.totalExpenses)}`],
+    ["Investimentos", `R$ ${formatCurrency(summary.totalInvestment)}`],
+    ["Gastos Recorrentes", `R$ ${formatCurrency(summary.totalRecurring)}`],
     ["Lucro Líquido", `R$ ${formatCurrency(summary.netProfit)}`],
     ["Ticket Médio", `R$ ${formatCurrency(summary.averageTicket)}`],
     ["Número de Faturas", summary.invoiceCount.toString()],
@@ -92,56 +96,96 @@ export const generateFinancialPDF = async (
     },
   });
 
-  // Detalhamento das Despesas e Investimentos (na mesma página)
-  let currentY = (doc as any).lastAutoTable.finalY + 20;
+  if (expenseDetails.length > 0) {
+    //#region EXPENSES
+    // Detalhamento das Despesas e Investimentos (na mesma página)
+    let currentY = (doc as any).lastAutoTable.finalY + 20;
 
-  doc.setFontSize(14);
-  doc.text("Detalhamento dos Gastos", 20, currentY);
-  currentY += 10;
+    doc.setFontSize(14);
+    doc.text("Detalhamento dos Gastos", 20, currentY);
+    currentY += 10;
 
-  autoTable(doc, {
-    startY: currentY,
-    head: [["Descrição", "Valor"]],
-    body: expenseDetails.map((detail) => [
-      detail.description,
-      `R$ ${formatCurrency(detail.amount)}`,
-    ]),
-    theme: "grid",
-    headStyles: {
-      fillColor: [231, 76, 60],
-      textColor: [255, 255, 255],
-      fontSize: 12,
-      fontStyle: "bold",
-    },
-    bodyStyles: {
-      fontSize: 11,
-    },
-  });
+    autoTable(doc, {
+      startY: currentY,
+      head: [["Nome", "Valor"]],
+      body: expenseDetails.map((detail) => [
+        detail.name,
+        `R$ ${formatCurrency(detail.amount)}`,
+      ]),
+      theme: "grid",
+      headStyles: {
+        fillColor: [231, 76, 60],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fontSize: 11,
+      },
+    });
 
-  currentY = (doc as any).lastAutoTable.finalY + 20;
+    //#endregion
+  }
 
-  doc.setFontSize(14);
-  doc.text("Detalhamento dos Investimentos", 20, currentY);
-  currentY += 10;
+  if (investmentDetails.length > 0) {
+    //#region INVESTMENTS
+    // Detalhamento das Despesas e Investimentos (na mesma página)
+    let currentY = (doc as any).lastAutoTable.finalY + 20;
 
-  autoTable(doc, {
-    startY: currentY,
-    head: [["Descrição", "Valor"]],
-    body: investmentDetails.map((detail) => [
-      detail.description,
-      `R$ ${formatCurrency(detail.amount)}`,
-    ]),
-    theme: "grid",
-    headStyles: {
-      fillColor: [52, 152, 219],
-      textColor: [255, 255, 255],
-      fontSize: 12,
-      fontStyle: "bold",
-    },
-    bodyStyles: {
-      fontSize: 11,
-    },
-  });
+    doc.setFontSize(14);
+    doc.text("Detalhamento dos Investimentos", 20, currentY);
+    currentY += 10;
+
+    console.log(investmentDetails);
+    autoTable(doc, {
+      startY: currentY,
+      head: [["Nome", "Valor"]],
+      body: investmentDetails.map((detail) => [
+        detail.name,
+        `R$ ${formatCurrency(detail.amount)}`,
+      ]),
+      theme: "grid",
+      headStyles: {
+        fillColor: [231, 76, 60],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fontSize: 11,
+      },
+    });
+    //#endregion
+  }
+
+  if (recurringDetails.length > 0) {
+    //#region recurringDetails
+    // Detalhamento das Despesas e Investimentos (na mesma página)
+    let currentY = (doc as any).lastAutoTable.finalY + 20;
+    doc.setFontSize(14);
+    doc.text("Detalhamento dos Custos Recorrentes", 20, currentY);
+    currentY += 10;
+
+    autoTable(doc, {
+      startY: currentY,
+      head: [["Nome", "Valor"]],
+      body: recurringDetails.map((detail) => [
+        detail.name,
+        `R$ ${formatCurrency(detail.amount)}`,
+      ]),
+      theme: "grid",
+      headStyles: {
+        fillColor: [231, 76, 60],
+        textColor: [255, 255, 255],
+        fontSize: 12,
+        fontStyle: "bold",
+      },
+      bodyStyles: {
+        fontSize: 11,
+      },
+    });
+    //#endregion
+  }
 
   // Rodapé
   const pageHeight = doc.internal.pageSize.getHeight();

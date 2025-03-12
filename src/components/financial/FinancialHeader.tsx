@@ -13,10 +13,17 @@ interface FinancialHeaderProps {
     totalExpenses: number;
     netProfit: number;
     totalInvestment: number;
+    totalRecurring: number;
     invoiceCount: number;
     averageTicket: number;
   };
   expenseDetails: Array<{ name: string; description: string; amount: number }>;
+
+  recurringDetails: Array<{
+    name: string;
+    description: string;
+    amount: number;
+  }>;
   investmentDetails: Array<{
     name: string;
     description: string;
@@ -29,6 +36,7 @@ export const FinancialHeader = ({
   summary,
   expenseDetails,
   investmentDetails,
+  recurringDetails,
 }: FinancialHeaderProps) => {
   const navigate = useNavigate();
 
@@ -38,7 +46,8 @@ export const FinancialHeader = ({
         summary,
         monthName,
         expenseDetails,
-        investmentDetails
+        investmentDetails,
+        recurringDetails
       );
       const fileName = `relatorio-financeiro-${format(new Date(), "MMMM-yyyy", {
         locale: ptBR,

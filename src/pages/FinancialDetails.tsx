@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { format, subMonths, addMonths, parseISO } from "date-fns";
@@ -124,8 +123,8 @@ const FinancialDetails = () => {
       .filter((rec) => {
         // Parse dates
         const startDate = rec.date ? new Date(rec.date) : null;
-        const endDate = rec.recurring_cancellation_date 
-          ? new Date(rec.recurring_cancellation_date) 
+        const endDate = rec.recurring_cancellation_date
+          ? new Date(rec.recurring_cancellation_date)
           : null;
 
         // Skip if dates are invalid
@@ -137,8 +136,10 @@ const FinancialDetails = () => {
         // Recurring is valid if:
         // 1. It started on or before the target month's end
         // 2. It wasn't cancelled, or was cancelled after the start of the target month
-        return startDate <= targetMonthEnd && 
-               (!endDate || endDate >= targetMonthStart);
+        return (
+          startDate <= targetMonthEnd &&
+          (!endDate || endDate >= targetMonthStart)
+        );
       })
       .map((rec) => {
         return {
@@ -163,47 +164,63 @@ const FinancialDetails = () => {
   // Subscribe to real-time changes in the database tables
   useEffect(() => {
     const investmentsChannel = supabase
-      .channel('investments-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'investments' 
-      }, () => {
-        setRefreshTrigger(prev => prev + 1);
-      })
+      .channel("investments-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "investments",
+        },
+        () => {
+          setRefreshTrigger((prev) => prev + 1);
+        }
+      )
       .subscribe();
 
     const expensesChannel = supabase
-      .channel('expenses-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'expenses' 
-      }, () => {
-        setRefreshTrigger(prev => prev + 1);
-      })
+      .channel("expenses-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "expenses",
+        },
+        () => {
+          setRefreshTrigger((prev) => prev + 1);
+        }
+      )
       .subscribe();
 
     const recurringChannel = supabase
-      .channel('recurring-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'recurring' 
-      }, () => {
-        setRefreshTrigger(prev => prev + 1);
-      })
+      .channel("recurring-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "recurring",
+        },
+        () => {
+          setRefreshTrigger((prev) => prev + 1);
+        }
+      )
       .subscribe();
 
     const invoicesChannel = supabase
-      .channel('invoices-changes')
-      .on('postgres_changes', { 
-        event: '*', 
-        schema: 'public', 
-        table: 'invoices' 
-      }, () => {
-        setRefreshTrigger(prev => prev + 1);
-      })
+      .channel("invoices-changes")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "invoices",
+        },
+        () => {
+          setRefreshTrigger((prev) => prev + 1);
+        }
+      )
       .subscribe();
 
     return () => {
@@ -312,8 +329,12 @@ const FinancialDetails = () => {
       setRecurringDetails(currentRecurring || []);
 
       // Process recurring items for the current month
-      const filteredCurrentRecurring = getRecurringDetails(currentRecurring, year, month);
-      
+      const filteredCurrentRecurring = getRecurringDetails(
+        currentRecurring,
+        year,
+        month
+      );
+
       const currentGrossIncome =
         currentInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
 
@@ -342,8 +363,9 @@ const FinancialDetails = () => {
       };
 
       // Process recurring items for the previous month
-      const filteredPreviousRecurring = getRecurringDetails(previousRecurring, 
-        previousDate.getFullYear(), 
+      const filteredPreviousRecurring = getRecurringDetails(
+        previousRecurring,
+        previousDate.getFullYear(),
         previousDate.getMonth() + 1
       );
 
@@ -398,6 +420,7 @@ const FinancialDetails = () => {
           summary={summary}
           expenseDetails={getExpenseDetails(expenseDetails)}
           investmentDetails={getInvestmentDetails(investmentDetails)}
+          recurringDetails={getRecurringDetails(recurringDetails, year, month)}
         />
 
         <div className="flex justify-between items-center mb-6">
