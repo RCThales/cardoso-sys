@@ -223,6 +223,7 @@ const Financial = () => {
               ))}
             </SelectContent>
           </Select>
+          {/* Botão para baixar o relatório anual 
           <Button
             variant="outline"
             // onClick={handleDownloadPDF}
@@ -231,6 +232,7 @@ const Financial = () => {
             <Download className="h-4 w-4 mr-2" />
             Baixar Relatório Anual
           </Button>
+          */}
         </div>
 
         {/* Exibir os meses do ano selecionado */}
