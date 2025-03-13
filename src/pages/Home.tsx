@@ -1,3 +1,4 @@
+
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -12,6 +13,7 @@ import {
   Smartphone,
 } from "lucide-react";
 
+// Modify the menuItems type to include the WhatsApp option
 const menuItems = [
   {
     title: "Aluguel",
@@ -80,6 +82,9 @@ const menuItems = [
   */
 ] as const;
 
+// Create a type that includes both the regular menu items and WhatsApp option
+type MenuItemTitle = typeof menuItems[number]['title'] | 'WhatsApp';
+
 const openWhatsApp = () => {
   const isAndroid = /Android/i.test(navigator.userAgent);
   const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -125,7 +130,7 @@ const Home = () => {
               key={item.title}
               className={`cursor-pointer hover:scale-105 transition-transform ${item.color}`}
               onClick={
-                item.title === "WhatsApp"
+                (item.title as MenuItemTitle) === "WhatsApp"
                   ? openWhatsApp
                   : () => navigate(item.route)
               }
