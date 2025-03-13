@@ -1,3 +1,4 @@
+
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -6,18 +7,11 @@ import { InvoiceItems } from "./invoice/InvoiceItems";
 import { useInvoiceGeneration } from "@/hooks/useInvoiceGeneration";
 import { Input } from "./ui/input";
 import { useCartStore } from "@/store/cartStore";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { is } from "date-fns/locale";
+import { PaymentMethodDialog } from "./invoice/PaymentMethodDialog";
 
 interface InvoiceGeneratorProps {
   onInvoiceCreated?: () => void;
@@ -32,6 +26,8 @@ export const InvoiceGenerator = ({
     setItems,
     clientData,
     setClientData,
+    paymentMethod,
+    setPaymentMethod,
     addItem,
     updateItem,
     removeItem,
@@ -40,10 +36,9 @@ export const InvoiceGenerator = ({
     validateRequiredFields,
   } = useInvoiceGeneration();
 
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const cartItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
-
-  console.log(cartItems);
 
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -109,14 +104,24 @@ export const InvoiceGenerator = ({
     return itemSubTotalPlusShipping() - clientData.specialDiscount;
   };
 
-  const handleGenerateInvoice = async () => {
+  const handleOpenPaymentDialog = () => {
     if (!validateRequiredFields()) return;
+    setIsPaymentDialogOpen(true);
+  };
+
+  const handlePaymentConfirm = async (method: string) => {
+    setPaymentMethod(method);
+    setClientData({
+      ...clientData,
+      isPaid: true,
+    });
+    
     const invoiceCreated = await generateInvoice();
     clearCart();
-    //InvoiceCreated?.();
     clearSessionStorage();
 
     navigate("/invoices/history?invoice_id=" + invoiceCreated);
+    if (onInvoiceCreated) onInvoiceCreated();
   };
 
   const clearSessionStorage = () => {
@@ -214,14 +219,21 @@ export const InvoiceGenerator = ({
             Voltar
           </Button>
           <Button
-            onClick={handleGenerateInvoice}
+            onClick={handleOpenPaymentDialog}
             className="w-full md:w-auto"
             disabled={!isFormValid}
           >
-            Gerar Fatura e Finalizar
+            Finalizar e Escolher Forma de Pagamento
           </Button>
         </div>
       </div>
+
+      <PaymentMethodDialog
+        open={isPaymentDialogOpen}
+        onOpenChange={setIsPaymentDialogOpen}
+        onConfirm={handlePaymentConfirm}
+        total={calculateTotalItemsPlusShippingMinusDiscount()}
+      />
     </Card>
   );
 };

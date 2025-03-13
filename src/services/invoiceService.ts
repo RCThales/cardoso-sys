@@ -36,7 +36,8 @@ export const createInvoice = async (
   items: InvoiceItem[],
   clientData: ClientData,
   total: number,
-  userId: string
+  userId: string,
+  paymentMethod: string = "Cartão"
 ) => {
   // First update client information if needed
   await updateClientInfoIfNeeded(clientData);
@@ -81,6 +82,7 @@ export const createInvoice = async (
     subtotal: total,
     total,
     is_paid: clientData.isPaid,
+    payment_method: paymentMethod,
     user_id: userId,
   });
 

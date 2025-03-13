@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -19,7 +20,7 @@ export const PaymentMethodDialog = ({
   onConfirm,
   total,
 }: PaymentMethodDialogProps) => {
-  const [method, setMethod] = useState<string>("card");
+  const [method, setMethod] = useState<string>("Cartão");
   const [cashReceived, setCashReceived] = useState<string>("");
   const [qrCode, setQrCode] = useState<string>("");
   const [rawPix, setRawPix] = useState<string>("");
@@ -36,24 +37,29 @@ export const PaymentMethodDialog = ({
 
   useEffect(() => {
     async function generateDynamicPix() {
-      const qrCodePix = QrCodePix({
-        version: "01",
-        key: "61981988450",
-        name: "57684914 FERNANDO",
-        city: "Brasília",
-        transactionId: "MULETAS" + Date.now().toString().slice(-6),
-        message: "Cardoso Aluguel de Muletas",
-        value: total,
-      });
+      try {
+        const qrCodePix = QrCodePix({
+          version: "01",
+          key: "61981988450",
+          name: "57684914 FERNANDO",
+          city: "Brasília",
+          transactionId: "MULETAS" + Date.now().toString().slice(-6),
+          message: "Cardoso Aluguel de Muletas",
+          value: total,
+        });
 
-      const rawPixStr = qrCodePix.payload();
-      const qrCodeBase64 = await qrCodePix.base64();
+        const rawPixStr = qrCodePix.payload();
+        const qrCodeBase64 = await qrCodePix.base64();
 
-      setRawPix(rawPixStr);
-      setQrCode(qrCodeBase64);
+        setRawPix(rawPixStr);
+        setQrCode(qrCodeBase64);
+        console.log("QR Code gerado:", !!qrCodeBase64);
+      } catch (error) {
+        console.error("Erro ao gerar QR Code PIX:", error);
+      }
     }
 
-    if (method === "pix" && open) {
+    if (method === "Pix" && open) {
       void generateDynamicPix();
     }
   }, [method, total, open]);
@@ -125,8 +131,12 @@ export const PaymentMethodDialog = ({
 
           <TabsContent value="Pix" className="mt-4">
             <div className="flex flex-col items-center space-y-4">
-              {qrCode && (
+              {qrCode ? (
                 <img src={qrCode} alt="QR Code PIX" className="w-48 h-48" />
+              ) : (
+                <div className="w-48 h-48 border-2 border-dashed border-gray-300 flex items-center justify-center text-muted-foreground">
+                  Gerando QR Code...
+                </div>
               )}
               <p className="text-sm text-muted-foreground">
                 Total a pagar: R$ {formatCurrency(total)}

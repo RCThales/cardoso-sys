@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -11,6 +12,7 @@ export const useInvoiceGeneration = () => {
   const { toast } = useToast();
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [clientData, setClientData] = useState<ClientData>(DEFAULT_CLIENT_DATA);
+  const [paymentMethod, setPaymentMethod] = useState<string>("Cartão");
 
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
@@ -99,7 +101,8 @@ export const useInvoiceGeneration = () => {
         items,
         clientData,
         total,
-        user.id
+        user.id,
+        paymentMethod
       );
 
       toast({
@@ -127,6 +130,8 @@ export const useInvoiceGeneration = () => {
     setItems,
     clientData,
     setClientData,
+    paymentMethod,
+    setPaymentMethod,
     addItem,
     updateItem,
     removeItem,
