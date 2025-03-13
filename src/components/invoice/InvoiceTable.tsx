@@ -1,3 +1,4 @@
+
 import { Table, TableBody, TableCell, TableRow } from "../ui/table";
 import { Invoice } from "./types";
 import { useToast } from "../ui/use-toast";
@@ -5,6 +6,7 @@ import { useState } from "react";
 import { ReturnConfirmDialog } from "./ReturnConfirmDialog";
 import { PaymentMethodDialog } from "./PaymentMethodDialog";
 import { DeleteInvoiceDialog } from "./DeleteInvoiceDialog";
+import { NotesDialog } from "./NotesDialog";
 import ReactConfetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
@@ -25,6 +27,7 @@ interface InvoiceTableProps {
   onDelete: (invoiceId: number) => void;
   formatCurrency: (value: number) => string;
   invoiceId?: string | null;
+  onRefresh: () => void;
 }
 
 export const InvoiceTable = ({
@@ -36,11 +39,13 @@ export const InvoiceTable = ({
   onDelete,
   formatCurrency,
   invoiceId,
+  onRefresh,
 }: InvoiceTableProps) => {
   const { toast } = useToast();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
@@ -57,8 +62,6 @@ export const InvoiceTable = ({
     // Verifica se todos os itens filtrados são VENDA ou ALUGUEL
     const allSales = filteredItems.every((item) => item.is_sale);
     const allRentals = filteredItems.every((item) => !item.is_sale);
-
-    console.log(filteredItems); // Para depuração
 
     if (allSales) {
       return "VENDA";
@@ -151,6 +154,11 @@ export const InvoiceTable = ({
     }
   };
 
+  const handleNotesClick = (invoice: Invoice) => {
+    setSelectedInvoice(invoice);
+    setNotesDialogOpen(true);
+  };
+
   return (
     <>
       {showConfetti && (
@@ -171,6 +179,7 @@ export const InvoiceTable = ({
               onDownload={() => onDownload(currentInvoice)}
               onPreview={() => onPreview(currentInvoice)}
               onDelete={() => handleDeleteClick(currentInvoice)}
+              onNotesClick={() => handleNotesClick(currentInvoice)}
               formatCurrency={formatCurrency}
               isPaidDisabled={currentInvoice.is_returned}
               isReturnedDisabled={
@@ -191,6 +200,7 @@ export const InvoiceTable = ({
               onDownload={() => onDownload(invoice)}
               onPreview={() => onPreview(invoice)}
               onDelete={() => handleDeleteClick(invoice)}
+              onNotesClick={() => handleNotesClick(invoice)}
               formatCurrency={formatCurrency}
               isPaidDisabled={invoice.is_returned}
               isReturnedDisabled={!invoice.is_paid || invoice.is_returned}
@@ -218,6 +228,14 @@ export const InvoiceTable = ({
         onOpenChange={setDeleteDialogOpen}
         onConfirm={handleDeleteConfirm}
         invoiceNumber={selectedInvoice?.invoice_number || ""}
+      />
+
+      <NotesDialog
+        open={notesDialogOpen}
+        onOpenChange={setNotesDialogOpen}
+        invoiceId={selectedInvoice?.id || 0}
+        initialNotes={selectedInvoice?.notes || ""}
+        onNotesSaved={onRefresh}
       />
     </>
   );

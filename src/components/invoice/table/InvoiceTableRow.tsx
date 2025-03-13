@@ -1,3 +1,4 @@
+
 import { format, parseISO } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -10,7 +11,9 @@ import {
   Tag,
   Calendar,
   Circle,
-} from "lucide-react"; // Importe os ícones necessários
+  StickyNote,
+  AlertOctagon,
+} from "lucide-react";
 import { Invoice, InvoiceExtension } from "../types";
 import { cn } from "@/lib/utils";
 
@@ -21,11 +24,12 @@ interface InvoiceTableRowProps {
   onDownload: () => void;
   onPreview: () => void;
   onDelete: () => void;
+  onNotesClick: () => void;
   formatCurrency: (value: number | string | null | undefined) => string;
   isPaidDisabled: boolean;
   isReturnedDisabled: boolean;
   current: boolean;
-  invoiceType: "VENDA" | "ALUGUEL" | "HÍBRIDO"; // Adiciona a prop invoiceType
+  invoiceType: "VENDA" | "ALUGUEL" | "HÍBRIDO";
 }
 
 export const InvoiceTableRow = ({
@@ -35,11 +39,12 @@ export const InvoiceTableRow = ({
   onDownload,
   onPreview,
   onDelete,
+  onNotesClick,
   formatCurrency,
   current,
   isPaidDisabled,
   isReturnedDisabled,
-  invoiceType, // Recebe o tipo da fatura
+  invoiceType,
 }: InvoiceTableRowProps) => {
   // Ícone e texto com base no tipo da fatura
   const invoiceTypeIcon =
@@ -60,6 +65,9 @@ export const InvoiceTableRow = ({
 
   // Verifica se a fatura é do tipo VENDA
   const isSale = invoiceType === "VENDA";
+  
+  // Check if notes exist
+  const hasNotes = invoice.notes && invoice.notes.trim().length > 0;
 
   return (
     <TableRow
@@ -149,6 +157,20 @@ export const InvoiceTableRow = ({
             disabled={isReturnedDisabled}
           />
         )}
+      </TableCell>
+      <TableCell>
+        <Button
+          variant={hasNotes ? "outline" : "ghost"}
+          size="icon"
+          onClick={onNotesClick}
+          title={hasNotes ? "Editar notas" : "Adicionar notas"}
+          className="relative"
+        >
+          <StickyNote className={cn("h-4 w-4", hasNotes ? "text-blue-500" : "text-muted-foreground")} />
+          {hasNotes && (
+            <AlertOctagon className="h-3 w-3 text-amber-500 absolute -top-1 -right-1" />
+          )}
+        </Button>
       </TableCell>
       <TableCell className="text-right space-x-2 space-y-2">
         <Button

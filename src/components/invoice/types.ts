@@ -1,3 +1,4 @@
+
 export interface InvoiceItem {
   is_sale: any;
   description: string;
@@ -39,6 +40,7 @@ export interface Invoice {
   extensions?: InvoiceExtension[];
   user_id?: string;
   return_date?: string;
+  notes?: string | null;
 }
 
 // Helper type for Supabase JSON conversion

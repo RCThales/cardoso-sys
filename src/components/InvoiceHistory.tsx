@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -13,7 +14,7 @@ interface InvoiceHistoryProps {
   sortOrder: "asc" | "desc";
   filterStatus: "all" | "paid" | "unpaid" | "returned" | "not-returned";
   dateSortType: "invoice" | "return";
-  invoiceId?: string | null; // Adicione o invoiceId como uma prop opcional
+  invoiceId?: string | null;
 }
 
 export const InvoiceHistory = ({
@@ -325,6 +326,7 @@ export const InvoiceHistory = ({
           onDelete={handleDelete}
           formatCurrency={formatCurrency}
           invoiceId={invoiceId}
+          onRefresh={fetchInvoices}
         />
       ) : (
         <div className="text-center p-8 border rounded-lg bg-muted/20">
