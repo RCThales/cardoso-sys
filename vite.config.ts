@@ -15,8 +15,8 @@ export default defineConfig(({ mode }) => ({
     VitePWA({
       registerType: "autoUpdate",
       manifest: {
-        name: "CARDOSO SYS",
-        short_name: "CARDOSO SYS",
+        name: "Cardoso Sys",
+        short_name: "Cardoso Sys",
         description: "Sistema de gestão Cardoso",
         theme_color: "#202020",
         background_color: "#ffffff",
