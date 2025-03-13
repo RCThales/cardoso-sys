@@ -13,9 +13,8 @@ export function Navbar() {
   return (
     <div className="bg-white border-b h-16 flex items-center justify-between px-4 sm:px-6 lg:px-8">
       <div className="flex items-center gap-3">
-        <Accessibility className="h-5 w-5 text-gray-700" />
-        <Link to="/" className="text-lg font-semibold text-gray-700">
-          CARDOSO SYS
+        <Link to="/" className="hover:scale-[1.03] transition-all">
+          <img src="/logo_cardoso.svg" alt="CARDOSO's logo" width={180} />
         </Link>
       </div>
 

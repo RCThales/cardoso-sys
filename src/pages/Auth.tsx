@@ -44,11 +44,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1 text-center">
           <div className="flex justify-center mb-4">
-            <img
-              src="/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png"
-              alt="Cardoso Logo"
-              className="h-28 w-auto"
-            />
+            <img src="/logo_cardoso.svg" alt="CARDOSO's logo" width={180} />
           </div>
           <p className="text-muted-foreground">
             Entre com suas credenciais para acessar

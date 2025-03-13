@@ -26,7 +26,7 @@ export default defineConfig(({ mode }) => ({
           {
             src: "/screenshot-wide.png",
             type: "image/png",
-            sizes: "1835x1080",
+            sizes: "1920x1080",
             form_factor: "wide",
           },
           {
