@@ -1,7 +1,8 @@
+
 import { jsPDF } from "jspdf";
 import autoTable, { RowInput } from "jspdf-autotable";
 import { Invoice, InvoiceExtension } from "@/components/invoice/types";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { formatCurrency } from "./formatters";
 
 interface ExtendedJsPDF extends jsPDF {
@@ -92,19 +93,29 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     75
   );
 
+  // Calcular os dias entre as datas
+  const days = invoice.return_date
+    ? differenceInDays(parseISO(invoice.return_date), parseISO(invoice.invoice_date))
+    : 0;
+
   // Informações da Fatura
+  const returnDateFormatted = invoice.return_date
+    ? format(parseISO(invoice.return_date), "dd/MM/yyyy")
+    : "N/A";
+
+  const invoiceDateFormatted = format(parseISO(invoice.invoice_date), "dd/MM/yyyy");
+  
   doc.text(
     [
-      `Data: ${format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}`,
-      `Data de Devolução: ${format(
-        parseISO(invoice.return_date || ""),
-        "dd/MM/yyyy"
-      )}`,
+      `Período: ${invoiceDateFormatted} ${
+        invoiceType !== "VENDA" ? `a ${returnDateFormatted}` : ""
+      }`,
+      invoiceType !== "VENDA" ? `Duração: ${days} dias` : "",
       `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
       invoice.payment_method
         ? `Forma de Pagamento: ${invoice.payment_method}`
         : "",
-    ],
+    ].filter(Boolean),
     pageWidth - 60,
     75
   );
@@ -214,6 +225,20 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
       1: { cellWidth: 50, halign: "right" },
     },
   });
+
+  // Adicionar notas se existirem
+  if (invoice.notes && invoice.notes.trim().length > 0) {
+    currentY = doc.lastAutoTable?.finalY || currentY;
+    
+    doc.setFontSize(12);
+    doc.text("Observações:", 15, currentY + 15);
+    
+    doc.setFontSize(10);
+    const splitNotes = doc.splitTextToSize(invoice.notes, pageWidth - 30);
+    doc.text(splitNotes, 15, currentY + 20);
+    
+    currentY += 20 + (splitNotes.length * 5);
+  }
 
   // Move o texto legal para o rodapé da página
   const pageHeight = doc.internal.pageSize.getHeight();

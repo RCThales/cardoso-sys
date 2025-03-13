@@ -1,5 +1,5 @@
 
-import { format, parseISO } from "date-fns";
+import { format, parseISO, differenceInDays } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -66,6 +66,43 @@ export const InvoiceTableRow = ({
   // Verifica se a fatura é do tipo VENDA
   const isSale = invoiceType === "VENDA";
   
+  // Função para formatar o nome do cliente limitando a 2 palavras por linha
+  const formatClientName = (name: string) => {
+    const words = name.split(' ');
+    if (words.length <= 2) return name;
+    
+    return (
+      <div>
+        <div>{words.slice(0, 2).join(' ')}</div>
+        <div className="text-xs">{words.slice(2).join(' ')}</div>
+      </div>
+    );
+  };
+  
+  // Função para calcular e formatar o período
+  const formatPeriod = () => {
+    const startDate = format(parseISO(invoice.invoice_date), "dd/MM/yy");
+    
+    if (isSale) {
+      return <span>{startDate}</span>;
+    }
+    
+    const endDate = invoice.return_date 
+      ? format(parseISO(invoice.return_date), "dd/MM/yy") 
+      : "-";
+      
+    const days = invoice.return_date 
+      ? differenceInDays(parseISO(invoice.return_date), parseISO(invoice.invoice_date))
+      : 0;
+      
+    return (
+      <div className="flex flex-col">
+        <span>{startDate} → {endDate}</span>
+        <span className="text-xs text-muted-foreground">{days} dias</span>
+      </div>
+    );
+  };
+  
   // Check if notes exist
   const hasNotes = invoice.notes && invoice.notes.trim().length > 0;
 
@@ -90,15 +127,9 @@ export const InvoiceTableRow = ({
           (current && invoice.is_paid && isSale), // Borda verde se estiver devolvida
       })}
     >
-      <TableCell>{invoice.client_name}</TableCell>
-      <TableCell>
-        {/* Exibe "-" se for VENDA, caso contrário, exibe a data de devolução */}
-        {isSale
-          ? "-"
-          : invoice.return_date &&
-            format(parseISO(invoice.return_date), "dd/MM/yyyy")}
-      </TableCell>
-      {/* Nova coluna para o tipo da fatura */}
+      <TableCell>{formatClientName(invoice.client_name)}</TableCell>
+      <TableCell>{formatPeriod()}</TableCell>
+      {/* Coluna para o tipo da fatura */}
       <TableCell>
         <div className="flex items-center space-x-2">
           {invoiceTypeIcon}
@@ -120,9 +151,6 @@ export const InvoiceTableRow = ({
             ))}
           </div>
         )}
-      </TableCell>
-      <TableCell>
-        {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
       </TableCell>
 
       <TableCell className="text-right">

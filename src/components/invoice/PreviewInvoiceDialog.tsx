@@ -1,4 +1,5 @@
-import { format, parseISO } from "date-fns";
+
+import { format, parseISO, differenceInDays } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -34,6 +35,15 @@ export const PreviewInvoiceDialog = ({
   formatCurrency,
 }: PreviewInvoiceDialogProps) => {
   if (!invoice) return null;
+  
+  // Calcular o período e dias para mostrar na visualização
+  const startDate = format(parseISO(invoice.invoice_date), "dd/MM/yyyy");
+  const endDate = invoice.return_date 
+    ? format(parseISO(invoice.return_date), "dd/MM/yyyy") 
+    : "-";
+  const days = invoice.return_date 
+    ? differenceInDays(parseISO(invoice.return_date), parseISO(invoice.invoice_date))
+    : 0;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -66,12 +76,9 @@ export const PreviewInvoiceDialog = ({
               <h3 className="font-semibold">Detalhes da Fatura</h3>
               <p>Nº: {invoice.invoice_number}</p>
               <p>
-                Data: {format(parseISO(invoice.invoice_date), "dd/MM/yyyy")}
+                Período: {startDate} {invoice.return_date ? `→ ${endDate}` : ""}
               </p>
-              <p>
-                Data de Devolução:{" "}
-                {format(parseISO(invoice.return_date || ""), "dd/MM/yyyy")}
-              </p>
+              {invoice.return_date && <p>Duração: {days} dias</p>}
               <p>Status: {invoice.is_paid ? "Pago" : "Pendente"}</p>
               {invoice.is_paid && invoice.payment_method && (
                 <p>Forma de Pagamento: {invoice.payment_method}</p>
