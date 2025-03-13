@@ -14,10 +14,14 @@ import { Navbar } from "@/components/Navbar";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
 import { Download } from "lucide-react";
+import { generateYearlyFinancialPDF } from "@/utils/financialPdfGenerator";
+import { saveAs } from "file-saver";
+import { useToast } from "@/components/ui/use-toast";
 
 type InvoiceRow = Database["public"]["Tables"]["invoices"]["Row"];
 type InvestmentRow = Database["public"]["Tables"]["investments"]["Row"];
 type ExpenseRow = Database["public"]["Tables"]["expenses"]["Row"];
+type RecurringRow = Database["public"]["Tables"]["recurring"]["Row"];
 
 interface MonthData {
   month: number;
@@ -27,11 +31,13 @@ interface MonthData {
   totalInvoices: number;
   totalInvestments: number;
   totalExpenses: number;
+  totalRecurring: number;
   balance: number; // Saldo financeiro (invoices - investments - expenses)
 }
 
 const Financial = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [years, setYears] = useState<number[]>([]);
   const [monthsByYear, setMonthsByYear] = useState<Record<number, MonthData[]>>(
     {}
@@ -39,6 +45,7 @@ const Financial = () => {
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -60,11 +67,18 @@ const Financial = () => {
         .select("*")
         .order("date", { ascending: true });
 
-      if (invoicesError || investmentsError || expensesError) {
+      // Buscar gastos recorrentes
+      const { data: recurrings, error: recurringsError } = await supabase
+        .from("recurring")
+        .select("*")
+        .order("date", { ascending: true });
+
+      if (invoicesError || investmentsError || expensesError || recurringsError) {
         console.error("Erro ao buscar dados:", {
           invoicesError,
           investmentsError,
           expensesError,
+          recurringsError,
         });
         return;
       }
@@ -94,6 +108,7 @@ const Financial = () => {
             totalInvoices: 0,
             totalInvestments: 0,
             totalExpenses: 0,
+            totalRecurring: 0,
             balance: 0,
           };
         }
@@ -123,6 +138,7 @@ const Financial = () => {
             totalInvoices: 0,
             totalInvestments: 0,
             totalExpenses: 0,
+            totalRecurring: 0,
             balance: 0,
           };
         }
@@ -153,12 +169,44 @@ const Financial = () => {
             totalInvoices: 0,
             totalInvestments: 0,
             totalExpenses: 0,
+            totalRecurring: 0,
             balance: 0,
           };
         }
 
         if (monthsData[year]?.[month]) {
           monthsData[year][month].totalExpenses += expense.amount || 0;
+        }
+      });
+
+      // Processar gastos recorrentes
+      recurrings?.forEach((recurring: RecurringRow) => {
+        const date = parseISO(recurring.date);
+        const year = date.getFullYear();
+        const month = date.getMonth();
+
+        yearsSet.add(year);
+
+        if (!monthsData[year]) {
+          monthsData[year] = {};
+        }
+
+        if (!monthsData[year][month]) {
+          monthsData[year][month] = {
+            month,
+            year,
+            label: format(date, "MMMM", { locale: ptBR }),
+            count: 0,
+            totalInvoices: 0,
+            totalInvestments: 0,
+            totalExpenses: 0,
+            totalRecurring: 0,
+            balance: 0,
+          };
+        }
+
+        if (monthsData[year]?.[month]) {
+          monthsData[year][month].totalRecurring += recurring.amount || 0;
         }
       });
 
@@ -169,7 +217,8 @@ const Financial = () => {
           monthData.balance =
             monthData.totalInvoices -
             monthData.totalInvestments -
-            monthData.totalExpenses;
+            monthData.totalExpenses -
+            monthData.totalRecurring;
         });
       });
 
@@ -193,6 +242,62 @@ const Financial = () => {
     fetchData();
   }, []);
 
+  const handleDownloadYearlyPDF = async () => {
+    try {
+      setIsGeneratingPDF(true);
+      
+      // Preparar dados para o relatório anual
+      const yearlyData = {
+        year: selectedYear,
+        totalInvoices: 0,
+        totalInvestments: 0,
+        totalExpenses: 0,
+        totalRecurring: 0,
+        balance: 0,
+        monthsData: monthsByYear[selectedYear]?.map(month => ({
+          month: month.month,
+          label: month.label,
+          invoices: month.totalInvoices,
+          investments: month.totalInvestments,
+          expenses: month.totalExpenses,
+          recurring: month.totalRecurring,
+        })) || [],
+      };
+      
+      // Calcular totais
+      monthsByYear[selectedYear]?.forEach(month => {
+        yearlyData.totalInvoices += month.totalInvoices;
+        yearlyData.totalInvestments += month.totalInvestments;
+        yearlyData.totalExpenses += month.totalExpenses;
+        yearlyData.totalRecurring += month.totalRecurring;
+      });
+      
+      yearlyData.balance = 
+        yearlyData.totalInvoices - 
+        yearlyData.totalInvestments - 
+        yearlyData.totalExpenses -
+        yearlyData.totalRecurring;
+      
+      const pdfBlob = await generateYearlyFinancialPDF(yearlyData);
+      const fileName = `relatorio-financeiro-anual-${selectedYear}.pdf`;
+      saveAs(pdfBlob, fileName);
+      
+      toast({
+        title: "Relatório gerado com sucesso",
+        description: `O relatório anual de ${selectedYear} foi gerado com sucesso.`,
+      });
+    } catch (error) {
+      console.error("Erro ao gerar PDF anual:", error);
+      toast({
+        title: "Erro ao gerar relatório",
+        description: "Ocorreu um erro ao gerar o relatório anual.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -206,8 +311,8 @@ const Financial = () => {
           </p>
         </div>
 
-        {/* Dropdown para selecionar o ano */}
-        <div className="flex mb-8">
+        {/* Dropdown para selecionar o ano e botão para baixar relatório anual */}
+        <div className="flex mb-8 items-center flex-wrap gap-4">
           <Select
             value={selectedYear.toString()}
             onValueChange={(value) => setSelectedYear(Number(value))}
@@ -223,16 +328,16 @@ const Financial = () => {
               ))}
             </SelectContent>
           </Select>
-          {/* Botão para baixar o relatório anual 
+          
           <Button
             variant="outline"
-            // onClick={handleDownloadPDF}
-            className="w-fit ml-4"
+            onClick={handleDownloadYearlyPDF}
+            className="w-fit"
+            disabled={isGeneratingPDF || !monthsByYear[selectedYear]?.length}
           >
             <Download className="h-4 w-4 mr-2" />
             Baixar Relatório Anual
           </Button>
-          */}
         </div>
 
         {/* Exibir os meses do ano selecionado */}
