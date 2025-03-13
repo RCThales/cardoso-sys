@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -66,7 +65,7 @@ export const PaymentMethodDialog = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-[95vw] md:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Forma de Pagamento</DialogTitle>
         </DialogHeader>
