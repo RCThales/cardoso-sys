@@ -1,13 +1,6 @@
 
-import { useState, useEffect, useRef } from "react";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { ProductSearch } from "./ProductSearch";
+import { useState, useEffect } from "react";
+import Select from "react-select";
 import { cn } from "@/lib/utils";
 
 interface SearchableSelectProps {
@@ -25,92 +18,103 @@ export const SearchableSelect = ({
   placeholder = "Select an item",
   className,
 }: SearchableSelectProps) => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filteredItems, setFilteredItems] = useState(items);
-  const [isOpen, setIsOpen] = useState(false);
-  const searchInputRef = useRef<HTMLInputElement>(null);
+  // Format options for react-select
+  const options = items.map(item => ({
+    value: item.id,
+    label: `${item.name} ${item.label ? item.label : ''}`.trim()
+  }));
 
-  useEffect(() => {
-    const filtered = items.filter((item) =>
-      item.name.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredItems(filtered);
-  }, [searchTerm, items]);
+  // Find the selected option
+  const selectedOption = options.find(option => option.value === value);
 
-  // When closing without selecting anything, select the first item if available
-  useEffect(() => {
-    if (!isOpen && searchTerm && !value && filteredItems.length > 0) {
-      // Select the first filtered item when closing dropdown without a selection
-      onValueChange(filteredItems[0].id);
-    }
-    
-    // Clear search input when closing the dropdown
-    if (!isOpen) {
-      setSearchTerm("");
-    }
-  }, [isOpen, filteredItems, value, searchTerm, onValueChange]);
-
-  const handleSearch = (term: string) => {
-    setSearchTerm(term);
-    // Make sure input stays focused
-    if (searchInputRef.current) {
-      searchInputRef.current.focus();
-    }
+  // Custom styles to match shadcn/ui aesthetic
+  const customStyles = {
+    control: (provided, state) => ({
+      ...provided,
+      minHeight: '40px',
+      height: '40px',
+      borderRadius: '0.375rem',
+      borderColor: state.isFocused ? 'var(--ring)' : 'var(--input)', 
+      boxShadow: state.isFocused ? '0 0 0 2px var(--ring)' : 'none',
+      '&:hover': {
+        borderColor: state.isFocused ? 'var(--ring)' : 'var(--input)',
+      },
+      backgroundColor: 'var(--background)',
+      fontSize: '0.875rem',
+    }),
+    menu: (provided) => ({
+      ...provided,
+      backgroundColor: 'var(--popover)',
+      borderRadius: '0.375rem',
+      overflow: 'hidden',
+      border: '1px solid var(--border)',
+      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+      zIndex: 50,
+    }),
+    option: (provided, state) => ({
+      ...provided,
+      backgroundColor: state.isSelected 
+        ? 'var(--accent)' 
+        : state.isFocused 
+          ? 'var(--accent-subtle)' 
+          : 'transparent',
+      color: state.isSelected ? 'var(--accent-foreground)' : 'var(--foreground)',
+      fontSize: '0.875rem',
+      padding: '10px 12px',
+      cursor: 'pointer',
+      '&:active': {
+        backgroundColor: 'var(--accent)',
+      },
+    }),
+    input: (provided) => ({
+      ...provided,
+      color: 'var(--foreground)',
+    }),
+    singleValue: (provided) => ({
+      ...provided,
+      color: 'var(--foreground)',
+    }),
+    placeholder: (provided) => ({
+      ...provided,
+      color: 'var(--muted-foreground)',
+    }),
+    dropdownIndicator: (provided) => ({
+      ...provided,
+      padding: '0 8px',
+      color: 'var(--muted-foreground)',
+    }),
+    clearIndicator: (provided) => ({
+      ...provided,
+      padding: '0 8px',
+      color: 'var(--muted-foreground)',
+    }),
+    indicatorSeparator: () => ({
+      display: 'none',
+    }),
   };
 
-  const handleSelectOpen = (open: boolean) => {
-    setIsOpen(open);
-    
-    // If opening the select, focus the search input after a small delay
-    if (open) {
-      setTimeout(() => {
-        searchInputRef.current?.focus();
-      }, 50);
+  // Handle change
+  const handleChange = (option) => {
+    if (option) {
+      onValueChange(option.value);
     }
   };
 
   return (
-    <Select 
-      value={value} 
-      onValueChange={onValueChange} 
-      open={isOpen}
-      onOpenChange={handleSelectOpen}
-    >
-      <SelectTrigger className={cn("w-full", className)}>
-        <SelectValue placeholder={placeholder} />
-      </SelectTrigger>
-      <SelectContent className="min-w-[240px]" onCloseAutoFocus={(e) => {
-        // Prevent automatic focus on close to avoid focus issues
-        e.preventDefault();
-      }}>
-        <div className="p-2">
-          <ProductSearch 
-            searchTerm={searchTerm} 
-            onSearch={handleSearch} 
-            inputRef={searchInputRef}
-          />
-        </div>
-        <div className="max-h-[300px] overflow-y-auto">
-          {filteredItems.length > 0 ? (
-            filteredItems.map((item) => (
-              <SelectItem 
-                key={item.id} 
-                value={item.id}
-                onMouseDown={(e) => {
-                  // Prevent focus loss when selecting an item
-                  e.preventDefault();
-                }}
-              >
-                {item.name} {item.label && ` (${item.label})`}
-              </SelectItem>
-            ))
-          ) : (
-            <div className="px-2 py-4 text-center text-sm text-muted-foreground">
-              Nenhum produto encontrado
-            </div>
-          )}
-        </div>
-      </SelectContent>
-    </Select>
+    <div className={cn(className)}>
+      <Select
+        options={options}
+        value={selectedOption}
+        onChange={handleChange}
+        placeholder={placeholder}
+        styles={customStyles}
+        className="react-select-container"
+        classNamePrefix="react-select"
+        isSearchable={true}
+        isClearable={false}
+        menuPosition="fixed"
+        noOptionsMessage={() => "Nenhum produto encontrado"}
+      />
+    </div>
   );
 };

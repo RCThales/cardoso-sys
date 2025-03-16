@@ -1,4 +1,3 @@
-import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { RefObject } from "react";
 
@@ -16,8 +15,8 @@ export const ProductSearch = ({
   return (
     <div className="relative mb-6">
       <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-      <Input
-        className="pl-10"
+      <input
+        className="w-full pl-10 h-10 rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
         placeholder="Buscar por nome ou código do produto..."
         value={searchTerm}
         onChange={(e) => onSearch(e.target.value)}

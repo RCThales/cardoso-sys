@@ -145,13 +145,13 @@ export const SalesCalculator = () => {
   }
 
   // Format products for the searchable select
-  const productItems = products.map((product) => ({
+  const productItems = products?.map((product) => ({
     id: product.id,
     name: product.name,
     label: product.sizes && product.sizes.length > 0
       ? "(verificar tamanhos)"
       : `(${getAvailableQuantity(product.id)} disponíveis)`
-  }));
+  })) || [];
 
   return (
     <div className="h-full">
