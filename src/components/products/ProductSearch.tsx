@@ -27,11 +27,12 @@ export const ProductSearch = ({
           e.stopPropagation();
         }}
         onKeyDown={(e) => {
-          // Prevent default behavior for arrow keys to keep focus in the input
-          if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+          // Prevent default behavior for arrow keys and Enter to keep focus in the input
+          if (['ArrowUp', 'ArrowDown', 'Enter'].includes(e.key)) {
             e.stopPropagation();
           }
         }}
+        autoComplete="off" // Disable browser autocomplete
       />
     </div>
   );

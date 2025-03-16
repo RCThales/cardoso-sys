@@ -7,7 +7,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { ProductSearch } from "./ProductSearch";
 import { cn } from "@/lib/utils";
 
@@ -53,6 +52,10 @@ export const SearchableSelect = ({
 
   const handleSearch = (term: string) => {
     setSearchTerm(term);
+    // Make sure input stays focused
+    if (searchInputRef.current) {
+      searchInputRef.current.focus();
+    }
   };
 
   const handleSelectOpen = (open: boolean) => {
@@ -76,7 +79,10 @@ export const SearchableSelect = ({
       <SelectTrigger className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
-      <SelectContent className="min-w-[240px]">
+      <SelectContent className="min-w-[240px]" onCloseAutoFocus={(e) => {
+        // Prevent automatic focus on close to avoid focus issues
+        e.preventDefault();
+      }}>
         <div className="p-2">
           <ProductSearch 
             searchTerm={searchTerm} 
