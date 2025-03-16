@@ -17,9 +17,8 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useCartStore } from "@/store/cartStore";
 import { useToast } from "@/hooks/use-toast";
-import { CartDrawer } from "@/components/cart/CartDrawer";
-import { handleLogout } from "@/utils/Logout";
 import { fetchProducts, type Product } from "@/utils/priceCalculator";
+import { SearchableSelect } from "@/components/products/SearchableSelect";
 import { Navbar } from "@/components/Navbar";
 
 export const SalesCalculator = () => {
@@ -145,6 +144,15 @@ export const SalesCalculator = () => {
     return <div>Carregando...</div>;
   }
 
+  // Format products for the searchable select
+  const productItems = products.map((product) => ({
+    id: product.id,
+    name: product.name,
+    label: product.sizes && product.sizes.length > 0
+      ? "(verificar tamanhos)"
+      : `(${getAvailableQuantity(product.id)} disponíveis)`
+  }));
+
   return (
     <div className="h-full">
       <Card className="w-screen min-h-screen md:min-h-full h-auto md:mt-8 md:max-w-lg mx-auto p-8 shadow-lg animate-fade-in relative overflow-x-hidden">
@@ -177,24 +185,12 @@ export const SalesCalculator = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <span className="text-sm font-medium">Produto</span>
-                <Select
+                <SearchableSelect
+                  items={productItems}
                   value={selectedProduct}
                   onValueChange={handleProductChange}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {products.map((product) => (
-                      <SelectItem key={product.id} value={product.id}>
-                        {product.name}{" "}
-                        {product.sizes && product.sizes.length > 0
-                          ? "(verificar tamanhos)"
-                          : `(${getAvailableQuantity(product.id)} disponíveis)`}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Selecione um produto"
+                />
               </div>
 
               {selectedProductData?.sizes &&
