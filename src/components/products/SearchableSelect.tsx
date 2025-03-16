@@ -38,11 +38,16 @@ export const SearchableSelect = ({
     setFilteredItems(filtered);
   }, [searchTerm, items]);
 
-  // When clicking outside without selecting anything, select the first item if available
+  // When closing without selecting anything, select the first item if available
   useEffect(() => {
     if (!isOpen && searchTerm && !value && filteredItems.length > 0) {
       // Select the first filtered item when closing dropdown without a selection
       onValueChange(filteredItems[0].id);
+    }
+    
+    // Clear search input when closing the dropdown
+    if (!isOpen) {
+      setSearchTerm("");
     }
   }, [isOpen, filteredItems, value, searchTerm, onValueChange]);
 

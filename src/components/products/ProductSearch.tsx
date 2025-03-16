@@ -1,4 +1,3 @@
-
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import { RefObject } from "react";
@@ -26,6 +25,12 @@ export const ProductSearch = ({
         onClick={(e) => {
           // Prevent event propagation to avoid closing the dropdown
           e.stopPropagation();
+        }}
+        onKeyDown={(e) => {
+          // Prevent default behavior for arrow keys to keep focus in the input
+          if (['ArrowUp', 'ArrowDown'].includes(e.key)) {
+            e.stopPropagation();
+          }
         }}
       />
     </div>
