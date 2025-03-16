@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import {
   Select,
   SelectContent,
@@ -28,6 +28,8 @@ export const SearchableSelect = ({
 }: SearchableSelectProps) => {
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredItems, setFilteredItems] = useState(items);
+  const [isOpen, setIsOpen] = useState(false);
+  const searchInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const filtered = items.filter((item) =>
@@ -36,23 +38,58 @@ export const SearchableSelect = ({
     setFilteredItems(filtered);
   }, [searchTerm, items]);
 
+  // When clicking outside without selecting anything, select the first item if available
+  useEffect(() => {
+    if (!isOpen && searchTerm && !value && filteredItems.length > 0) {
+      // Select the first filtered item when closing dropdown without a selection
+      onValueChange(filteredItems[0].id);
+    }
+  }, [isOpen, filteredItems, value, searchTerm, onValueChange]);
+
   const handleSearch = (term: string) => {
     setSearchTerm(term);
   };
 
+  const handleSelectOpen = (open: boolean) => {
+    setIsOpen(open);
+    
+    // If opening the select, focus the search input after a small delay
+    if (open) {
+      setTimeout(() => {
+        searchInputRef.current?.focus();
+      }, 50);
+    }
+  };
+
   return (
-    <Select value={value} onValueChange={onValueChange}>
+    <Select 
+      value={value} 
+      onValueChange={onValueChange} 
+      open={isOpen}
+      onOpenChange={handleSelectOpen}
+    >
       <SelectTrigger className={cn("w-full", className)}>
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent className="min-w-[240px]">
         <div className="p-2">
-          <ProductSearch searchTerm={searchTerm} onSearch={handleSearch} />
+          <ProductSearch 
+            searchTerm={searchTerm} 
+            onSearch={handleSearch} 
+            inputRef={searchInputRef}
+          />
         </div>
         <div className="max-h-[300px] overflow-y-auto">
           {filteredItems.length > 0 ? (
             filteredItems.map((item) => (
-              <SelectItem key={item.id} value={item.id}>
+              <SelectItem 
+                key={item.id} 
+                value={item.id}
+                onMouseDown={(e) => {
+                  // Prevent focus loss when selecting an item
+                  e.preventDefault();
+                }}
+              >
                 {item.name} {item.label && ` (${item.label})`}
               </SelectItem>
             ))
