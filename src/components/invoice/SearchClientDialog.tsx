@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Input } from "../ui/input";
@@ -20,6 +21,7 @@ interface ClientSearchResult {
   client_address: string;
   client_address_number: string;
   client_address_complement: string;
+  client_neighborhood: string;
   client_city: string;
   client_state: string;
   client_postal_code: string;
@@ -46,7 +48,7 @@ export const SearchClientDialog = ({
     const { data, error } = await supabase
       .from("invoices")
       .select(
-        "client_name, client_cpf, client_phone, client_address, client_address_number, client_address_complement, client_city, client_state, client_postal_code"
+        "client_name, client_cpf, client_phone, client_address, client_address_number, client_address_complement, client_neighborhood, client_city, client_state, client_postal_code"
       )
       .or(`client_name.ilike.%${search}%,client_cpf.ilike.%${search}%`)
       .order("client_name")
@@ -85,6 +87,7 @@ export const SearchClientDialog = ({
       address: client.client_address,
       addressNumber: client.client_address_number || "",
       addressComplement: client.client_address_complement || "",
+      neighborhood: client.client_neighborhood || "",
       city: client.client_city,
       state: client.client_state,
       postalCode: client.client_postal_code,
