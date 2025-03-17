@@ -14,6 +14,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Check, Trash2 } from "lucide-react";
 import { Input } from "../components/ui/input";
 import { Button } from "../components/ui/button";
+import { ThemeToggle } from "@/components/theme/ThemeToggle";
 
 export default function Settings() {
   const [settings, setSettings] = useState([]);
@@ -176,7 +177,15 @@ export default function Settings() {
   return (
     <div className="min-h-screen bg-background transition-colors duration-300">
       <Navbar />
-      <div className="h-full">
+      <div className="h-full ">
+        <div className="max-w-2xl mx-auto p-6 space-y-6">
+          {" "}
+          <h2 className="font-bold text-2xl hover:text-[1.6rem] transition-all">
+            Tema do Aplicativo
+          </h2>
+          <ThemeToggle />
+        </div>
+
         <div className="max-w-2xl mx-auto p-6 space-y-6">
           {/* Seção Pagamentos */}
           <details className="cursor-pointer">

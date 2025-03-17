@@ -29,7 +29,7 @@ const App = () => {
       <TooltipProvider>
         <Toaster />
         <Sonner />
-        <ThemeToggle />
+
         <Routes>
           <Route
             path="/"
