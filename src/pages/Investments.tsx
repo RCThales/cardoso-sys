@@ -1,4 +1,3 @@
-
 import { Navbar } from "@/components/Navbar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DeleteProductDialog } from "@/components/products/DeleteProductDialog";
@@ -40,7 +39,7 @@ const Investments = () => {
     getAvailableYears,
     getButtonLabel,
     getDialogTitle,
-    INITIAL_FORM_STATE
+    INITIAL_FORM_STATE,
   } = useInvestments();
 
   return (
@@ -53,16 +52,18 @@ const Investments = () => {
               Investimentos e Despesas
             </h1>
             <p className="text-muted-foreground mt-2">
-              Gerencie os investimentos, despesas e gastos recorrentes em equipamentos, impostos,
-              infraestrutura e marketing.
+              Gerencie os investimentos, despesas e gastos recorrentes em
+              equipamentos, impostos, infraestrutura e marketing.
             </p>
           </div>
         </div>
 
-        <Tabs 
-          defaultValue="investments" 
-          value={activeTab} 
-          onValueChange={(value) => setActiveTab(value as "investments" | "expenses" | "recurrings")}
+        <Tabs
+          defaultValue="investments"
+          value={activeTab}
+          onValueChange={(value) =>
+            setActiveTab(value as "investments" | "expenses" | "recurrings")
+          }
           className="mb-8"
         >
           <TabsList>
@@ -72,7 +73,7 @@ const Investments = () => {
           </TabsList>
 
           <TabsContent value="investments" className="mt-4">
-            <div className="mb-8">
+            <div className="mb-8 ">
               <AddInvestmentDialog
                 open={isDialogOpen}
                 onOpenChange={(open) => {
@@ -140,7 +141,7 @@ const Investments = () => {
 
         {/* Year/Month filters */}
         <div className="mb-8">
-          {(getAvailableYears().length > 0) && (
+          {getAvailableYears().length > 0 && (
             <FilterBar
               selectedYear={selectedYear}
               setSelectedYear={setSelectedYear}
@@ -153,18 +154,23 @@ const Investments = () => {
 
           <div className="grid gap-4">
             <h2 className="text-xl font-semibold mb-4">
-              {activeTab === "investments" 
-                ? "Investimentos" 
-                : activeTab === "expenses" 
-                  ? "Despesas" 
-                  : "Gastos Recorrentes"} do Período
+              {activeTab === "investments"
+                ? "Investimentos"
+                : activeTab === "expenses"
+                ? "Despesas"
+                : "Gastos Recorrentes"}{" "}
+              do Período
             </h2>
 
-            <InvestmentsList 
+            <InvestmentsList
               items={getFilteredItems()}
               onEdit={handleEdit}
               onDelete={handleDeleteClick}
-              onCancelRecurring={activeTab === "recurrings" ? handleCancelRecurringClick : undefined}
+              onCancelRecurring={
+                activeTab === "recurrings"
+                  ? handleCancelRecurringClick
+                  : undefined
+              }
               isRecurring={activeTab === "recurrings"}
             />
           </div>

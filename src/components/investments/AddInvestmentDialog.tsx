@@ -36,7 +36,7 @@ export const AddInvestmentDialog = ({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button>
-          <Plus className="mr-2 h-4 w-4" />
+          <Plus className="mr-2 h-4 w-4 " />
           {buttonLabel}
         </Button>
       </DialogTrigger>

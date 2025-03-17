@@ -123,7 +123,7 @@ const Products = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-background">
       <Navbar />
       <div className="container py-8">
         <ProductsHeader onNewProduct={() => toggleProductDialog()} />

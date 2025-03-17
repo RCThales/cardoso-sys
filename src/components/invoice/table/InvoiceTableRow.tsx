@@ -1,4 +1,3 @@
-
 import { format, parseISO, differenceInDays } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -65,66 +64,72 @@ export const InvoiceTableRow = ({
 
   // Verifica se a fatura é do tipo VENDA
   const isSale = invoiceType === "VENDA";
-  
+
   // Função para formatar o nome do cliente limitando a 2 palavras por linha
   const formatClientName = (name: string) => {
-    const words = name.split(' ');
+    const words = name.split(" ");
     if (words.length <= 2) return name;
-    
+
     return (
       <div>
-        <div>{words.slice(0, 2).join(' ')}</div>
-        <div className="text-xs">{words.slice(2).join(' ')}</div>
+        <div>{words.slice(0, 2).join(" ")}</div>
+        <div className="text-xs">{words.slice(2).join(" ")}</div>
       </div>
     );
   };
-  
+
   // Função para calcular e formatar o período
   const formatPeriod = () => {
     const startDate = format(parseISO(invoice.invoice_date), "dd/MM/yy");
-    
+
     if (isSale) {
       return <span>{startDate}</span>;
     }
-    
-    const endDate = invoice.return_date 
-      ? format(parseISO(invoice.return_date), "dd/MM/yy") 
+
+    const endDate = invoice.return_date
+      ? format(parseISO(invoice.return_date), "dd/MM/yy")
       : "-";
-      
-    const days = invoice.return_date 
-      ? differenceInDays(parseISO(invoice.return_date), parseISO(invoice.invoice_date))
+
+    const days = invoice.return_date
+      ? differenceInDays(
+          parseISO(invoice.return_date),
+          parseISO(invoice.invoice_date)
+        )
       : 0;
-      
+
     return (
       <div className="flex flex-col">
-        <span>{startDate} → {endDate}</span>
+        <span>
+          {startDate} → {endDate}
+        </span>
         <span className="text-xs text-muted-foreground">{days} dias</span>
       </div>
     );
   };
-  
+
   // Check if notes exist
   const hasNotes = invoice.notes && invoice.notes.trim().length > 0;
 
   return (
     <TableRow
       className={cn({
-        // Cores de fundo padrão
-        "bg-green-100 hover:bg-green-200":
+        // Cores de fundo no modo claro
+        "bg-green-100 hover:bg-green-200 dark:bg-green-900 dark:hover:bg-green-800":
           (invoice.is_paid && invoice.is_returned) ||
-          (isSale && invoice.is_paid), // BG verde para VENDA paga
-        "bg-yellow-100 hover:bg-yellow-200":
-          invoice.is_paid && !invoice.is_returned && !isSale, // BG amarelo para ALUGUEL pago
-        "bg-red-100 hover:bg-red-200": !invoice.is_paid && !invoice.is_returned, // BG vermelho para não pago
+          (isSale && invoice.is_paid), // Verde para VENDA paga
+        "bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-800 dark:hover:bg-yellow-700":
+          invoice.is_paid && !invoice.is_returned && !isSale, // Amarelo para ALUGUEL pago
+        "bg-red-100 hover:bg-red-200 dark:bg-red-900 dark:hover:bg-red-800":
+          !invoice.is_paid && !invoice.is_returned, // Vermelho para não pago
 
         // Borda da fatura atual (current)
-        "border-4 shadow-lg": current, // Aplica borda e sombra
-        "border-red-400": current && !invoice.is_paid, // Borda vermelha se não estiver paga
-        "border-yellow-400":
-          current && invoice.is_paid && !invoice.is_returned && !isSale, // Borda amarela se estiver paga
-        "border-green-400":
+        "border-4 shadow-lg": current,
+        "border-red-400 dark:border-red-600": current && !invoice.is_paid, // Borda vermelha escura se não estiver paga
+        "border-yellow-400 dark:border-yellow-600":
+          current && invoice.is_paid && !invoice.is_returned && !isSale, // Borda amarela escura se estiver paga
+        "border-green-400 dark:border-green-600":
           (current && invoice.is_paid && invoice.is_returned) ||
-          (current && invoice.is_paid && isSale), // Borda verde se estiver devolvida
+          (current && invoice.is_paid && isSale), // Borda verde escura se estiver devolvida
       })}
     >
       <TableCell>{formatClientName(invoice.client_name)}</TableCell>
@@ -194,7 +199,12 @@ export const InvoiceTableRow = ({
           title={hasNotes ? "Editar notas" : "Adicionar notas"}
           className="relative"
         >
-          <StickyNote className={cn("h-4 w-4", hasNotes ? "text-blue-500" : "text-muted-foreground")} />
+          <StickyNote
+            className={cn(
+              "h-4 w-4",
+              hasNotes ? "text-blue-500" : "text-muted-foreground"
+            )}
+          />
           {hasNotes && (
             <AlertOctagon className="h-3 w-3 text-amber-500 absolute -top-1 -right-1" />
           )}

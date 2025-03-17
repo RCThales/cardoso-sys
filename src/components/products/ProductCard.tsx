@@ -46,7 +46,7 @@ export const ProductCard = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-blue-500 hover:text-blue-500 hover:bg-blue-50"
+            className="text-blue-500 hover:text-blue-800 hover:bg-blue-300 dark:hover:bg-blue-800 dark:hover:text-white"
             onClick={() => onEdit(product)}
           >
             <Pencil className="w-4 h-4" />
@@ -54,7 +54,7 @@ export const ProductCard = ({
           <Button
             variant="ghost"
             size="icon"
-            className="text-destructive hover:text-destructive hover:bg-destructive/10"
+            className="text-destructive hover:text-destructive hover:bg-destructive/20 dark:hover:bg-destructive/80 dark:hover:text-white"
             onClick={() => onDelete(product)}
           >
             <Trash2 className="w-4 h-4" />

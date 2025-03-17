@@ -1,4 +1,3 @@
-
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { useNavigate } from "react-router-dom";
@@ -20,70 +19,69 @@ const menuItems = [
     description: "Calculadora de aluguéis",
     icon: Calculator,
     route: "/rentals",
-    color: "bg-gradient-to-br from-purple-500 to-pink-500",
+    color:
+      "bg-gradient-to-br from-purple-500 to-pink-500 dark:from-purple-700 dark:to-pink-700",
   },
   {
     title: "Vendas",
     description: "Venda de Produtos",
     icon: DollarSign,
     route: "/sales",
-    color: "bg-gradient-to-br from-teal-500 to-slate-700",
+    color:
+      "bg-gradient-to-br from-teal-500 to-slate-700 dark:from-teal-700 dark:to-slate-800",
   },
   {
     title: "Faturas",
     description: "Lista de faturas",
     icon: LineChart,
     route: "/invoices/history",
-    color: "bg-gradient-to-br from-blue-500 to-cyan-500",
+    color:
+      "bg-gradient-to-br from-blue-500 to-cyan-500 dark:from-blue-700 dark:to-cyan-700",
   },
   {
     title: "Estoque",
     description: "Controle de estoque",
     icon: Package,
     route: "/inventory",
-    color: "bg-gradient-to-br from-red-500 to-red-700",
+    color:
+      "bg-gradient-to-br from-red-500 to-red-700 dark:from-red-700 dark:to-red-800",
   },
   {
     title: "Financeiro",
     description: "Análise financeira",
     icon: DollarSign,
     route: "/financial",
-    color: "bg-gradient-to-br from-yellow-500 to-orange-500",
+    color:
+      "bg-gradient-to-br from-yellow-500 to-orange-500 dark:from-yellow-700 dark:to-orange-700",
   },
   {
     title: "Gastos",
     description: "Controle de gastos",
     icon: Wallet,
     route: "/investments",
-    color: "bg-gradient-to-br from-red-500 to-pink-500",
+    color:
+      "bg-gradient-to-br from-red-500 to-pink-500 dark:from-red-700 dark:to-pink-700",
   },
   {
     title: "Produtos",
     description: "Gerenciamento de produtos",
     icon: ShoppingBag,
     route: "/products",
-    color: "bg-gradient-to-br from-teal-500 to-emerald-500",
+    color:
+      "bg-gradient-to-br from-teal-500 to-emerald-500 dark:from-teal-700 dark:to-emerald-700",
   },
   {
     title: "Clientes",
     description: "Gerenciamento de clientes",
     icon: Users,
     route: "/clients",
-    color: "bg-gradient-to-br from-purple-500 to-indigo-500",
+    color:
+      "bg-gradient-to-br from-purple-500 to-indigo-500 dark:from-purple-700 dark:to-indigo-700",
   },
-  /*
-  {
-    title: "WhatsApp",
-    description: "Abrir chat",
-    icon: Smartphone,
-    route: "https://web.whatsapp.com/",
-    color: "bg-gradient-to-br from-green-500 to-emerald-500",
-  },
-  */
 ] as const;
 
 // Create a type that includes both the regular menu items and WhatsApp option
-type MenuItemTitle = typeof menuItems[number]['title'] | 'WhatsApp';
+type MenuItemTitle = (typeof menuItems)[number]["title"] | "WhatsApp";
 
 const openWhatsApp = () => {
   const isAndroid = /Android/i.test(navigator.userAgent);

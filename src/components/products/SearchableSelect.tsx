@@ -41,9 +41,10 @@ export const SearchableSelect = ({
       backgroundColor: "bg-white",
       fontSize: "0.875rem",
     }),
-    menu: (provided) => ({
+    menu: (provided, state) => ({
       ...provided,
-      backgroundColor: "white", // Change this if needed
+      backgroundColor:
+        localStorage.getItem("theme") === "dark" ? "#1f1f1f" : "white", // Alterna entre cinza escuro e branco
       borderRadius: "0.375rem",
       overflow: "hidden",
       border: "1px solid var(--border)",
@@ -51,6 +52,7 @@ export const SearchableSelect = ({
         "0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)",
       zIndex: 50,
     }),
+
     option: (provided, state) => ({
       ...provided,
       backgroundColor: state.isSelected
