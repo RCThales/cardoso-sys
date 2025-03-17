@@ -1,12 +1,13 @@
-
 import { Navbar } from "@/components/Navbar";
 import { useFinancialData } from "@/hooks/useFinancialData";
 import { YearSelector } from "@/components/financial/YearSelector";
 import { MonthGrid } from "@/components/financial/MonthGrid";
 import { YearlyReportButton } from "@/components/financial/YearlyReportButton";
+import Loader from "@/components/loader";
 
 const Financial = () => {
-  const { years, monthsByYear, selectedYear, setSelectedYear, isLoading } = useFinancialData();
+  const { years, monthsByYear, selectedYear, setSelectedYear, isLoading } =
+    useFinancialData();
 
   return (
     <div className="min-h-screen bg-background">
@@ -23,24 +24,24 @@ const Financial = () => {
 
         {/* Dropdown para selecionar o ano e botão para baixar relatório anual */}
         <div className="flex mb-8 items-center flex-wrap gap-4">
-          <YearSelector 
-            years={years} 
-            selectedYear={selectedYear} 
-            onYearChange={setSelectedYear} 
+          <YearSelector
+            years={years}
+            selectedYear={selectedYear}
+            onYearChange={setSelectedYear}
           />
-          
-          <YearlyReportButton 
-            selectedYear={selectedYear} 
-            months={monthsByYear[selectedYear] || []} 
+
+          <YearlyReportButton
+            selectedYear={selectedYear}
+            months={monthsByYear[selectedYear] || []}
           />
         </div>
 
         {isLoading ? (
-          <div className="text-center py-12">Carregando dados financeiros...</div>
+          <Loader />
         ) : (
-          <MonthGrid 
-            months={monthsByYear[selectedYear] || []} 
-            selectedYear={selectedYear} 
+          <MonthGrid
+            months={monthsByYear[selectedYear] || []}
+            selectedYear={selectedYear}
           />
         )}
       </div>

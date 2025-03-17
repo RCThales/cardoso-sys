@@ -1,4 +1,3 @@
-
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -11,6 +10,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
+import Loader from "./loader";
 
 interface InvoiceGeneratorProps {
   onInvoiceCreated?: () => void;
@@ -102,13 +102,13 @@ export const InvoiceGenerator = ({
 
   const handleGenerateInvoice = async () => {
     if (!validateRequiredFields()) return;
-    
+
     // Set default payment method to "Não informado"
     setClientData({
       ...clientData,
       isPaid: false,
     });
-    
+
     const invoiceCreated = await generateInvoice();
     clearCart();
     clearSessionStorage();
@@ -137,7 +137,7 @@ export const InvoiceGenerator = ({
   );
 
   if (!products) {
-    return <div>Carregando...</div>;
+    return <Loader />;
   }
 
   return (

@@ -1,11 +1,17 @@
-
-import { Table, TableBody, TableHead, TableHeader, TableRow } from "../ui/table";
+import {
+  Table,
+  TableBody,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../ui/table";
 import { InventorySearch } from "./InventorySearch";
 import { InventoryFilters } from "./InventoryFilters";
 import { InventoryAdjustModal } from "./InventoryAdjustModal";
 import { SingleSizeInventoryRow } from "./SingleSizeInventoryRow";
 import { MultiSizeInventoryRow } from "./MultiSizeInventoryRow";
 import { useInventory } from "./useInventory";
+import Loader from "../loader";
 
 export const InventoryTable = () => {
   const {
@@ -27,7 +33,7 @@ export const InventoryTable = () => {
   } = useInventory();
 
   if (isLoading || !products) {
-    return <div className="text-center">Carregando...</div>;
+    return <Loader />;
   }
 
   const groupedInventory = inventory?.reduce((acc, item) => {
@@ -40,24 +46,34 @@ export const InventoryTable = () => {
 
   const filteredAndGroupedInventory = Object.entries(groupedInventory || {})
     .filter(([productId]) => {
-      const product = products.find(p => p.id === productId);
+      const product = products.find((p) => p.id === productId);
       if (!product) return false;
-      
-      const matchesSearch = product.name.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesSearch = product.name
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase());
       if (!matchesSearch) return false;
 
       const items = groupedInventory[productId];
-      const hasRented = items.some(item => item.rented_quantity > 0);
-      const hasAvailable = items.some(item => (item.total_quantity - item.rented_quantity) > 0);
-      
+      const hasRented = items.some((item) => item.rented_quantity > 0);
+      const hasAvailable = items.some(
+        (item) => item.total_quantity - item.rented_quantity > 0
+      );
+
       if (showRented && !hasRented) return false;
       if (showAvailable && !hasAvailable) return false;
-      
+
       return true;
     })
     .sort(([productIdA], [productIdB]) => {
-      const totalA = groupedInventory[productIdA].reduce((sum, item) => sum + item.total_quantity, 0);
-      const totalB = groupedInventory[productIdB].reduce((sum, item) => sum + item.total_quantity, 0);
+      const totalA = groupedInventory[productIdA].reduce(
+        (sum, item) => sum + item.total_quantity,
+        0
+      );
+      const totalB = groupedInventory[productIdB].reduce(
+        (sum, item) => sum + item.total_quantity,
+        0
+      );
       return sortOrder === "asc" ? totalA - totalB : totalB - totalA;
     });
 
@@ -93,8 +109,8 @@ export const InventoryTable = () => {
             const product = products.find((p) => p.id === productId);
             if (!product) return null;
 
-            const hasSizes = items.some(item => item.size);
-            
+            const hasSizes = items.some((item) => item.size);
+
             if (!hasSizes) {
               const item = items[0];
               return (
@@ -110,8 +126,10 @@ export const InventoryTable = () => {
             // Ordenar os items baseado na ordem dos tamanhos do produto
             const sortedItems = items.sort((a, b) => {
               if (!a.size || !b.size) return 0;
-              const sizeOrderA = product.sizes?.findIndex(s => s.size === a.size) ?? -1;
-              const sizeOrderB = product.sizes?.findIndex(s => s.size === b.size) ?? -1;
+              const sizeOrderA =
+                product.sizes?.findIndex((s) => s.size === a.size) ?? -1;
+              const sizeOrderB =
+                product.sizes?.findIndex((s) => s.size === b.size) ?? -1;
               return sizeOrderA - sizeOrderB;
             });
 

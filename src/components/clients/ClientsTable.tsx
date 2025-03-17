@@ -1,4 +1,3 @@
-
 import {
   Table,
   TableBody,
@@ -11,6 +10,7 @@ import { formatCPF } from "@/utils/formatters";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import type { ClientSummary } from "@/types/client";
+import Loader from "../loader";
 
 interface ClientsTableProps {
   clients: ClientSummary[];
@@ -19,7 +19,7 @@ interface ClientsTableProps {
 
 export const ClientsTable = ({ clients, isLoading }: ClientsTableProps) => {
   if (isLoading) {
-    return <div>Carregando...</div>;
+    return <Loader />;
   }
 
   return (
@@ -44,7 +44,9 @@ export const ClientsTable = ({ clients, isLoading }: ClientsTableProps) => {
               </TableCell>
               <TableCell className="text-right">{client.orderCount}</TableCell>
               <TableCell>
-                {format(new Date(client.lastOrderDate), "dd/MM/yyyy", { locale: ptBR })}
+                {format(new Date(client.lastOrderDate), "dd/MM/yyyy", {
+                  locale: ptBR,
+                })}
               </TableCell>
             </TableRow>
           ))}

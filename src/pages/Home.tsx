@@ -9,8 +9,8 @@ import {
   DollarSign,
   Wallet,
   Users,
-  Smartphone,
 } from "lucide-react";
+import Loader from "../components/loader";
 
 // Modify the menuItems type to include the WhatsApp option
 const menuItems = [
