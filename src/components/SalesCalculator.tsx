@@ -35,6 +35,9 @@ export const SalesCalculator = () => {
     queryFn: fetchProducts,
   });
 
+  // Filter products with sale_price > 0
+  const filteredProducts = products?.filter(p => p.sale_price > 0) || [];
+
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
@@ -45,14 +48,14 @@ export const SalesCalculator = () => {
   });
 
   useEffect(() => {
-    if (products && products.length > 0 && !selectedProduct) {
-      const firstProduct = products[0];
+    if (filteredProducts && filteredProducts.length > 0 && !selectedProduct) {
+      const firstProduct = filteredProducts[0];
       setSelectedProduct(firstProduct.id);
       if (firstProduct.sizes && firstProduct.sizes.length > 0) {
         setSelectedSize(firstProduct.sizes[0].size);
       }
     }
-  }, [products]);
+  }, [filteredProducts]);
 
   const handleProductChange = (productId: string) => {
     setSelectedProduct(productId);
@@ -134,18 +137,18 @@ export const SalesCalculator = () => {
     });
   };
 
-  const selectedProductData = products?.find((p) => p.id === selectedProduct);
+  const selectedProductData = filteredProducts?.find((p) => p.id === selectedProduct);
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
   const isProductInCart = items.some(
     (item) => item.productId === selectedProduct && item.size === selectedSize
   );
 
-  if (!products) {
-    return <div>Carregando...</div>;
+  if (!filteredProducts || filteredProducts.length === 0) {
+    return <div>Não há produtos disponíveis para venda</div>;
   }
 
   // Format products for the searchable select
-  const productItems = products?.map((product) => ({
+  const productItems = filteredProducts?.map((product) => ({
     id: product.id,
     name: product.name,
     label: product.sizes && product.sizes.length > 0
@@ -159,13 +162,13 @@ export const SalesCalculator = () => {
         <div className="absolute w-full left-0 top-0 flex">
           <Button
             onClick={() => navigate("/rentals")}
-            className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100  border-r-[1px] rounded-t-none w-full  "
+            className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100 border-r-[1px] rounded-t-none w-full dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
           >
             Aluguel
           </Button>
           <Button
             disabled
-            className="bg-gray-200 text-black border-gray-200 hover:bg-gray-50  border-l-[1px] rounded-t-none w-full "
+            className="bg-gray-200 text-black border-gray-200 hover:bg-gray-50 border-l-[1px] rounded-t-none w-full dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
           >
             Venda
           </Button>
@@ -251,7 +254,7 @@ export const SalesCalculator = () => {
                 </span>
                 <div className="text-5xl font-semibold tracking-tight">
                   {quantity === 0 ? (
-                    <div className="animate-pulse bg-gray-300 h-10 w-32 mx-auto rounded-md" />
+                    <div className="animate-pulse bg-gray-300 h-10 w-32 mx-auto rounded-md dark:bg-gray-600" />
                   ) : (
                     `R$${(
                       (selectedProductData?.sale_price || 0) * quantity

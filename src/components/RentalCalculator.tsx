@@ -47,6 +47,9 @@ export const RentalCalculator = () => {
     queryFn: fetchProducts,
   });
 
+  // Filter products with base_price > 0
+  const filteredProducts = products?.filter(p => p.base_price > 0) || [];
+
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
     queryFn: async () => {
@@ -58,29 +61,29 @@ export const RentalCalculator = () => {
 
   // Efeitos
   useEffect(() => {
-    if (products && products.length > 0 && !selectedProduct) {
-      const firstProduct = products[0];
+    if (filteredProducts && filteredProducts.length > 0 && !selectedProduct) {
+      const firstProduct = filteredProducts[0];
       setSelectedProduct(firstProduct.id);
       if (firstProduct.sizes && firstProduct.sizes.length > 0) {
         setSelectedSize(firstProduct.sizes[0].size);
       }
     }
-  }, [products]);
+  }, [filteredProducts]);
 
   useEffect(() => {
-    const base_price = getProductBasePrice(products || [], selectedProduct);
+    const base_price = getProductBasePrice(filteredProducts || [], selectedProduct);
 
     if (base_price) {
       setBasePrice(base_price); // Armazena o base_price no estado
 
       setPrice(calculateTotalPrice(days, base_price));
     }
-  }, [days, selectedProduct, products]);
+  }, [days, selectedProduct, filteredProducts]);
 
   // Funções
   const handleProductChange = (productId: string) => {
     setSelectedProduct(productId);
-    const product = products?.find((p) => p.id === productId);
+    const product = filteredProducts?.find((p) => p.id === productId);
     if (product?.sizes && product.sizes.length > 0) {
       setSelectedSize(product.sizes[0].size);
     } else {
@@ -134,7 +137,7 @@ export const RentalCalculator = () => {
   };
 
   const handleAddToCart = () => {
-    if (!products) return;
+    if (!filteredProducts) return;
 
     const availableQuantity = inventory
       ? getAvailableQuantity(selectedProduct, selectedSize)
@@ -166,18 +169,18 @@ export const RentalCalculator = () => {
   };
 
   // Dados derivados
-  const selectedProductData = products?.find((p) => p.id === selectedProduct);
+  const selectedProductData = filteredProducts?.find((p) => p.id === selectedProduct);
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
   const isProductInCart = items.some(
     (item) => item.productId === selectedProduct && item.size === selectedSize
   );
 
-  if (!products) {
-    return <div>Carregando...</div>;
+  if (!filteredProducts || filteredProducts.length === 0) {
+    return <div>Não há produtos disponíveis para aluguel</div>;
   }
 
   // Format products for the searchable select
-  const productItems = products.map((product) => ({
+  const productItems = filteredProducts.map((product) => ({
     id: product.id,
     name: product.name,
     label: product.sizes && product.sizes.length > 0
@@ -191,13 +194,13 @@ export const RentalCalculator = () => {
         <div className="absolute w-full left-0 top-0 flex">
           <Button
             disabled
-            className="bg-gray-200 text-black border-gray-200 hover:bg-gray-50  border-l-[1px] rounded-t-none w-full "
+            className="bg-gray-200 text-black border-gray-200 hover:bg-gray-50 border-l-[1px] rounded-t-none w-full dark:bg-gray-700 dark:text-white dark:border-gray-600 dark:hover:bg-gray-600"
           >
             Aluguel
           </Button>
           <Button
             onClick={() => navigate("/sales")}
-            className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100  border-r-[1px] rounded-t-none w-full "
+            className="bg-white text-black border-gray-200 shadow-md hover:bg-gray-100 border-r-[1px] rounded-t-none w-full dark:bg-gray-800 dark:text-white dark:border-gray-700 dark:hover:bg-gray-700"
           >
             Venda
           </Button>
@@ -350,7 +353,7 @@ export const RentalCalculator = () => {
                 </span>
                 <div className="text-5xl font-semibold tracking-tight">
                   {quantity === 0 || days === 0 ? (
-                    <div className="animate-pulse bg-gray-300 h-10 w-32 mx-auto rounded-md" />
+                    <div className="animate-pulse bg-gray-300 h-10 w-32 mx-auto rounded-md dark:bg-gray-600" />
                   ) : (
                     `R$${(price * quantity).toFixed(2)}`
                   )}

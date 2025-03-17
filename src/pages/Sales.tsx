@@ -1,3 +1,4 @@
+
 import { SalesCalculator } from "@/components/SalesCalculator";
 import { Navbar } from "@/components/Navbar";
 import { useEffect, useState } from "react";
@@ -52,14 +53,14 @@ const Sales = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900" />
+      <div className="min-h-screen flex items-center justify-center dark:bg-gray-900">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 dark:border-white" />
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50">
+    <div className="min-h-screen bg-gradient-to-b from-white to-gray-50 dark:from-gray-900 dark:to-gray-800 transition-colors duration-300">
       <Navbar />
       <div className="h-full">
         <SalesCalculator />
