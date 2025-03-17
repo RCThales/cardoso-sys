@@ -1,4 +1,3 @@
-
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -20,6 +19,7 @@ import ProtectedRoute from "./utils/protectedRoutes";
 import Sales from "./pages/Sales";
 import Rentals from "./pages/Rentals";
 import { ThemeToggle } from "./components/theme/ThemeToggle";
+import Settings from "./pages/Settings";
 
 const queryClient = new QueryClient();
 
@@ -116,6 +116,15 @@ const App = () => {
             element={
               <ProtectedRoute>
                 <Clients />
+              </ProtectedRoute>
+            }
+          />
+
+          <Route
+            path="/settings"
+            element={
+              <ProtectedRoute>
+                <Settings />
               </ProtectedRoute>
             }
           />

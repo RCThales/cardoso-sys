@@ -9,6 +9,7 @@ import {
   DollarSign,
   Wallet,
   Users,
+  Cog,
 } from "lucide-react";
 import Loader from "../components/loader";
 
@@ -77,6 +78,14 @@ const menuItems = [
     route: "/clients",
     color:
       "bg-gradient-to-br from-purple-500 to-indigo-500 dark:from-purple-700 dark:to-indigo-700",
+  },
+  {
+    title: "Configurações",
+    description: "Gerenciamento de configurações",
+    icon: Cog,
+    route: "/settings",
+    color:
+      "bg-gradient-to-br from-gray-500 to-gray-600 dark:from-gray-700 dark:to-gray-800",
   },
 ] as const;
 
