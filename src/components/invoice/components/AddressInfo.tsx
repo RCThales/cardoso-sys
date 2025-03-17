@@ -1,4 +1,3 @@
-
 import { Input } from "../../ui/input";
 import {
   Select,
@@ -50,8 +49,8 @@ export const AddressInfo = ({
           postalCode: cep,
           address: address.street,
           city: address.city,
-          state: address.state,
-          neighborhood: address.neighborhood || "", // Add neighborhood from API response
+          state: address.state, // Ensure state updates
+          neighborhood: address.neighborhood || "",
         });
       } catch (error) {
         toast({
@@ -126,9 +125,8 @@ export const AddressInfo = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Bairro ou RA *</label>
+        <label className="text-sm font-medium">Bairro ou RA</label>
         <Input
-          required
           value={clientData.neighborhood}
           onChange={(e) =>
             onClientDataChange({ ...clientData, neighborhood: e.target.value })

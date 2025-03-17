@@ -37,6 +37,11 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Determina o tipo da fatura
   const invoiceType = getInvoiceType(invoice);
 
+  // Adicionar o logo
+  const logo = new Image();
+  logo.src = "/screenshot-wide.png";
+  doc.addImage(logo, "PNG", 15, 10, 40, 20);
+
   // Define o título com base no tipo da fatura
   const title =
     invoiceType === "VENDA"
@@ -46,7 +51,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
       : "FATURA DE LOCAÇÃO E VENDA";
 
   // Cabeçalho
-  doc.setFontSize(20);
+  doc.setFontSize(16);
   doc.text(title, pageWidth / 2, 20, { align: "center" });
 
   // Informações da empresa
@@ -85,7 +90,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
       invoice.client_address_complement
         ? `Complemento: ${invoice.client_address_complement}`
         : "",
-      invoice.client_neighborhood 
+      invoice.client_neighborhood
         ? `Bairro/RA: ${invoice.client_neighborhood}`
         : "",
       `${invoice.client_city} - ${invoice.client_state}`,
@@ -97,7 +102,10 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
 
   // Calcular os dias entre as datas
   const days = invoice.return_date
-    ? differenceInDays(parseISO(invoice.return_date), parseISO(invoice.invoice_date))
+    ? differenceInDays(
+        parseISO(invoice.return_date),
+        parseISO(invoice.invoice_date)
+      )
     : 0;
 
   // Informações da Fatura
@@ -105,8 +113,11 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     ? format(parseISO(invoice.return_date), "dd/MM/yyyy")
     : "N/A";
 
-  const invoiceDateFormatted = format(parseISO(invoice.invoice_date), "dd/MM/yyyy");
-  
+  const invoiceDateFormatted = format(
+    parseISO(invoice.invoice_date),
+    "dd/MM/yyyy"
+  );
+
   doc.text(
     [
       `Período: ${invoiceDateFormatted} ${
@@ -231,15 +242,15 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Adicionar notas se existirem
   if (invoice.notes && invoice.notes.trim().length > 0) {
     currentY = doc.lastAutoTable?.finalY || currentY;
-    
+
     doc.setFontSize(12);
     doc.text("Observações:", 15, currentY + 15);
-    
+
     doc.setFontSize(10);
     const splitNotes = doc.splitTextToSize(invoice.notes, pageWidth - 30);
     doc.text(splitNotes, 15, currentY + 20);
-    
-    currentY += 20 + (splitNotes.length * 5);
+
+    currentY += 20 + splitNotes.length * 5;
   }
 
   // Move o texto legal para o rodapé da página

@@ -207,7 +207,7 @@ export const InvoiceGenerator = ({
           </div>
         </div>
 
-        <div className="flex justify-end gap-4">
+        <div className="md:flex flex-row justify-end gap-4 hidden">
           <Button variant="outline" onClick={handleBack}>
             Voltar
           </Button>
@@ -217,6 +217,18 @@ export const InvoiceGenerator = ({
             disabled={!isFormValid}
           >
             Finalizar e Gerar Fatura
+          </Button>
+        </div>
+        <div className="flex flex-col  justify-end gap-4 md:hidden">
+          <Button
+            onClick={handleGenerateInvoice}
+            className="w-full md:w-auto"
+            disabled={!isFormValid}
+          >
+            Finalizar e Gerar Fatura
+          </Button>
+          <Button variant="outline" onClick={handleBack}>
+            Voltar
           </Button>
         </div>
       </div>

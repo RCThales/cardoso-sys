@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,16 +18,10 @@ export const useInvoiceGeneration = () => {
     const hasValidPostalCode = clientData.postalCode.length === 8;
     const hasValidPhone = clientData.phone.replace(/\D/g, "").length === 11;
     const hasValidCPF = validateCPF(clientData.cpf);
-    const hasNeighborhood = !!clientData.neighborhood;
     const hasItems = items.length > 0;
 
     return (
-      hasName && 
-      hasValidPostalCode && 
-      hasValidPhone && 
-      hasValidCPF && 
-      hasNeighborhood && 
-      hasItems
+      hasName && hasValidPostalCode && hasValidPhone && hasValidCPF && hasItems
     );
   };
 
