@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useParams, useLocation } from "react-router-dom"; // Importe useParams e useLocation
+import { useParams, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceHistory as InvoiceHistoryComponent } from "@/components/InvoiceHistory";
 import { Input } from "@/components/ui/input";
@@ -20,14 +20,14 @@ const InvoiceHistory = () => {
   const [dateSortType, setDateSortType] = useState<"invoice" | "return">(
     "return"
   );
+  const [filterType, setFilterType] = useState<
+    "all" | "rental" | "sale" | "hybrid"
+  >("all"); // 🔥 Novo filtro
 
-  // Captura o ID da URL (se existir)
-  const { invoice_id } = useParams(); // Para path parameters (ex: /invoices/history/:invoice_id)
+  const { invoice_id } = useParams();
   const location = useLocation();
   const searchParams = new URLSearchParams(location.search);
-  const queryId = searchParams.get("invoice_id"); // Para query parameters (ex: /invoices/history?id=123)
-
-  // Define o ID a ser passado (prioriza o path parameter sobre o query parameter)
+  const queryId = searchParams.get("invoice_id");
   const invoiceId = invoice_id || queryId || null;
 
   return (
@@ -51,7 +51,7 @@ const InvoiceHistory = () => {
             className="max-w-md"
           />
 
-          <div className="flex gap-4">
+          <div className="flex flex-wrap gap-4">
             <Select
               value={dateSortType}
               onValueChange={(value) =>
@@ -67,6 +67,7 @@ const InvoiceHistory = () => {
               </SelectContent>
             </Select>
 
+            {/*
             <Select
               value={sortOrder}
               onValueChange={(value) => setSortOrder(value as "asc" | "desc")}
@@ -75,11 +76,11 @@ const InvoiceHistory = () => {
                 <SelectValue placeholder="Ordem" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="desc">Mais antigas primeiro</SelectItem>
-                <SelectItem value="asc">Mais recentes primeiro</SelectItem>
+                <SelectItem value="asc">Mais antigas primeiro</SelectItem>
+                <SelectItem value="desc">Mais recentes primeiro</SelectItem>
               </SelectContent>
             </Select>
-
+*/}
             <Select
               value={filterStatus}
               onValueChange={(value) => setFilterStatus(value as any)}
@@ -88,7 +89,7 @@ const InvoiceHistory = () => {
                 <SelectValue placeholder="Filtrar por status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Todas as faturas</SelectItem>
+                <SelectItem value="all">Todas os status</SelectItem>
                 <SelectItem value="paid">Somente pagas</SelectItem>
                 <SelectItem value="unpaid">Somente não pagas</SelectItem>
                 <SelectItem value="returned">Somente devolvidas</SelectItem>
@@ -97,16 +98,33 @@ const InvoiceHistory = () => {
                 </SelectItem>
               </SelectContent>
             </Select>
+
+            {/* 🔥 Novo filtro para diferenciar aluguel, venda e híbrido */}
+            <Select
+              value={filterType}
+              onValueChange={(value) => setFilterType(value as any)}
+            >
+              <SelectTrigger className="w-[180px]">
+                <SelectValue placeholder="Filtrar por tipo" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os tipos</SelectItem>
+                <SelectItem value="rental">Somente Aluguel</SelectItem>
+                <SelectItem value="sale">Somente Venda</SelectItem>
+                <SelectItem value="hybrid">Somente Híbridos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
-        {/* Passa o ID para o componente InvoiceHistoryComponent */}
+        {/* Passa o novo filtro para o componente de histórico de faturas */}
         <InvoiceHistoryComponent
           search={search}
           sortOrder={sortOrder}
           filterStatus={filterStatus}
           dateSortType={dateSortType}
-          invoiceId={invoiceId} // Passa o ID capturado da URL
+          filterType={filterType} // 🔥 Novo filtro sendo passado
+          invoiceId={invoiceId}
         />
       </div>
     </div>

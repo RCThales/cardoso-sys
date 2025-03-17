@@ -1,4 +1,3 @@
-
 import { Table, TableBody, TableCell, TableRow } from "../ui/table";
 import { Invoice } from "./types";
 import { useToast } from "../ui/use-toast";
@@ -28,6 +27,7 @@ interface InvoiceTableProps {
   formatCurrency: (value: number) => string;
   invoiceId?: string | null;
   onRefresh: () => void;
+  filterType: "all" | "rental" | "sale" | "hybrid";
 }
 
 export const InvoiceTable = ({
@@ -40,6 +40,7 @@ export const InvoiceTable = ({
   formatCurrency,
   invoiceId,
   onRefresh,
+  filterType,
 }: InvoiceTableProps) => {
   const { toast } = useToast();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
@@ -77,10 +78,34 @@ export const InvoiceTable = ({
     ? invoices.find((invoice) => invoice.invoice_number === invoiceId)
     : null;
 
+  const filteredCurrentInvoice =
+    currentInvoice &&
+    (filterType === "all" ||
+      getInvoiceType(currentInvoice) ===
+        (filterType === "rental"
+          ? "ALUGUEL"
+          : filterType === "sale"
+          ? "VENDA"
+          : filterType === "hybrid"
+          ? "HÍBRIDO"
+          : "all"))
+      ? currentInvoice
+      : null;
+
   // Filtra as faturas excluindo a fatura atual (se existir)
   const otherInvoices = invoiceId
     ? invoices.filter((invoice) => invoice.invoice_number !== invoiceId)
     : invoices;
+
+  const filteredInvoices = otherInvoices.filter((invoice) => {
+    const type = getInvoiceType(invoice);
+    return (
+      filterType === "all" ||
+      (filterType === "rental" && type === "ALUGUEL") ||
+      (filterType === "sale" && type === "VENDA") ||
+      (filterType === "hybrid" && type === "HÍBRIDO")
+    );
+  });
 
   const handlePaymentToggle = (invoice: Invoice) => {
     if (invoice.is_paid) {
@@ -167,45 +192,57 @@ export const InvoiceTable = ({
       <Table>
         <InvoiceTableHeader />
         <TableBody>
-          {/* Exibe a fatura atual destacada (se existir) */}
-          {currentInvoice && (
+          {/* Exibe a fatura atual destacada se ela passar no filtro */}
+          {filteredCurrentInvoice && (
             <InvoiceTableRow
-              key={currentInvoice.id}
+              key={filteredCurrentInvoice.id}
               current={true}
-              invoice={currentInvoice}
-              invoiceType={getInvoiceType(currentInvoice)}
-              onTogglePaid={() => handlePaymentToggle(currentInvoice)}
-              onToggleReturned={() => handleReturnedToggle(currentInvoice)}
-              onDownload={() => onDownload(currentInvoice)}
-              onPreview={() => onPreview(currentInvoice)}
-              onDelete={() => handleDeleteClick(currentInvoice)}
-              onNotesClick={() => handleNotesClick(currentInvoice)}
+              invoice={filteredCurrentInvoice}
+              invoiceType={getInvoiceType(filteredCurrentInvoice)}
+              onTogglePaid={() => handlePaymentToggle(filteredCurrentInvoice)}
+              onToggleReturned={() =>
+                handleReturnedToggle(filteredCurrentInvoice)
+              }
+              onDownload={() => onDownload(filteredCurrentInvoice)}
+              onPreview={() => onPreview(filteredCurrentInvoice)}
+              onDelete={() => handleDeleteClick(filteredCurrentInvoice)}
+              onNotesClick={() => handleNotesClick(filteredCurrentInvoice)}
               formatCurrency={formatCurrency}
-              isPaidDisabled={currentInvoice.is_returned}
+              isPaidDisabled={filteredCurrentInvoice.is_returned}
               isReturnedDisabled={
-                !currentInvoice.is_paid || currentInvoice.is_returned
+                !filteredCurrentInvoice.is_paid ||
+                filteredCurrentInvoice.is_returned
               }
             />
           )}
 
-          {/* Exibe as outras faturas */}
-          {otherInvoices.map((invoice) => (
-            <InvoiceTableRow
-              key={invoice.id}
-              current={false}
-              invoice={invoice}
-              invoiceType={getInvoiceType(invoice)}
-              onTogglePaid={() => handlePaymentToggle(invoice)}
-              onToggleReturned={() => handleReturnedToggle(invoice)}
-              onDownload={() => onDownload(invoice)}
-              onPreview={() => onPreview(invoice)}
-              onDelete={() => handleDeleteClick(invoice)}
-              onNotesClick={() => handleNotesClick(invoice)}
-              formatCurrency={formatCurrency}
-              isPaidDisabled={invoice.is_returned}
-              isReturnedDisabled={!invoice.is_paid || invoice.is_returned}
-            />
-          ))}
+          {/* Exibe as outras faturas filtradas */}
+          {filteredInvoices.length > 0 ? (
+            filteredInvoices.map((invoice) => (
+              <InvoiceTableRow
+                key={invoice.id}
+                current={false}
+                invoice={invoice}
+                invoiceType={getInvoiceType(invoice)}
+                onTogglePaid={() => handlePaymentToggle(invoice)}
+                onToggleReturned={() => handleReturnedToggle(invoice)}
+                onDownload={() => onDownload(invoice)}
+                onPreview={() => onPreview(invoice)}
+                onDelete={() => handleDeleteClick(invoice)}
+                onNotesClick={() => handleNotesClick(invoice)}
+                formatCurrency={formatCurrency}
+                isPaidDisabled={invoice.is_returned}
+                isReturnedDisabled={!invoice.is_paid || invoice.is_returned}
+              />
+            ))
+          ) : (
+            // Se não houver faturas após o filtro, exibe uma mensagem
+            <TableRow>
+              <TableCell colSpan={7} className="text-center text-gray-500">
+                Nenhuma fatura encontrada para este filtro.
+              </TableCell>
+            </TableRow>
+          )}
         </TableBody>
       </Table>
 

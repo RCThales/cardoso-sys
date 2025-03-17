@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -14,6 +13,7 @@ interface InvoiceHistoryProps {
   sortOrder: "asc" | "desc";
   filterStatus: "all" | "paid" | "unpaid" | "returned" | "not-returned";
   dateSortType: "invoice" | "return";
+  filterType: "all" | "rental" | "sale" | "hybrid";
   invoiceId?: string | null;
 }
 
@@ -23,6 +23,7 @@ export const InvoiceHistory = ({
   filterStatus,
   dateSortType,
   invoiceId,
+  filterType,
 }: InvoiceHistoryProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
@@ -318,6 +319,7 @@ export const InvoiceHistory = ({
         </div>
       ) : invoices.length > 0 ? (
         <InvoiceTable
+          filterType={filterType}
           invoices={invoices}
           onTogglePaid={handleTogglePaid}
           onToggleReturned={handleToggleReturned}
