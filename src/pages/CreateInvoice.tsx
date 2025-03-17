@@ -1,3 +1,4 @@
+
 import { useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceGenerator } from "@/components/InvoiceGenerator";

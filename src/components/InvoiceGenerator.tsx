@@ -11,7 +11,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
-import { PaymentMethodDialog } from "./invoice/PaymentMethodDialog";
 
 interface InvoiceGeneratorProps {
   onInvoiceCreated?: () => void;
@@ -26,8 +25,6 @@ export const InvoiceGenerator = ({
     setItems,
     clientData,
     setClientData,
-    paymentMethod,
-    setPaymentMethod,
     addItem,
     updateItem,
     removeItem,
@@ -36,7 +33,6 @@ export const InvoiceGenerator = ({
     validateRequiredFields,
   } = useInvoiceGeneration();
 
-  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
   const cartItems = useCartStore((state) => state.items);
   const clearCart = useCartStore((state) => state.clearCart);
 
@@ -104,16 +100,13 @@ export const InvoiceGenerator = ({
     return itemSubTotalPlusShipping() - clientData.specialDiscount;
   };
 
-  const handleOpenPaymentDialog = () => {
+  const handleGenerateInvoice = async () => {
     if (!validateRequiredFields()) return;
-    setIsPaymentDialogOpen(true);
-  };
-
-  const handlePaymentConfirm = async (method: string) => {
-    setPaymentMethod(method);
+    
+    // Set default payment method to "Não informado"
     setClientData({
       ...clientData,
-      isPaid: true,
+      isPaid: false,
     });
     
     const invoiceCreated = await generateInvoice();
@@ -219,21 +212,14 @@ export const InvoiceGenerator = ({
             Voltar
           </Button>
           <Button
-            onClick={handleOpenPaymentDialog}
+            onClick={handleGenerateInvoice}
             className="w-full md:w-auto"
             disabled={!isFormValid}
           >
-            Finalizar e Escolher Forma de Pagamento
+            Finalizar e Gerar Fatura
           </Button>
         </div>
       </div>
-
-      <PaymentMethodDialog
-        open={isPaymentDialogOpen}
-        onOpenChange={setIsPaymentDialogOpen}
-        onConfirm={handlePaymentConfirm}
-        total={calculateTotalItemsPlusShippingMinusDiscount()}
-      />
     </Card>
   );
 };

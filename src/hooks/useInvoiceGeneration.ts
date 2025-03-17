@@ -12,7 +12,7 @@ export const useInvoiceGeneration = () => {
   const { toast } = useToast();
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [clientData, setClientData] = useState<ClientData>(DEFAULT_CLIENT_DATA);
-  const [paymentMethod, setPaymentMethod] = useState<string>("Cartão");
+  const [paymentMethod, setPaymentMethod] = useState<string>("Não informado");
 
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
