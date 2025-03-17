@@ -1,8 +1,9 @@
+
 export const CompanyHeader = () => {
   return (
     <div className="text-center mb-6 p-4 border-b">
       <img
-        src="/lovable-uploads/e9185795-25bc-4086-a973-5a5ff9e3c108.png"
+        src="/logo_cardoso.svg"
         alt="Cardoso Aluguel de Muletas"
         className="h-24 mx-auto"
       />

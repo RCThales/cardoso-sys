@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable, { RowInput } from "jspdf-autotable";
 import { Invoice, InvoiceExtension } from "@/components/invoice/types";
@@ -85,6 +84,9 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
       }`,
       invoice.client_address_complement
         ? `Complemento: ${invoice.client_address_complement}`
+        : "",
+      invoice.client_neighborhood 
+        ? `Bairro/RA: ${invoice.client_neighborhood}`
         : "",
       `${invoice.client_city} - ${invoice.client_state}`,
       `CEP: ${invoice.client_postal_code}`,

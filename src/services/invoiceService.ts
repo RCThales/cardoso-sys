@@ -24,6 +24,7 @@ const updateClientInfoIfNeeded = async (clientData: ClientData) => {
         client_address: clientData.address,
         client_address_number: clientData.addressNumber,
         client_address_complement: clientData.addressComplement,
+        client_neighborhood: clientData.neighborhood, // Added neighborhood field
         client_city: clientData.city,
         client_state: clientData.state,
         client_postal_code: clientData.postalCode,
@@ -72,6 +73,7 @@ export const createInvoice = async (
     client_address: clientData.address,
     client_address_number: clientData.addressNumber,
     client_address_complement: clientData.addressComplement,
+    client_neighborhood: clientData.neighborhood, // Added neighborhood field
     client_city: clientData.city,
     client_state: clientData.state,
     client_postal_code: clientData.postalCode,

@@ -109,6 +109,7 @@ export type Database = {
           client_city: string
           client_cpf: string
           client_name: string
+          client_neighborhood: string | null
           client_phone: string
           client_postal_code: string
           client_state: string
@@ -135,6 +136,7 @@ export type Database = {
           client_city: string
           client_cpf: string
           client_name: string
+          client_neighborhood?: string | null
           client_phone: string
           client_postal_code: string
           client_state: string
@@ -161,6 +163,7 @@ export type Database = {
           client_city?: string
           client_cpf?: string
           client_name?: string
+          client_neighborhood?: string | null
           client_phone?: string
           client_postal_code?: string
           client_state?: string

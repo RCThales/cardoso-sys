@@ -6,6 +6,7 @@ export interface ClientData {
   address: string;
   addressNumber: string;
   addressComplement: string;
+  neighborhood: string; // Added neighborhood field
   city: string;
   state: string;
   postalCode: string;

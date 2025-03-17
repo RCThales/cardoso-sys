@@ -30,6 +30,7 @@ export interface Invoice {
   client_address: string;
   client_address_number: string;
   client_address_complement: string;
+  client_neighborhood: string; // Added neighborhood field
   client_city: string;
   client_state: string;
   client_postal_code: string;

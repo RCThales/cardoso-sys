@@ -1,3 +1,4 @@
+
 import { Input } from "../../ui/input";
 import {
   Select,
@@ -120,6 +121,17 @@ export const AddressInfo = ({
             })
           }
           placeholder="Complemento"
+        />
+      </div>
+
+      <div className="space-y-2">
+        <label className="text-sm font-medium">Bairro ou RA</label>
+        <Input
+          value={clientData.neighborhood}
+          onChange={(e) =>
+            onClientDataChange({ ...clientData, neighborhood: e.target.value })
+          }
+          placeholder="Bairro ou Região Administrativa"
         />
       </div>
 

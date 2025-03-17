@@ -6,6 +6,7 @@ export interface ClientData {
   address: string;
   addressNumber: string;
   addressComplement: string;
+  neighborhood: string; // New field for neighborhood/administrative region
   city: string;
   state: string;
   postalCode: string;
@@ -21,6 +22,7 @@ export const DEFAULT_CLIENT_DATA: ClientData = {
   address: "",
   addressNumber: "",
   addressComplement: "",
+  neighborhood: "", // New field with empty default
   city: "",
   state: "",
   postalCode: "",
