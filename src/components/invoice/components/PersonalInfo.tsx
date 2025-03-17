@@ -74,7 +74,7 @@ export const PersonalInfo = ({
 
     const { data, error } = await supabase
       .from("invoices")
-      .select("client_name, id, client_phone, client_address, client_address_number, client_address_complement, client_city, client_state, client_postal_code")
+      .select("client_name, id, client_phone, client_address, client_address_number, client_address_complement, client_neighborhood, client_city, client_state, client_postal_code")
       .eq("client_cpf", cpf);
 
     if (error) {
@@ -98,6 +98,7 @@ export const PersonalInfo = ({
         address: data[0].client_address,
         addressNumber: data[0].client_address_number || "",
         addressComplement: data[0].client_address_complement || "",
+        neighborhood: data[0].client_neighborhood || "",
         city: data[0].client_city,
         state: data[0].client_state,
         postalCode: data[0].client_postal_code,
