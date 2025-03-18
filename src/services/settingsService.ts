@@ -19,6 +19,13 @@ interface SettingDB {
   installments: Json | null;
 }
 
+// Types specifically for insert and update operations based on Supabase schema
+type SettingInsert = {
+  name: string;
+  fee: number;
+  installments: Json | null;
+}
+
 export const getSettings = async (): Promise<Setting[]> => {
   const { data, error } = await supabase.from("settings_pagamentos").select("*");
   if (error) throw new Error("Error fetching settings: " + error.message);
@@ -34,7 +41,7 @@ export const getSettings = async (): Promise<Setting[]> => {
 
 export const updateSetting = async (id: number, setting: Partial<Setting>) => {
   // Convert to database format
-  const dbSetting: Partial<SettingDB> = {
+  const dbSetting: Partial<SettingInsert> = {
     name: setting.name,
     fee: setting.fee,
     installments: setting.installments as Json | null,
@@ -58,8 +65,8 @@ export const addSetting = async (setting: Setting) => {
       }, {})
     : null;
 
-  const settingData = {
-    ...restSetting,
+  const settingData: SettingInsert = {
+    name: restSetting.name,
     fee: installments && installmentRates && installmentRates.length > 0 
       ? parseFloat(installmentRates[0] as string) 
       : setting.fee,
