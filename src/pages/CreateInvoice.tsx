@@ -1,14 +1,25 @@
-import { useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceGenerator } from "@/components/InvoiceGenerator";
 import { useCartStore } from "@/store/cartStore";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
+import { PaymentMethodDialog } from "@/components/invoice/PaymentMethodDialog";
+import { Button } from "@/components/ui/button";
 
 const CreateInvoice = () => {
   const { items } = useCartStore();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [isPaymentDialogOpen, setIsPaymentDialogOpen] = useState(false);
+  const [total, setTotal] = useState(0);
+  const [invoiceRef, setInvoiceRef] = useState<{
+    generateInvoice: () => Promise<string | undefined>;
+    setPaymentMethod: (method: string) => void;
+    setInstallments: (installments?: number) => void;
+    setSplitPayments: (payments?: any[]) => void;
+  } | null>(null);
 
   useEffect(() => {
     // Solicita permissão para notificações quando o componente montar
@@ -37,6 +48,32 @@ const CreateInvoice = () => {
     }
   };
 
+  const handlePaymentSelect = async (method: string, installments?: number, splitPayments?: any[]) => {
+    if (invoiceRef) {
+      invoiceRef.setPaymentMethod(method);
+      
+      if (installments) {
+        invoiceRef.setInstallments(installments);
+      }
+      
+      if (splitPayments) {
+        invoiceRef.setSplitPayments(splitPayments);
+      }
+      
+      const invoiceCreated = await invoiceRef.generateInvoice();
+      if (invoiceCreated) {
+        navigate("/invoices/history?invoice_id=" + invoiceCreated);
+        handleInvoiceCreated();
+      }
+    }
+  };
+
+  const handlePaymentClick = (generatedTotal: number, invoiceRefObj: any) => {
+    setTotal(generatedTotal);
+    setInvoiceRef(invoiceRefObj);
+    setIsPaymentDialogOpen(true);
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -47,7 +84,17 @@ const CreateInvoice = () => {
             Preencha os dados para gerar a fatura
           </p>
         </div>
-        <InvoiceGenerator onInvoiceCreated={handleInvoiceCreated} />
+        <InvoiceGenerator 
+          onInvoiceCreated={handleInvoiceCreated} 
+          onPaymentClick={handlePaymentClick}
+        />
+        
+        <PaymentMethodDialog
+          open={isPaymentDialogOpen}
+          onOpenChange={setIsPaymentDialogOpen}
+          onConfirm={handlePaymentSelect}
+          total={total}
+        />
       </div>
     </div>
   );

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -7,11 +8,19 @@ import { validateCPF } from "@/utils/validateCPF";
 import { updateInventory } from "@/services/inventoryService";
 import { createInvoice } from "@/services/invoiceService";
 
+interface SplitPayment {
+  method: string;
+  amount: number;
+  installments?: number;
+}
+
 export const useInvoiceGeneration = () => {
   const { toast } = useToast();
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [clientData, setClientData] = useState<ClientData>(DEFAULT_CLIENT_DATA);
   const [paymentMethod, setPaymentMethod] = useState<string>("Não informado");
+  const [installments, setInstallments] = useState<number | undefined>(undefined);
+  const [splitPayments, setSplitPayments] = useState<SplitPayment[] | undefined>(undefined);
 
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
@@ -96,12 +105,23 @@ export const useInvoiceGeneration = () => {
       const total = calculateSubtotal();
 
       await updateInventory(items);
+      
+      // If payment is split, create a combined string representation
+      let paymentInfo = paymentMethod;
+      if (paymentMethod === "Split" && splitPayments && splitPayments.length > 0) {
+        paymentInfo = splitPayments.map(p => 
+          `${p.method}${p.installments ? ` ${p.installments}x` : ''}: R$${p.amount.toFixed(2)}`
+        ).join(' + ');
+      } else if (paymentMethod === "Cartão" && installments && installments > 1) {
+        paymentInfo = `${paymentMethod} ${installments}x`;
+      }
+      
       const invoiceCreated = await createInvoice(
         items,
         clientData,
         total,
         user.id,
-        paymentMethod
+        paymentInfo
       );
 
       toast({
@@ -131,6 +151,10 @@ export const useInvoiceGeneration = () => {
     setClientData,
     paymentMethod,
     setPaymentMethod,
+    installments,
+    setInstallments,
+    splitPayments,
+    setSplitPayments,
     addItem,
     updateItem,
     removeItem,

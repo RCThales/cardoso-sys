@@ -1,3 +1,4 @@
+
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -14,10 +15,12 @@ import Loader from "./loader";
 
 interface InvoiceGeneratorProps {
   onInvoiceCreated?: () => void;
+  onPaymentClick?: (total: number, invoiceRef: any) => void;
 }
 
 export const InvoiceGenerator = ({
   onInvoiceCreated,
+  onPaymentClick,
 }: InvoiceGeneratorProps) => {
   const navigate = useNavigate();
   const {
@@ -25,6 +28,10 @@ export const InvoiceGenerator = ({
     setItems,
     clientData,
     setClientData,
+    paymentMethod,
+    setPaymentMethod,
+    setInstallments,
+    setSplitPayments,
     addItem,
     updateItem,
     removeItem,
@@ -103,18 +110,38 @@ export const InvoiceGenerator = ({
   const handleGenerateInvoice = async () => {
     if (!validateRequiredFields()) return;
 
-    // Set default payment method to "Não informado"
-    setClientData({
-      ...clientData,
-      isPaid: false,
-    });
+    // If onPaymentClick is provided, use the payment dialog flow
+    if (onPaymentClick) {
+      const total = calculateTotalItemsPlusShippingMinusDiscount();
+      
+      // Set default payment method to "Não informado"
+      setClientData({
+        ...clientData,
+        isPaid: false,
+      });
+      
+      const invoiceRef = {
+        generateInvoice,
+        setPaymentMethod,
+        setInstallments,
+        setSplitPayments
+      };
+      
+      onPaymentClick(total, invoiceRef);
+    } else {
+      // Legacy flow without payment dialog
+      setClientData({
+        ...clientData,
+        isPaid: false,
+      });
 
-    const invoiceCreated = await generateInvoice();
-    clearCart();
-    clearSessionStorage();
+      const invoiceCreated = await generateInvoice();
+      clearCart();
+      clearSessionStorage();
 
-    navigate("/invoices/history?invoice_id=" + invoiceCreated);
-    if (onInvoiceCreated) onInvoiceCreated();
+      navigate("/invoices/history?invoice_id=" + invoiceCreated);
+      if (onInvoiceCreated) onInvoiceCreated();
+    }
   };
 
   const clearSessionStorage = () => {
