@@ -20,7 +20,7 @@ export default function Settings() {
   const [settings, setSettings] = useState([]);
   const [newSetting, setNewSetting] = useState({
     name: "",
-    fee: null,
+    fee: 0,
     installments: null,
     installmentRates: [],
   });
@@ -28,8 +28,8 @@ export default function Settings() {
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(true);
   const [editingSettings, setEditingSettings] = useState<{
-    [key: number]: { name: string; fee: number };
-  }>({}); // To hold edited values for each setting
+    [key: number]: { name: string; fee: number; installments?: any };
+  }>({});
   const { toast } = useToast();
 
   useEffect(() => {
@@ -118,21 +118,29 @@ export default function Settings() {
   const handleAdd = async () => {
     if (!newSetting.name.trim()) return;
 
-    // Criação do objeto de installments conforme esperado pelo banco
-    const formattedInstallments = newSetting.installments
-      ? newSetting.installmentRates.reduce((acc, rate, index) => {
-          acc[index + 1] = rate;
-          return acc;
-        }, {})
-      : null;
+    // If installments are set, make sure we have valid rate values
+    let installmentsToAdd = null;
+    let installmentRatesToAdd = [];
+    
+    if (newSetting.installments && newSetting.installments > 0) {
+      installmentsToAdd = newSetting.installments;
+      installmentRatesToAdd = newSetting.installmentRates.length > 0 
+        ? newSetting.installmentRates
+        : Array(parseInt(newSetting.installments)).fill(newSetting.fee); // Default to using fee for all installments
+    }
 
-    const settingWithInstallments = {
+    const settingToAdd = {
       ...newSetting,
-      installments: formattedInstallments,
+      installments: installmentsToAdd,
+      installmentRates: installmentRatesToAdd,
+      // If using installments, the fee should be the rate of the first installment
+      fee: installmentsToAdd ? 
+        (installmentRatesToAdd.length > 0 ? parseFloat(installmentRatesToAdd[0]) : newSetting.fee) : 
+        newSetting.fee,
     };
 
     try {
-      await addSetting(settingWithInstallments);
+      await addSetting(settingToAdd);
       setNewSetting({
         name: "",
         fee: 0,
@@ -215,63 +223,6 @@ export default function Settings() {
                       />
                     </div>
 
-                    {newSetting.installments > 0 && (
-                      <div className="space-y-2 mt-4 w-full">
-                        <label className="block">Parcelas:</label>
-                        {newSetting.installmentRates.map((rate, index) => (
-                          <div key={index} className="flex gap-2">
-                            <label
-                              htmlFor={`installment-rate-${index}`}
-                              className="block"
-                            >
-                              Parcela {index + 1}:
-                            </label>
-                            <Input
-                              id={`installment-rate-${index}`}
-                              className="w-full"
-                              type="number"
-                              placeholder={`Taxa ${index + 1}`}
-                              value={rate}
-                              onChange={(e) =>
-                                setNewSetting({
-                                  ...newSetting,
-                                  installmentRates:
-                                    newSetting.installmentRates.map((r, i) =>
-                                      i === index
-                                        ? parseFloat(e.target.value)
-                                        : r
-                                    ),
-                                })
-                              }
-                            />
-                          </div>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Fee input becomes hidden if installments are set */}
-                    {(newSetting.installments === null ||
-                      newSetting.installments === 0) && (
-                      <div className="w-full">
-                        <label htmlFor="payment-fee" className="block">
-                          Valor
-                        </label>
-                        <Input
-                          id="payment-fee"
-                          type="number"
-                          className="min-w-[200px]"
-                          placeholder="Valor"
-                          value={newSetting.fee}
-                          onChange={(e) =>
-                            setNewSetting({
-                              ...newSetting,
-                              fee: parseFloat(e.target.value),
-                            })
-                          }
-                        />
-                      </div>
-                    )}
-
                     <div className="flex-1">
                       <label htmlFor="installments" className="block">
                         Parcelas
@@ -290,17 +241,68 @@ export default function Settings() {
                               ? null
                               : installments,
                             installmentRates: installments
-                              ? new Array(installments).fill(null)
+                              ? Array(installments).fill("")
                               : [],
-                            fee:
-                              installments > 0
-                                ? newSetting.installmentRates[0] || 0
-                                : newSetting.fee, // Fill fee with the first installment rate
                           });
                         }}
                       />
                     </div>
-                    <Button onClick={handleAdd}>Adicionar</Button>
+
+                    {/* Show fee input only if no installments */}
+                    {(!newSetting.installments || newSetting.installments <= 0) && (
+                      <div className="w-full">
+                        <label htmlFor="payment-fee" className="block">
+                          Valor
+                        </label>
+                        <Input
+                          id="payment-fee"
+                          type="number"
+                          className="min-w-[200px]"
+                          placeholder="Valor"
+                          value={newSetting.fee}
+                          onChange={(e) =>
+                            setNewSetting({
+                              ...newSetting,
+                              fee: parseFloat(e.target.value) || 0,
+                            })
+                          }
+                        />
+                      </div>
+                    )}
+
+                    {/* Show installment rates inputs if installments are set */}
+                    {newSetting.installments > 0 && (
+                      <div className="space-y-2 mt-4 w-full">
+                        <label className="block">Taxa por parcela:</label>
+                        {Array.from({ length: newSetting.installments }).map((_, index) => (
+                          <div key={index} className="flex gap-2">
+                            <label
+                              htmlFor={`installment-rate-${index}`}
+                              className="block"
+                            >
+                              Parcela {index + 1}:
+                            </label>
+                            <Input
+                              id={`installment-rate-${index}`}
+                              className="w-full"
+                              type="number"
+                              placeholder={`Taxa ${index + 1}`}
+                              value={newSetting.installmentRates[index] || ""}
+                              onChange={(e) => {
+                                const updatedRates = [...newSetting.installmentRates];
+                                updatedRates[index] = e.target.value;
+                                setNewSetting({
+                                  ...newSetting,
+                                  installmentRates: updatedRates,
+                                });
+                              }}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+
+                    <Button onClick={handleAdd} className="mt-4">Adicionar</Button>
                   </div>
                 </CardContent>
               </div>
@@ -349,8 +351,8 @@ export default function Settings() {
                                   />
                                 </div>
 
-                                {/* Valor */}
-                                {setting.installments === null && (
+                                {/* Valor (mostrar apenas se não tiver parcelas) */}
+                                {!setting.installments && (
                                   <div className="w-full">
                                     <label
                                       htmlFor={`setting-fee-${setting.id}`}
@@ -396,23 +398,19 @@ export default function Settings() {
                                       const newInstallments = parseInt(
                                         e.target.value
                                       );
-                                      if (!isNaN(newInstallments)) {
-                                        const updatedInstallments = Object.keys(
-                                          setting.installments
-                                        ).slice(0, newInstallments);
-                                        const newInstallmentRates =
-                                          updatedInstallments.reduce(
-                                            (acc, key) => {
-                                              acc[key] =
-                                                setting.installments[key] || 0;
-                                              return acc;
-                                            },
-                                            {}
-                                          );
+                                      if (!isNaN(newInstallments) && newInstallments > 0) {
+                                        // Create a new object with the number of installments
+                                        const updatedInstallments = {};
+                                        
+                                        // Keep existing rates where possible
+                                        for (let i = 1; i <= newInstallments; i++) {
+                                          updatedInstallments[i] = setting.installments[i] || 0;
+                                        }
+                                        
                                         handleChange(
                                           setting.id,
                                           "installments",
-                                          newInstallmentRates
+                                          updatedInstallments
                                         );
                                       }
                                     }}
@@ -438,21 +436,44 @@ export default function Settings() {
                                         <Input
                                           id={`installment-rate-${key}-${setting.id}`}
                                           type="number"
-                                          value={value}
+                                          value={
+                                            editingSettings[setting.id]?.installments?.[key] !== undefined
+                                              ? editingSettings[setting.id].installments[key]
+                                              : value
+                                          }
                                           onChange={(e) => {
                                             const newRate = parseFloat(
                                               e.target.value
                                             );
                                             if (!isNaN(newRate)) {
+                                              // Get current installments from editing state or original setting
+                                              const currentInstallments = 
+                                                editingSettings[setting.id]?.installments || 
+                                                { ...setting.installments };
+                                              
+                                              // Update the rate for this installment
                                               const updatedInstallments = {
-                                                ...setting.installments,
+                                                ...currentInstallments,
                                                 [key]: newRate,
                                               };
-                                              handleChange(
-                                                setting.id,
-                                                "installments",
-                                                updatedInstallments
-                                              );
+                                              
+                                              // If this is the first installment, also update the fee
+                                              const updatedValues = {
+                                                installments: updatedInstallments
+                                              };
+                                              
+                                              if (key === "1") {
+                                                updatedValues.fee = newRate;
+                                              }
+                                              
+                                              // Update editing state with both installments and potentially fee
+                                              setEditingSettings(prev => ({
+                                                ...prev,
+                                                [setting.id]: {
+                                                  ...prev[setting.id],
+                                                  ...updatedValues
+                                                }
+                                              }));
                                             }
                                           }}
                                         />
@@ -470,15 +491,19 @@ export default function Settings() {
                                 size="icon"
                                 className="text-blue-500 hover:text-blue-800 hover:bg-blue-300 dark:hover:bg-blue-800 dark:hover:text-white"
                                 onClick={() => {
-                                  handleUpdate(setting.id, {
-                                    name:
-                                      editingSettings[setting.id]?.name ||
-                                      setting.name,
-                                    fee:
-                                      editingSettings[setting.id]?.fee ||
-                                      setting.fee,
-                                    installments: setting.installments,
-                                  });
+                                  // Prepare the data to update
+                                  const dataToUpdate = {
+                                    name: editingSettings[setting.id]?.name || setting.name,
+                                    fee: editingSettings[setting.id]?.fee || setting.fee,
+                                    installments: editingSettings[setting.id]?.installments || setting.installments,
+                                  };
+                                  
+                                  // If we have installments, make sure the fee is set to the first installment rate
+                                  if (dataToUpdate.installments && Object.keys(dataToUpdate.installments).length > 0) {
+                                    dataToUpdate.fee = dataToUpdate.installments["1"] || 0;
+                                  }
+                                  
+                                  handleUpdate(setting.id, dataToUpdate);
                                 }}
                               >
                                 <Check className="w-4 h-4" />
