@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { CreditCard, Coins, QrCode, Split } from "lucide-react";
+import { CreditCard, Coins, QrCode, Split, Link, CreditCard as DebitCard } from "lucide-react";
 import { useState, useEffect } from "react";
 import { QrCodePix } from "qrcode-pix";
 import { formatCurrency } from "@/utils/formatters";
@@ -179,10 +179,14 @@ export const PaymentMethodDialog = ({
           <DialogTitle>Forma de Pagamento</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="Cartão" value={method} onValueChange={setMethod}>
-          <TabsList className="grid grid-cols-4 gap-4">
+          <TabsList className="grid grid-cols-6 gap-1">
             <TabsTrigger value="Cartão">
               <CreditCard className="h-4 w-4 mr-2" />
-              Cartão
+              Crédito
+            </TabsTrigger>
+            <TabsTrigger value="Cartão de Débito">
+              <DebitCard className="h-4 w-4 mr-2" />
+              Débito
             </TabsTrigger>
             <TabsTrigger value="Dinheiro">
               <Coins className="h-4 w-4 mr-2" />
@@ -191,6 +195,10 @@ export const PaymentMethodDialog = ({
             <TabsTrigger value="Pix">
               <QrCode className="h-4 w-4 mr-2" />
               PIX
+            </TabsTrigger>
+            <TabsTrigger value="Link de Pagamento">
+              <Link className="h-4 w-4 mr-2" />
+              Link
             </TabsTrigger>
             <TabsTrigger value="Split">
               <Split className="h-4 w-4 mr-2" />
@@ -247,6 +255,18 @@ export const PaymentMethodDialog = ({
                 Confirmar Pagamento
               </Button>
             </div>
+          </TabsContent>
+
+          <TabsContent value="Cartão de Débito" className="mt-4 space-y-4">
+            <div className="p-4 bg-muted rounded-md">
+              <div className="flex justify-between mb-2">
+                <span>Total:</span>
+                <span>R$ {formatCurrency(total)}</span>
+              </div>
+            </div>
+            <Button onClick={handleConfirm} className="w-full">
+              Confirmar Pagamento com Débito
+            </Button>
           </TabsContent>
 
           <TabsContent value="Dinheiro" className="mt-4 space-y-4">
@@ -309,6 +329,21 @@ export const PaymentMethodDialog = ({
             </div>
           </TabsContent>
 
+          <TabsContent value="Link de Pagamento" className="mt-4 space-y-4">
+            <div className="p-4 bg-muted rounded-md">
+              <div className="flex justify-between mb-2">
+                <span>Total:</span>
+                <span>R$ {formatCurrency(total)}</span>
+              </div>
+              <p className="text-sm mt-2">
+                Um link de pagamento será enviado ao cliente para processamento.
+              </p>
+            </div>
+            <Button onClick={handleConfirm} className="w-full">
+              Gerar Link de Pagamento
+            </Button>
+          </TabsContent>
+
           <TabsContent value="Split" className="mt-4">
             <Form {...splitForm}>
               <div className="space-y-6">
@@ -343,9 +378,11 @@ export const PaymentMethodDialog = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cartão">Cartão</SelectItem>
+                              <SelectItem value="Cartão">Cartão de Crédito</SelectItem>
+                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
                               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                               <SelectItem value="Pix">PIX</SelectItem>
+                              <SelectItem value="Link de Pagamento">Link de Pagamento</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -419,9 +456,11 @@ export const PaymentMethodDialog = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cartão">Cartão</SelectItem>
+                              <SelectItem value="Cartão">Cartão de Crédito</SelectItem>
+                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
                               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                               <SelectItem value="Pix">PIX</SelectItem>
+                              <SelectItem value="Link de Pagamento">Link de Pagamento</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -470,9 +509,11 @@ export const PaymentMethodDialog = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cartão">Cartão</SelectItem>
+                              <SelectItem value="Cartão">Cartão de Crédito</SelectItem>
+                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
                               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                               <SelectItem value="Pix">PIX</SelectItem>
+                              <SelectItem value="Link de Pagamento">Link de Pagamento</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
