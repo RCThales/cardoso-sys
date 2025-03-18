@@ -2,7 +2,7 @@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { CreditCard, Coins, QrCode, Split, CreditCard as DebitCard, Link } from "lucide-react";
+import { CreditCard, Coins, QrCode, Split } from "lucide-react";
 import { useState, useEffect } from "react";
 import { QrCodePix } from "qrcode-pix";
 import { formatCurrency } from "@/utils/formatters";
@@ -61,16 +61,7 @@ export const PaymentMethodDialog = ({
     const fetchInstallmentFees = async () => {
       try {
         setLoading(true);
-        let setting;
-        
-        if (method === "Cartão") {
-          setting = await getSettingByName("Cartão de Crédito");
-        } else if (method === "Cartão de Débito") {
-          setting = await getSettingByName("Cartão de Débito");
-        } else if (method === "Link de Pagamento") {
-          setting = await getSettingByName("Link de Pagamento");
-        }
-        
+        const setting = await getSettingByName("Cartão de Crédito");
         if (setting && setting.installments) {
           setInstallmentFees(setting.installments);
           console.log("Fees loaded:", setting.installments);
@@ -85,10 +76,10 @@ export const PaymentMethodDialog = ({
     if (open) {
       void fetchInstallmentFees();
     }
-  }, [open, method]);
+  }, [open]);
 
   useEffect(() => {
-    if (installmentFees && (method === "Cartão" || method === "Cartão de Débito" || method === "Link de Pagamento")) {
+    if (installmentFees && method === "Cartão") {
       const fee = installmentFees[installments] || 0;
       const feeAmount = total * (fee / 100);
       setTotalWithFee(total + feeAmount);
@@ -98,7 +89,7 @@ export const PaymentMethodDialog = ({
   }, [installments, installmentFees, method, total]);
 
   const handleConfirm = () => {
-    onConfirm(method, (method === "Cartão" || method === "Cartão de Débito" || method === "Link de Pagamento") ? installments : undefined);
+    onConfirm(method, method === "Cartão" ? installments : undefined);
     onOpenChange(false);
   };
 
@@ -188,142 +179,29 @@ export const PaymentMethodDialog = ({
           <DialogTitle>Forma de Pagamento</DialogTitle>
         </DialogHeader>
         <Tabs defaultValue="Cartão" value={method} onValueChange={setMethod}>
-          <TabsList className="grid grid-cols-6 gap-1">
-            <TabsTrigger value="Cartão" className="text-xs">
-              <CreditCard className="h-4 w-4 mr-1" />
-              Crédito
+          <TabsList className="grid grid-cols-4 gap-4">
+            <TabsTrigger value="Cartão">
+              <CreditCard className="h-4 w-4 mr-2" />
+              Cartão
             </TabsTrigger>
-            <TabsTrigger value="Cartão de Débito" className="text-xs">
-              <DebitCard className="h-4 w-4 mr-1" />
-              Débito
-            </TabsTrigger>
-            <TabsTrigger value="Dinheiro" className="text-xs">
-              <Coins className="h-4 w-4 mr-1" />
+            <TabsTrigger value="Dinheiro">
+              <Coins className="h-4 w-4 mr-2" />
               Dinheiro
             </TabsTrigger>
-            <TabsTrigger value="Pix" className="text-xs">
-              <QrCode className="h-4 w-4 mr-1" />
+            <TabsTrigger value="Pix">
+              <QrCode className="h-4 w-4 mr-2" />
               PIX
             </TabsTrigger>
-            <TabsTrigger value="Link de Pagamento" className="text-xs">
-              <Link className="h-4 w-4 mr-1" />
-              Link
-            </TabsTrigger>
-            <TabsTrigger value="Split" className="text-xs">
-              <Split className="h-4 w-4 mr-1" />
+            <TabsTrigger value="Split">
+              <Split className="h-4 w-4 mr-2" />
               Dividido
             </TabsTrigger>
           </TabsList>
 
-          {/* Cartão de Crédito Tab */}
           <TabsContent value="Cartão" className="mt-4">
             <div className="space-y-4">
               <div>
                 <Label htmlFor="installments">Número de Parcelas:</Label>
-                <Select 
-                  value={installments.toString()} 
-                  onValueChange={(value) => setInstallments(parseInt(value))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o número de parcelas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[...Array(12)].map((_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        {i + 1}x {installmentFees && installmentFees[i + 1] ? `(+${installmentFees[i + 1]}%)` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="p-4 bg-muted rounded-md">
-                <div className="flex justify-between mb-2">
-                  <span>Total:</span>
-                  <span>R$ {formatCurrency(total)}</span>
-                </div>
-                
-                {installmentFees && installments > 1 && (
-                  <div className="flex justify-between mb-2">
-                    <span>Taxa ({installmentFees[installments] || 0}%):</span>
-                    <span>R$ {formatCurrency((total * ((installmentFees[installments] || 0) / 100)))}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between font-bold">
-                  <span>Total com taxa:</span>
-                  <span>R$ {formatCurrency(totalWithFee)}</span>
-                </div>
-                
-                <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                  <span>Valor por parcela:</span>
-                  <span>R$ {formatCurrency(totalWithFee / installments)}</span>
-                </div>
-              </div>
-              
-              <Button onClick={handleConfirm} className="w-full">
-                Confirmar Pagamento
-              </Button>
-            </div>
-          </TabsContent>
-
-          {/* Cartão de Débito Tab */}
-          <TabsContent value="Cartão de Débito" className="mt-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="debitInstallments">Número de Parcelas:</Label>
-                <Select 
-                  value={installments.toString()} 
-                  onValueChange={(value) => setInstallments(parseInt(value))}
-                >
-                  <SelectTrigger className="w-full">
-                    <SelectValue placeholder="Selecione o número de parcelas" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {[...Array(12)].map((_, i) => (
-                      <SelectItem key={i + 1} value={(i + 1).toString()}>
-                        {i + 1}x {installmentFees && installmentFees[i + 1] ? `(+${installmentFees[i + 1]}%)` : ''}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="p-4 bg-muted rounded-md">
-                <div className="flex justify-between mb-2">
-                  <span>Total:</span>
-                  <span>R$ {formatCurrency(total)}</span>
-                </div>
-                
-                {installmentFees && installments > 1 && (
-                  <div className="flex justify-between mb-2">
-                    <span>Taxa ({installmentFees[installments] || 0}%):</span>
-                    <span>R$ {formatCurrency((total * ((installmentFees[installments] || 0) / 100)))}</span>
-                  </div>
-                )}
-                
-                <div className="flex justify-between font-bold">
-                  <span>Total com taxa:</span>
-                  <span>R$ {formatCurrency(totalWithFee)}</span>
-                </div>
-                
-                <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                  <span>Valor por parcela:</span>
-                  <span>R$ {formatCurrency(totalWithFee / installments)}</span>
-                </div>
-              </div>
-              
-              <Button onClick={handleConfirm} className="w-full">
-                Confirmar Pagamento
-              </Button>
-            </div>
-          </TabsContent>
-
-          {/* Link de Pagamento Tab */}
-          <TabsContent value="Link de Pagamento" className="mt-4">
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="linkInstallments">Número de Parcelas:</Label>
                 <Select 
                   value={installments.toString()} 
                   onValueChange={(value) => setInstallments(parseInt(value))}
@@ -465,11 +343,9 @@ export const PaymentMethodDialog = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cartão">Cartão de Crédito</SelectItem>
-                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                              <SelectItem value="Cartão">Cartão</SelectItem>
                               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                               <SelectItem value="Pix">PIX</SelectItem>
-                              <SelectItem value="Link de Pagamento">Link de Pagamento</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -543,11 +419,9 @@ export const PaymentMethodDialog = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cartão">Cartão de Crédito</SelectItem>
-                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                              <SelectItem value="Cartão">Cartão</SelectItem>
                               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                               <SelectItem value="Pix">PIX</SelectItem>
-                              <SelectItem value="Link de Pagamento">Link de Pagamento</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -596,11 +470,9 @@ export const PaymentMethodDialog = ({
                               </SelectTrigger>
                             </FormControl>
                             <SelectContent>
-                              <SelectItem value="Cartão">Cartão de Crédito</SelectItem>
-                              <SelectItem value="Cartão de Débito">Cartão de Débito</SelectItem>
+                              <SelectItem value="Cartão">Cartão</SelectItem>
                               <SelectItem value="Dinheiro">Dinheiro</SelectItem>
                               <SelectItem value="Pix">PIX</SelectItem>
-                              <SelectItem value="Link de Pagamento">Link de Pagamento</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormItem>
@@ -642,4 +514,5 @@ export const PaymentMethodDialog = ({
         </Tabs>
       </DialogContent>
     </Dialog>
-  
+  );
+};

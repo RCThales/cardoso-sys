@@ -7,14 +7,6 @@ import { formatCurrency } from "@/utils/formatters";
 import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
 import { saveAs } from "file-saver";
 import { generatePDF } from "@/utils/pdfGenerator";
-import { 
-  Pagination, 
-  PaginationContent, 
-  PaginationItem, 
-  PaginationLink, 
-  PaginationNext, 
-  PaginationPrevious 
-} from "./ui/pagination";
 
 interface InvoiceHistoryProps {
   search: string;
@@ -38,65 +30,16 @@ export const InvoiceHistory = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 10;
 
   useEffect(() => {
     fetchInvoices();
-  }, [search, sortOrder, filterStatus, dateSortType, currentPage]);
+  }, [search, sortOrder, filterStatus, dateSortType]);
 
   const fetchInvoices = async () => {
     setLoading(true);
-    
-    // Query for total count
-    let countQuery = supabase.from("invoices").select("id", { count: "exact" });
-    
-    // Apply status filters to count query
-    switch (filterStatus) {
-      case "paid":
-        countQuery = countQuery.eq("is_paid", true);
-        break;
-      case "unpaid":
-        countQuery = countQuery.eq("is_paid", false);
-        break;
-      case "returned":
-        countQuery = countQuery.eq("is_returned", true);
-        break;
-      case "not-returned":
-        countQuery = countQuery.eq("is_returned", false);
-        break;
-    }
-    
-    // Apply search to count query
-    if (search) {
-      countQuery = countQuery.or(
-        `client_name.ilike.%${search}%,client_cpf.ilike.%${search}%,invoice_number.ilike.%${search}%`
-      );
-    }
-    
-    // Execute count query
-    const { count, error: countError } = await countQuery;
-    
-    if (countError) {
-      toast({
-        title: "Erro ao contar faturas",
-        description: countError.message,
-        variant: "destructive",
-      });
-      setLoading(false);
-      return;
-    }
-    
-    setTotalItems(count || 0);
-    
-    // Query for paginated data
-    let query = supabase
-      .from("invoices")
-      .select("*")
-      .range((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage - 1);
+    let query = supabase.from("invoices").select("*");
 
-    // Apply filters for status
+    // Aplicar filtros de status
     switch (filterStatus) {
       case "paid":
         query = query.eq("is_paid", true);
@@ -112,14 +55,13 @@ export const InvoiceHistory = ({
         break;
     }
 
-    // Apply search
+    // Aplicar busca
     if (search) {
       query = query.or(
         `client_name.ilike.%${search}%,client_cpf.ilike.%${search}%,invoice_number.ilike.%${search}%`
       );
     }
-    
-    // Execute data query
+
     const { data: invoicesData, error } = await query;
 
     if (error) {
@@ -368,38 +310,6 @@ export const InvoiceHistory = ({
       throw new Error(deleteError.message);
     }
   };
-  
-  // Generate pagination
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
-  
-  const renderPaginationItems = () => {
-    const items = [];
-    const maxVisiblePages = 5;
-    
-    // Logic to display a reasonable number of page links
-    let startPage = Math.max(1, currentPage - 2);
-    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-    
-    // Adjust if we're near the end
-    if (endPage - startPage + 1 < maxVisiblePages) {
-      startPage = Math.max(1, endPage - maxVisiblePages + 1);
-    }
-    
-    for (let i = startPage; i <= endPage; i++) {
-      items.push(
-        <PaginationItem key={i}>
-          <PaginationLink
-            isActive={currentPage === i}
-            onClick={() => setCurrentPage(i)}
-          >
-            {i}
-          </PaginationLink>
-        </PaginationItem>
-      );
-    }
-    
-    return items;
-  };
 
   return (
     <>
@@ -408,42 +318,18 @@ export const InvoiceHistory = ({
           <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary"></div>
         </div>
       ) : invoices.length > 0 ? (
-        <>
-          <InvoiceTable
-            filterType={filterType}
-            invoices={invoices}
-            onTogglePaid={handleTogglePaid}
-            onToggleReturned={handleToggleReturned}
-            onDownload={handleDownload}
-            onPreview={handlePreview}
-            onDelete={handleDelete}
-            formatCurrency={formatCurrency}
-            invoiceId={invoiceId}
-            onRefresh={fetchInvoices}
-          />
-          
-          {totalPages > 1 && (
-            <Pagination className="mt-6">
-              <PaginationContent>
-                <PaginationItem>
-                  <PaginationPrevious 
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className={currentPage === 1 ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-                
-                {renderPaginationItems()}
-                
-                <PaginationItem>
-                  <PaginationNext 
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className={currentPage === totalPages ? "pointer-events-none opacity-50" : ""}
-                  />
-                </PaginationItem>
-              </PaginationContent>
-            </Pagination>
-          )}
-        </>
+        <InvoiceTable
+          filterType={filterType}
+          invoices={invoices}
+          onTogglePaid={handleTogglePaid}
+          onToggleReturned={handleToggleReturned}
+          onDownload={handleDownload}
+          onPreview={handlePreview}
+          onDelete={handleDelete}
+          formatCurrency={formatCurrency}
+          invoiceId={invoiceId}
+          onRefresh={fetchInvoices}
+        />
       ) : (
         <div className="text-center p-8 border rounded-lg bg-muted/20">
           <h3 className="text-lg font-medium mb-2">
