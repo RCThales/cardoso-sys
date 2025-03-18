@@ -8,6 +8,7 @@ const InvoicePage = () => {
       sortOrder="desc"
       filterStatus="all"
       dateSortType="invoice"
+      filterType="all" // Add the missing filterType prop
     />
   );
 };

@@ -458,7 +458,7 @@ export default function Settings() {
                                               };
                                               
                                               // If this is the first installment, also update the fee
-                                              const updatedValues = {
+                                              const updatedValues: any = {
                                                 installments: updatedInstallments
                                               };
                                               
@@ -500,7 +500,7 @@ export default function Settings() {
                                   
                                   // If we have installments, make sure the fee is set to the first installment rate
                                   if (dataToUpdate.installments && Object.keys(dataToUpdate.installments).length > 0) {
-                                    dataToUpdate.fee = dataToUpdate.installments["1"] || 0;
+                                    dataToUpdate.fee = dataToUpdate.installments["1"] || dataToUpdate.fee;
                                   }
                                   
                                   handleUpdate(setting.id, dataToUpdate);
