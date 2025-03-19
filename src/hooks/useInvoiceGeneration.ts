@@ -108,13 +108,15 @@ export const useInvoiceGeneration = () => {
 
       await updateInventory(items);
       
-      // If payment is split, create a combined string representation
+      // If payment is split, create a combined string representation with fee details
       let paymentInfo = paymentMethod;
       if (paymentMethod === "Split" && splitPayments && splitPayments.length > 0) {
         paymentInfo = splitPayments.map(p => {
           let methodInfo = p.method;
           if (p.installments && p.installments > 1) {
-            methodInfo += ` ${p.installments}x${p.noInterest ? " sem juros" : ""}`;
+            const feeInfo = p.noInterest ? " sem juros" : 
+              (p.method === "Cartão" ? " (+5%)" : p.method === "Cartão de Débito" ? " (+2%)" : "");
+            methodInfo += ` ${p.installments}x${feeInfo}`;
           }
           return `${methodInfo}: R$${p.amount.toFixed(2)}`;
         }).join(' + ');
@@ -123,9 +125,12 @@ export const useInvoiceGeneration = () => {
         installments && 
         installments > 1
       ) {
-        paymentInfo = `${paymentMethod} ${installments}x${noInterest ? " sem juros" : ""}`;
-      } else if (paymentMethod === "Cartão de Débito" && noInterest) {
-        paymentInfo = `${paymentMethod} sem juros`;
+        // Add fee information to payment method string
+        const feeInfo = noInterest ? " sem juros" : 
+          (paymentMethod === "Cartão" ? " (+5%)" : "");
+        paymentInfo = `${paymentMethod} ${installments}x${feeInfo}`;
+      } else if (paymentMethod === "Cartão de Débito" && !noInterest) {
+        paymentInfo = `${paymentMethod} (+2%)`;
       }
       
       const invoiceCreated = await createInvoice(

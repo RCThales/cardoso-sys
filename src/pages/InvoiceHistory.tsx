@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -22,7 +23,7 @@ const InvoiceHistory = () => {
   );
   const [filterType, setFilterType] = useState<
     "all" | "rental" | "sale" | "hybrid"
-  >("all"); // 🔥 Novo filtro
+  >("all");
 
   const { invoice_id } = useParams();
   const location = useLocation();
@@ -67,20 +68,6 @@ const InvoiceHistory = () => {
               </SelectContent>
             </Select>
 
-            {/*
-            <Select
-              value={sortOrder}
-              onValueChange={(value) => setSortOrder(value as "asc" | "desc")}
-            >
-              <SelectTrigger className="w-[180px]">
-                <SelectValue placeholder="Ordem" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="asc">Mais antigas primeiro</SelectItem>
-                <SelectItem value="desc">Mais recentes primeiro</SelectItem>
-              </SelectContent>
-            </Select>
-*/}
             <Select
               value={filterStatus}
               onValueChange={(value) => setFilterStatus(value as any)}
@@ -99,7 +86,6 @@ const InvoiceHistory = () => {
               </SelectContent>
             </Select>
 
-            {/* 🔥 Novo filtro para diferenciar aluguel, venda e híbrido */}
             <Select
               value={filterType}
               onValueChange={(value) => setFilterType(value as any)}
@@ -117,14 +103,14 @@ const InvoiceHistory = () => {
           </div>
         </div>
 
-        {/* Passa o novo filtro para o componente de histórico de faturas */}
         <InvoiceHistoryComponent
           search={search}
           sortOrder={sortOrder}
           filterStatus={filterStatus}
           dateSortType={dateSortType}
-          filterType={filterType} // 🔥 Novo filtro sendo passado
+          filterType={filterType}
           invoiceId={invoiceId}
+          showFeeInfo={true}
         />
       </div>
     </div>

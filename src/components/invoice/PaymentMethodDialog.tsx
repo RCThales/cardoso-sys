@@ -80,25 +80,26 @@ export const PaymentMethodDialog = ({
         const creditCardSetting = await getSettingByName("Cartão de Crédito");
         if (creditCardSetting && creditCardSetting.installments) {
           setInstallmentFees(creditCardSetting.installments);
+          console.log("Credit card fees loaded:", creditCardSetting.installments);
         }
         
         // Fetch debit card fee
         const debitCardSetting = await getSettingByName("Cartão de Débito");
         if (debitCardSetting) {
           setDebitFee(debitCardSetting.fee);
+          console.log("Debit card fee loaded:", debitCardSetting.fee);
         }
         
         // Fetch payment link settings
         const linkSetting = await getSettingByName("Link de Pagamento");
         if (linkSetting && linkSetting.installments) {
           setLinkInstallmentFees(linkSetting.installments);
+          console.log("Link fees loaded:", linkSetting.installments);
         } else {
           // If no specific Link settings found, fallback to credit card settings
           setLinkInstallmentFees(creditCardSetting?.installments || null);
+          console.log("Using credit card fees for link (fallback):", creditCardSetting?.installments);
         }
-        
-        console.log("Link fees loaded:", linkSetting?.installments);
-        console.log("Credit card fees loaded:", creditCardSetting?.installments);
       } catch (error) {
         console.error("Error fetching payment settings:", error);
       } finally {
@@ -164,9 +165,9 @@ export const PaymentMethodDialog = ({
     return Math.max(0, received - total);
   };
 
-  const calculateSplitRemaining = () => {
+  const calculateSplitTotalWithFees = () => {
     const values = splitForm.getValues();
-    let totalPaid = 0;
+    let totalWithFees = 0;
     
     // Sum the payment amounts with their respective fees
     values.splitPayments.forEach(payment => {
@@ -175,22 +176,27 @@ export const PaymentMethodDialog = ({
         const installmentCount = parseInt(payment.installments as string) || 1;
         const noInterestOption = payment.noInterest === true;
         
-        if (noInterestOption) {
-          totalPaid += amount;
-        } else {
-          // Add fee based on payment method
+        // Calculate with fee if applicable
+        if (!noInterestOption) {
           const fee = calculateSplitFee(
             payment.method, 
             amount, 
             installmentCount,
             noInterestOption
           );
-          totalPaid += amount;
+          totalWithFees += amount + fee;
+        } else {
+          totalWithFees += amount;
         }
       }
     });
     
-    return Math.max(0, total - totalPaid);
+    return totalWithFees;
+  };
+
+  const calculateSplitRemaining = () => {
+    const totalWithFees = calculateSplitTotalWithFees();
+    return Math.max(0, total - totalWithFees);
   };
 
   // Calculate fee amount for a method in split payment
@@ -210,7 +216,7 @@ export const PaymentMethodDialog = ({
 
   // Check if payment methods add up to the total amount
   const isSplitValid = () => {
-    return calculateSplitRemaining() === 0;
+    return calculateSplitRemaining() <= 0;
   };
   
   // Check if method can be added (credit card and debit card can be used multiple times)
@@ -588,6 +594,10 @@ export const PaymentMethodDialog = ({
                       <div className="flex justify-between mb-2">
                         <span>Total da Fatura:</span>
                         <span>R$ {formatCurrency(total)}</span>
+                      </div>
+                      <div className="flex justify-between mb-2">
+                        <span>Total com Taxas:</span>
+                        <span>R$ {formatCurrency(calculateSplitTotalWithFees())}</span>
                       </div>
                       <div className="flex justify-between font-bold">
                         <span>Restante a pagar:</span>

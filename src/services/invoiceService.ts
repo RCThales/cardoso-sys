@@ -50,12 +50,55 @@ export const createInvoice = async (
 
   // Calculate the total with any payment method fees included
   let finalTotal = total;
+  let paymentFees = 0;
+  let paymentDetails = null;
   
-  // For split payments, we calculate the total with fees for each payment
+  // For split payments, we need to calculate total fees
   if (paymentMethod.startsWith('Split')) {
-    // Split payments should have the fees already included in the UI calculation
-    // The total passed here should already account for those fees
+    const paymentInfoRegex = /([^:]+): R\$(\d+\.\d+)/g;
+    const paymentParts = [];
+    let match;
+    
+    while ((match = paymentInfoRegex.exec(paymentMethod)) !== null) {
+      const methodInfo = match[1].trim();
+      const amount = parseFloat(match[2]);
+      
+      paymentParts.push({ method: methodInfo, amount });
+    }
+    
+    // Calculate fees for payment methods
+    paymentDetails = {
+      type: 'split',
+      methods: paymentParts,
+      subtotal: total,
+      fees: 0
+    };
+    
+    // We already include fees in the UI calculation for split payments
     finalTotal = total;
+  } else if (paymentMethod.includes('(+')) {
+    // Extract payment method and fee information
+    const methodMatch = paymentMethod.match(/(.+?)(\d+)x\s*(?:\((\+[\d.]+)%\))?/);
+    
+    if (methodMatch) {
+      const method = methodMatch[1].trim();
+      const installments = parseInt(methodMatch[2]);
+      const feePercentage = methodMatch[3] ? parseFloat(methodMatch[3].replace('+', '')) : 0;
+      
+      if (feePercentage > 0) {
+        paymentFees = total * (feePercentage / 100);
+        finalTotal = total + paymentFees;
+        
+        paymentDetails = {
+          type: 'installment',
+          method: method,
+          installments: installments,
+          feePercentage: feePercentage,
+          subtotal: total,
+          fees: paymentFees
+        };
+      }
+    }
   }
 
   const allItems = [
@@ -96,6 +139,8 @@ export const createInvoice = async (
     is_paid: clientData.isPaid,
     payment_method: paymentMethod,
     user_id: userId,
+    payment_fees: paymentFees,
+    payment_details: paymentDetails
   });
 
   if (error) throw error;
