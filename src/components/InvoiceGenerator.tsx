@@ -1,4 +1,3 @@
-
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -32,6 +31,7 @@ export const InvoiceGenerator = ({
     setPaymentMethod,
     setInstallments,
     setSplitPayments,
+    setNoInterest,
     addItem,
     updateItem,
     removeItem,
@@ -124,7 +124,8 @@ export const InvoiceGenerator = ({
         generateInvoice,
         setPaymentMethod,
         setInstallments,
-        setSplitPayments
+        setSplitPayments,
+        setNoInterest
       };
       
       onPaymentClick(total, invoiceRef);

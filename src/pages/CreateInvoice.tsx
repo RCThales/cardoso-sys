@@ -19,6 +19,7 @@ const CreateInvoice = () => {
     setPaymentMethod: (method: string) => void;
     setInstallments: (installments?: number) => void;
     setSplitPayments: (payments?: any[]) => void;
+    setNoInterest: (noInterest: boolean) => void;
   } | null>(null);
 
   useEffect(() => {
@@ -48,7 +49,12 @@ const CreateInvoice = () => {
     }
   };
 
-  const handlePaymentSelect = async (method: string, installments?: number, splitPayments?: any[]) => {
+  const handlePaymentSelect = async (
+    method: string, 
+    installments?: number, 
+    splitPayments?: any[],
+    noInterest?: boolean
+  ) => {
     if (invoiceRef) {
       invoiceRef.setPaymentMethod(method);
       
@@ -58,6 +64,10 @@ const CreateInvoice = () => {
       
       if (splitPayments) {
         invoiceRef.setSplitPayments(splitPayments);
+      }
+      
+      if (noInterest !== undefined) {
+        invoiceRef.setNoInterest(noInterest);
       }
       
       const invoiceCreated = await invoiceRef.generateInvoice();

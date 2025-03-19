@@ -12,6 +12,7 @@ interface SplitPayment {
   method: string;
   amount: number;
   installments?: number;
+  noInterest?: boolean;
 }
 
 export const useInvoiceGeneration = () => {
@@ -21,6 +22,7 @@ export const useInvoiceGeneration = () => {
   const [paymentMethod, setPaymentMethod] = useState<string>("Não informado");
   const [installments, setInstallments] = useState<number | undefined>(undefined);
   const [splitPayments, setSplitPayments] = useState<SplitPayment[] | undefined>(undefined);
+  const [noInterest, setNoInterest] = useState<boolean>(false);
 
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
@@ -109,11 +111,21 @@ export const useInvoiceGeneration = () => {
       // If payment is split, create a combined string representation
       let paymentInfo = paymentMethod;
       if (paymentMethod === "Split" && splitPayments && splitPayments.length > 0) {
-        paymentInfo = splitPayments.map(p => 
-          `${p.method}${p.installments ? ` ${p.installments}x` : ''}: R$${p.amount.toFixed(2)}`
-        ).join(' + ');
-      } else if (paymentMethod === "Cartão" && installments && installments > 1) {
-        paymentInfo = `${paymentMethod} ${installments}x`;
+        paymentInfo = splitPayments.map(p => {
+          let methodInfo = p.method;
+          if (p.installments && p.installments > 1) {
+            methodInfo += ` ${p.installments}x${p.noInterest ? " sem juros" : ""}`;
+          }
+          return `${methodInfo}: R$${p.amount.toFixed(2)}`;
+        }).join(' + ');
+      } else if (
+        (paymentMethod === "Cartão" || paymentMethod === "Link de Pagamento") && 
+        installments && 
+        installments > 1
+      ) {
+        paymentInfo = `${paymentMethod} ${installments}x${noInterest ? " sem juros" : ""}`;
+      } else if (paymentMethod === "Cartão de Débito" && noInterest) {
+        paymentInfo = `${paymentMethod} sem juros`;
       }
       
       const invoiceCreated = await createInvoice(
@@ -155,6 +167,8 @@ export const useInvoiceGeneration = () => {
     setInstallments,
     splitPayments,
     setSplitPayments,
+    noInterest,
+    setNoInterest,
     addItem,
     updateItem,
     removeItem,
