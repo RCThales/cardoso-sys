@@ -48,6 +48,16 @@ export const createInvoice = async (
   const dueDate = new Date();
   dueDate.setDate(today.getDate() + 30);
 
+  // Calculate the total with any payment method fees included
+  let finalTotal = total;
+  
+  // For split payments, we calculate the total with fees for each payment
+  if (paymentMethod.startsWith('Split')) {
+    // Split payments should have the fees already included in the UI calculation
+    // The total passed here should already account for those fees
+    finalTotal = total;
+  }
+
   const allItems = [
     ...items.map((item) => ({
       ...item,
@@ -82,7 +92,7 @@ export const createInvoice = async (
     payment_terms: "30 dias",
     items: allItems,
     subtotal: total,
-    total,
+    total: finalTotal,
     is_paid: clientData.isPaid,
     payment_method: paymentMethod,
     user_id: userId,

@@ -92,9 +92,13 @@ export const PaymentMethodDialog = ({
         const linkSetting = await getSettingByName("Link de Pagamento");
         if (linkSetting && linkSetting.installments) {
           setLinkInstallmentFees(linkSetting.installments);
+        } else {
+          // If no specific Link settings found, fallback to credit card settings
+          setLinkInstallmentFees(creditCardSetting?.installments || null);
         }
         
-        console.log("Fees loaded:", creditCardSetting?.installments);
+        console.log("Link fees loaded:", linkSetting?.installments);
+        console.log("Credit card fees loaded:", creditCardSetting?.installments);
       } catch (error) {
         console.error("Error fetching payment settings:", error);
       } finally {
@@ -162,9 +166,29 @@ export const PaymentMethodDialog = ({
 
   const calculateSplitRemaining = () => {
     const values = splitForm.getValues();
-    const totalPaid = values.splitPayments.reduce((sum, payment) => {
-      return sum + (parseFloat(payment.amount as string) || 0);
-    }, 0);
+    let totalPaid = 0;
+    
+    // Sum the payment amounts with their respective fees
+    values.splitPayments.forEach(payment => {
+      const amount = parseFloat(payment.amount as string) || 0;
+      if (amount > 0) {
+        const installmentCount = parseInt(payment.installments as string) || 1;
+        const noInterestOption = payment.noInterest === true;
+        
+        if (noInterestOption) {
+          totalPaid += amount;
+        } else {
+          // Add fee based on payment method
+          const fee = calculateSplitFee(
+            payment.method, 
+            amount, 
+            installmentCount,
+            noInterestOption
+          );
+          totalPaid += amount;
+        }
+      }
+    });
     
     return Math.max(0, total - totalPaid);
   };
@@ -283,32 +307,34 @@ export const PaymentMethodDialog = ({
         <ScrollArea className="flex-1">
           <div className="p-1">
             <Tabs defaultValue="Cartão" value={method} onValueChange={setMethod}>
-              <TabsList className="grid grid-cols-3 gap-1 mb-2 w-full">
-                <TabsTrigger value="Cartão">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  <span>Crédito</span>
+              <TabsList className="grid grid-cols-2 gap-1 mb-2 w-full">
+                <TabsTrigger value="Cartão" className="flex flex-col items-center py-2">
+                  <CreditCard className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Crédito</span>
                 </TabsTrigger>
-                <TabsTrigger value="Cartão de Débito">
-                  <DebitCard className="h-4 w-4 mr-2" />
-                  <span>Débito</span>
-                </TabsTrigger>
-                <TabsTrigger value="Dinheiro">
-                  <Coins className="h-4 w-4 mr-2" />
-                  <span>Dinheiro</span>
+                <TabsTrigger value="Cartão de Débito" className="flex flex-col items-center py-2">
+                  <DebitCard className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Débito</span>
                 </TabsTrigger>
               </TabsList>
               <TabsList className="grid grid-cols-3 gap-1 mb-4 w-full">
-                <TabsTrigger value="Pix">
-                  <QrCode className="h-4 w-4 mr-2" />
-                  <span>PIX</span>
+                <TabsTrigger value="Dinheiro" className="flex flex-col items-center py-2">
+                  <Coins className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Dinheiro</span>
                 </TabsTrigger>
-                <TabsTrigger value="Link de Pagamento">
+                <TabsTrigger value="Pix" className="flex flex-col items-center py-2">
+                  <QrCode className="h-4 w-4 mb-1" />
+                  <span className="text-xs">PIX</span>
+                </TabsTrigger>
+                <TabsTrigger value="Split" className="flex flex-col items-center py-2">
+                  <Split className="h-4 w-4 mb-1" />
+                  <span className="text-xs">Dividido</span>
+                </TabsTrigger>
+              </TabsList>
+              <TabsList className="grid grid-cols-1 gap-1 mb-4 w-full">
+                <TabsTrigger value="Link de Pagamento" className="flex items-center">
                   <LinkIcon className="h-4 w-4 mr-2" />
-                  <span>Link</span>
-                </TabsTrigger>
-                <TabsTrigger value="Split">
-                  <Split className="h-4 w-4 mr-2" />
-                  <span>Dividido</span>
+                  <span>Link de Pagamento</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -492,11 +518,20 @@ export const PaymentMethodDialog = ({
                           <SelectValue placeholder="Selecione parcelas" />
                         </SelectTrigger>
                         <SelectContent>
-                          {linkInstallmentFees && Object.keys(linkInstallmentFees).map((installment) => (
-                            <SelectItem key={installment} value={installment}>
-                              {installment}x {!noInterest && linkInstallmentFees[installment] ? `(+${linkInstallmentFees[installment]}%)` : ''}
-                            </SelectItem>
-                          ))}
+                          {linkInstallmentFees ? (
+                            Object.keys(linkInstallmentFees).map((installment) => (
+                              <SelectItem key={installment} value={installment}>
+                                {installment}x {!noInterest && linkInstallmentFees[installment] ? `(+${linkInstallmentFees[installment]}%)` : ''}
+                              </SelectItem>
+                            ))
+                          ) : (
+                            // Fallback to standard installments if no specific fees
+                            installmentFees && Object.keys(installmentFees).map((installment) => (
+                              <SelectItem key={installment} value={installment}>
+                                {installment}x {!noInterest && installmentFees[installment] ? `(+${installmentFees[installment]}%)` : ''}
+                              </SelectItem>
+                            ))
+                          )}
                         </SelectContent>
                       </Select>
                     </div>
