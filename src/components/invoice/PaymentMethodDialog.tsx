@@ -1,8 +1,8 @@
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { CreditCard, Coins, QrCode, Split, Link, CreditCard as DebitCard, Plus, Trash2 } from "lucide-react";
+import { CreditCard, Coins, QrCode, Split, Link as LinkIcon, CreditCard as DebitCard, Plus, Trash2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { QrCodePix } from "qrcode-pix";
 import { formatCurrency } from "@/utils/formatters";
@@ -68,7 +68,7 @@ export const PaymentMethodDialog = ({
     { value: "Cartão de Débito", label: "Cartão de Débito", icon: <DebitCard className="h-4 w-4 mr-2" /> },
     { value: "Dinheiro", label: "Dinheiro", icon: <Coins className="h-4 w-4 mr-2" /> },
     { value: "Pix", label: "PIX", icon: <QrCode className="h-4 w-4 mr-2" /> },
-    { value: "Link de Pagamento", label: "Link de Pagamento", icon: <Link className="h-4 w-4 mr-2" /> }
+    { value: "Link de Pagamento", label: "Link de Pagamento", icon: <LinkIcon className="h-4 w-4 mr-2" /> }
   ];
 
   useEffect(() => {
@@ -169,6 +169,21 @@ export const PaymentMethodDialog = ({
     return Math.max(0, total - totalPaid);
   };
 
+  // Calculate fee amount for a method in split payment
+  const calculateSplitFee = (method: string, amount: number, installments: number, noInterest: boolean): number => {
+    if (noInterest) return 0;
+    
+    if (method === "Cartão" && installmentFees) {
+      return amount * (installmentFees[installments] || 0) / 100;
+    } else if (method === "Cartão de Débito") {
+      return amount * (debitFee || 0) / 100;
+    } else if (method === "Link de Pagamento" && linkInstallmentFees) {
+      return amount * (linkInstallmentFees[installments] || 0) / 100;
+    }
+    
+    return 0;
+  };
+
   // Check if payment methods add up to the total amount
   const isSplitValid = () => {
     return calculateSplitRemaining() === 0;
@@ -246,45 +261,54 @@ export const PaymentMethodDialog = ({
       case "Pix":
         return <QrCode className="h-4 w-4" />;
       case "Link de Pagamento":
-        return <Link className="h-4 w-4" />;
+        return <LinkIcon className="h-4 w-4" />;
       default:
         return null;
     }
   };
 
+  // Get method label from value
+  const getMethodLabel = (methodValue: string): string => {
+    const method = paymentMethods.find(m => m.value === methodValue);
+    return method ? method.label : methodValue;
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-[95vw] md:max-w-[600px] max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="max-w-[95vw] md:max-w-[620px] max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Forma de Pagamento</DialogTitle>
+          <DialogDescription>Selecione o método de pagamento da fatura</DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-1">
           <div className="p-1">
             <Tabs defaultValue="Cartão" value={method} onValueChange={setMethod}>
-              <TabsList className="grid grid-cols-6 gap-1 mb-4 w-full">
+              <TabsList className="grid grid-cols-3 gap-1 mb-2 w-full">
                 <TabsTrigger value="Cartão">
                   <CreditCard className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Crédito</span>
+                  <span>Crédito</span>
                 </TabsTrigger>
                 <TabsTrigger value="Cartão de Débito">
                   <DebitCard className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Débito</span>
+                  <span>Débito</span>
                 </TabsTrigger>
                 <TabsTrigger value="Dinheiro">
                   <Coins className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Dinheiro</span>
+                  <span>Dinheiro</span>
                 </TabsTrigger>
+              </TabsList>
+              <TabsList className="grid grid-cols-3 gap-1 mb-4 w-full">
                 <TabsTrigger value="Pix">
                   <QrCode className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">PIX</span>
+                  <span>PIX</span>
                 </TabsTrigger>
                 <TabsTrigger value="Link de Pagamento">
-                  <Link className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Link</span>
+                  <LinkIcon className="h-4 w-4 mr-2" />
+                  <span>Link</span>
                 </TabsTrigger>
                 <TabsTrigger value="Split">
                   <Split className="h-4 w-4 mr-2" />
-                  <span className="hidden sm:inline">Dividido</span>
+                  <span>Dividido</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -538,92 +562,50 @@ export const PaymentMethodDialog = ({
 
                     <ScrollArea className="h-[360px] md:h-[400px] pr-4">
                       <div className="space-y-6">
-                        {fields.map((field, index) => (
-                          <Card key={field.id} className="overflow-hidden">
-                            <CardContent className="p-4 pt-4">
-                              <div className="flex justify-between items-center mb-3">
-                                <div className="flex items-center gap-2">
-                                  {renderMethodIcon(splitForm.watch(`splitPayments.${index}.method`))}
-                                  <h3 className="font-medium">
-                                    Método {index + 1}
-                                  </h3>
+                        {fields.map((field, index) => {
+                          const currentMethod = splitForm.watch(`splitPayments.${index}.method`);
+                          const currentAmount = parseFloat(splitForm.watch(`splitPayments.${index}.amount`) as string) || 0;
+                          const currentInstallments = parseInt(splitForm.watch(`splitPayments.${index}.installments`) as string) || 1;
+                          const currentNoInterest = splitForm.watch(`splitPayments.${index}.noInterest`);
+                          
+                          // Calculate the fee for this payment method
+                          const feeAmount = calculateSplitFee(
+                            currentMethod, 
+                            currentAmount, 
+                            currentInstallments,
+                            currentNoInterest
+                          );
+                          
+                          return (
+                            <Card key={field.id} className="overflow-hidden">
+                              <CardContent className="p-4 pt-4">
+                                <div className="flex justify-between items-center mb-3">
+                                  <div className="flex items-center gap-2">
+                                    {renderMethodIcon(currentMethod)}
+                                    <h3 className="font-medium">
+                                      {getMethodLabel(currentMethod)}
+                                    </h3>
+                                  </div>
+                                  {fields.length > 2 && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="icon"
+                                      onClick={() => remove(index)}
+                                    >
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                    </Button>
+                                  )}
                                 </div>
-                                {fields.length > 2 && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="icon"
-                                    onClick={() => remove(index)}
-                                  >
-                                    <Trash2 className="h-4 w-4 text-destructive" />
-                                  </Button>
-                                )}
-                              </div>
-                              
-                              <div className="grid grid-cols-2 gap-3">
-                                <FormField
-                                  control={splitForm.control}
-                                  name={`splitPayments.${index}.method`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Método</FormLabel>
-                                      <Select
-                                        value={field.value}
-                                        onValueChange={field.onChange}
-                                      >
-                                        <FormControl>
-                                          <SelectTrigger>
-                                            <SelectValue placeholder="Selecione" />
-                                          </SelectTrigger>
-                                        </FormControl>
-                                        <SelectContent>
-                                          {paymentMethods.map(method => (
-                                            (method.value === field.value || canAddMethod(method.value)) && (
-                                              <SelectItem key={method.value} value={method.value}>
-                                                <div className="flex items-center">
-                                                  {method.icon}
-                                                  {method.label}
-                                                </div>
-                                              </SelectItem>
-                                            )
-                                          ))}
-                                        </SelectContent>
-                                      </Select>
-                                    </FormItem>
-                                  )}
-                                />
-                                <FormField
-                                  control={splitForm.control}
-                                  name={`splitPayments.${index}.amount`}
-                                  render={({ field }) => (
-                                    <FormItem>
-                                      <FormLabel>Valor</FormLabel>
-                                      <FormControl>
-                                        <Input
-                                          type="number"
-                                          placeholder="0.00"
-                                          {...field}
-                                          onChange={(e) => {
-                                            field.onChange(e);
-                                            splitForm.trigger();
-                                          }}
-                                        />
-                                      </FormControl>
-                                    </FormItem>
-                                  )}
-                                />
-                              </div>
-                              
-                              {(splitForm.watch(`splitPayments.${index}.method`) === "Cartão" || 
-                                splitForm.watch(`splitPayments.${index}.method`) === "Link de Pagamento") && (
-                                <div className="mt-3">
+                                
+                                <div className="grid grid-cols-2 gap-3">
                                   <FormField
                                     control={splitForm.control}
-                                    name={`splitPayments.${index}.installments`}
+                                    name={`splitPayments.${index}.method`}
                                     render={({ field }) => (
                                       <FormItem>
-                                        <FormLabel>Parcelas</FormLabel>
+                                        <FormLabel>Método</FormLabel>
                                         <Select
-                                          value={field.value as string}
+                                          value={field.value}
                                           onValueChange={field.onChange}
                                         >
                                           <FormControl>
@@ -632,35 +614,123 @@ export const PaymentMethodDialog = ({
                                             </SelectTrigger>
                                           </FormControl>
                                           <SelectContent>
-                                            {[...Array(12)].map((_, i) => (
-                                              <SelectItem key={i+1} value={(i+1).toString()}>{i+1}x</SelectItem>
+                                            {paymentMethods.map(method => (
+                                              (method.value === field.value || canAddMethod(method.value)) && (
+                                                <SelectItem key={method.value} value={method.value}>
+                                                  <div className="flex items-center">
+                                                    {method.icon}
+                                                    {method.label}
+                                                  </div>
+                                                </SelectItem>
+                                              )
                                             ))}
                                           </SelectContent>
                                         </Select>
                                       </FormItem>
                                     )}
                                   />
-                                  
                                   <FormField
                                     control={splitForm.control}
-                                    name={`splitPayments.${index}.noInterest`}
+                                    name={`splitPayments.${index}.amount`}
                                     render={({ field }) => (
-                                      <FormItem className="flex flex-row items-center space-x-2 space-y-0 mt-3">
+                                      <FormItem>
+                                        <FormLabel>Valor</FormLabel>
                                         <FormControl>
-                                          <Switch
-                                            checked={field.value as boolean}
-                                            onCheckedChange={field.onChange}
+                                          <Input
+                                            type="number"
+                                            placeholder="0.00"
+                                            {...field}
+                                            onChange={(e) => {
+                                              field.onChange(e);
+                                              splitForm.trigger();
+                                            }}
                                           />
                                         </FormControl>
-                                        <FormLabel className="font-normal">Sem Juros</FormLabel>
                                       </FormItem>
                                     )}
                                   />
                                 </div>
-                              )}
-                            </CardContent>
-                          </Card>
-                        ))}
+                                
+                                {(currentMethod === "Cartão" || 
+                                  currentMethod === "Link de Pagamento") && (
+                                  <div className="mt-3">
+                                    <FormField
+                                      control={splitForm.control}
+                                      name={`splitPayments.${index}.installments`}
+                                      render={({ field }) => (
+                                        <FormItem>
+                                          <FormLabel>Parcelas</FormLabel>
+                                          <Select
+                                            value={field.value as string}
+                                            onValueChange={field.onChange}
+                                          >
+                                            <FormControl>
+                                              <SelectTrigger>
+                                                <SelectValue placeholder="Selecione" />
+                                              </SelectTrigger>
+                                            </FormControl>
+                                            <SelectContent>
+                                              {currentMethod === "Cartão" && installmentFees 
+                                                ? Object.keys(installmentFees).map((i) => (
+                                                    <SelectItem key={i} value={i}>
+                                                      {i}x {!currentNoInterest ? `(+${installmentFees[i]}%)` : ''}
+                                                    </SelectItem>
+                                                  ))
+                                                : currentMethod === "Link de Pagamento" && linkInstallmentFees
+                                                  ? Object.keys(linkInstallmentFees).map((i) => (
+                                                      <SelectItem key={i} value={i}>
+                                                        {i}x {!currentNoInterest ? `(+${linkInstallmentFees[i]}%)` : ''}
+                                                      </SelectItem>
+                                                    ))
+                                                  : [...Array(12)].map((_, i) => (
+                                                      <SelectItem key={i+1} value={(i+1).toString()}>{i+1}x</SelectItem>
+                                                    ))
+                                              }
+                                            </SelectContent>
+                                          </Select>
+                                        </FormItem>
+                                      )}
+                                    />
+                                    
+                                    <FormField
+                                      control={splitForm.control}
+                                      name={`splitPayments.${index}.noInterest`}
+                                      render={({ field }) => (
+                                        <FormItem className="flex flex-row items-center space-x-2 space-y-0 mt-3">
+                                          <FormControl>
+                                            <Switch
+                                              checked={field.value as boolean}
+                                              onCheckedChange={field.onChange}
+                                            />
+                                          </FormControl>
+                                          <FormLabel className="font-normal">Sem Juros</FormLabel>
+                                        </FormItem>
+                                      )}
+                                    />
+                                  </div>
+                                )}
+                                
+                                {/* Show fee if applicable */}
+                                {feeAmount > 0 && currentAmount > 0 && !currentNoInterest && (
+                                  <div className="mt-3 p-2 bg-muted/40 rounded text-sm">
+                                    <div className="flex justify-between text-muted-foreground">
+                                      <span>Subtotal:</span>
+                                      <span>R$ {formatCurrency(currentAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-muted-foreground">
+                                      <span>Taxa:</span>
+                                      <span>R$ {formatCurrency(feeAmount)}</span>
+                                    </div>
+                                    <div className="flex justify-between font-medium mt-1 pt-1 border-t border-border">
+                                      <span>Total:</span>
+                                      <span>R$ {formatCurrency(currentAmount + feeAmount)}</span>
+                                    </div>
+                                  </div>
+                                )}
+                              </CardContent>
+                            </Card>
+                          );
+                        })}
                       </div>
                     </ScrollArea>
                     
