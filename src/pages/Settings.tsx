@@ -416,7 +416,7 @@ export default function Settings() {
                                   <div className="flex flex-wrap gap-1">
                                     {Object.entries(setting.installments).map(([key, value]) => (
                                       <Badge key={key} variant="outline" className="bg-background">
-                                        {key}x: {value}%
+                                        {key}x: {String(value)}%
                                       </Badge>
                                     ))}
                                   </div>
