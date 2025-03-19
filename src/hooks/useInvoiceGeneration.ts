@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -20,8 +19,12 @@ export const useInvoiceGeneration = () => {
   const [items, setItems] = useState<InvoiceItem[]>([]);
   const [clientData, setClientData] = useState<ClientData>(DEFAULT_CLIENT_DATA);
   const [paymentMethod, setPaymentMethod] = useState<string>("Não informado");
-  const [installments, setInstallments] = useState<number | undefined>(undefined);
-  const [splitPayments, setSplitPayments] = useState<SplitPayment[] | undefined>(undefined);
+  const [installments, setInstallments] = useState<number | undefined>(
+    undefined
+  );
+  const [splitPayments, setSplitPayments] = useState<
+    SplitPayment[] | undefined
+  >(undefined);
   const [noInterest, setNoInterest] = useState<boolean>(false);
 
   const validateRequiredFields = () => {
@@ -106,40 +109,14 @@ export const useInvoiceGeneration = () => {
 
       const total = calculateSubtotal();
 
-      await updateInventory(items);
-      
-      // If payment is split, create a combined string representation with fee details
-      let paymentInfo = paymentMethod;
-      if (paymentMethod === "Split" && splitPayments && splitPayments.length > 0) {
-        paymentInfo = splitPayments.map(p => {
-          let methodInfo = p.method;
-          if (p.installments && p.installments > 1) {
-            const feeInfo = p.noInterest ? " sem juros" : 
-              (p.method === "Cartão" ? " (+5%)" : p.method === "Cartão de Débito" ? " (+2%)" : "");
-            methodInfo += ` ${p.installments}x${feeInfo}`;
-          }
-          return `${methodInfo}: R$${p.amount.toFixed(2)}`;
-        }).join(' + ');
-      } else if (
-        (paymentMethod === "Cartão" || paymentMethod === "Link de Pagamento") && 
-        installments && 
-        installments > 1
-      ) {
-        // Add fee information to payment method string
-        const feeInfo = noInterest ? " sem juros" : 
-          (paymentMethod === "Cartão" ? " (+5%)" : "");
-        paymentInfo = `${paymentMethod} ${installments}x${feeInfo}`;
-      } else if (paymentMethod === "Cartão de Débito" && !noInterest) {
-        paymentInfo = `${paymentMethod} (+2%)`;
-      }
-      
       const invoiceCreated = await createInvoice(
         items,
         clientData,
         total,
-        user.id,
-        paymentInfo
+        user.id
       );
+
+      await updateInventory(items);
 
       toast({
         title: "Sucesso!",

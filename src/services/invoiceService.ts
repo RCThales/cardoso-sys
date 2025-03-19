@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
@@ -37,8 +36,7 @@ export const createInvoice = async (
   items: InvoiceItem[],
   clientData: ClientData,
   total: number,
-  userId: string,
-  paymentMethod: string = "Cartão"
+  userId: string
 ) => {
   // First update client information if needed
   await updateClientInfoIfNeeded(clientData);
@@ -50,56 +48,6 @@ export const createInvoice = async (
 
   // Calculate the total with any payment method fees included
   let finalTotal = total;
-  let paymentFees = 0;
-  let paymentDetails = null;
-  
-  // For split payments, we need to calculate total fees
-  if (paymentMethod.startsWith('Split')) {
-    const paymentInfoRegex = /([^:]+): R\$(\d+\.\d+)/g;
-    const paymentParts = [];
-    let match;
-    
-    while ((match = paymentInfoRegex.exec(paymentMethod)) !== null) {
-      const methodInfo = match[1].trim();
-      const amount = parseFloat(match[2]);
-      
-      paymentParts.push({ method: methodInfo, amount });
-    }
-    
-    // Calculate fees for payment methods
-    paymentDetails = {
-      type: 'split',
-      methods: paymentParts,
-      subtotal: total,
-      fees: 0
-    };
-    
-    // We already include fees in the UI calculation for split payments
-    finalTotal = total;
-  } else if (paymentMethod.includes('(+')) {
-    // Extract payment method and fee information
-    const methodMatch = paymentMethod.match(/(.+?)(\d+)x\s*(?:\((\+[\d.]+)%\))?/);
-    
-    if (methodMatch) {
-      const method = methodMatch[1].trim();
-      const installments = parseInt(methodMatch[2]);
-      const feePercentage = methodMatch[3] ? parseFloat(methodMatch[3].replace('+', '')) : 0;
-      
-      if (feePercentage > 0) {
-        paymentFees = total * (feePercentage / 100);
-        finalTotal = total + paymentFees;
-        
-        paymentDetails = {
-          type: 'installment',
-          method: method,
-          installments: installments,
-          feePercentage: feePercentage,
-          subtotal: total,
-          fees: paymentFees
-        };
-      }
-    }
-  }
 
   const allItems = [
     ...items.map((item) => ({
@@ -137,10 +85,8 @@ export const createInvoice = async (
     subtotal: total,
     total: finalTotal,
     is_paid: clientData.isPaid,
-    payment_method: paymentMethod,
+    payment_method: "Não informado",
     user_id: userId,
-    payment_fees: paymentFees,
-    payment_details: paymentDetails
   });
 
   if (error) throw error;

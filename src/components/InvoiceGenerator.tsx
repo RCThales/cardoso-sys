@@ -12,26 +12,13 @@ import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
 import Loader from "./loader";
 
-interface InvoiceGeneratorProps {
-  onInvoiceCreated?: () => void;
-  onPaymentClick?: (total: number, invoiceRef: any) => void;
-}
-
-export const InvoiceGenerator = ({
-  onInvoiceCreated,
-  onPaymentClick,
-}: InvoiceGeneratorProps) => {
+export const InvoiceGenerator = () => {
   const navigate = useNavigate();
   const {
     items,
     setItems,
     clientData,
     setClientData,
-    paymentMethod,
-    setPaymentMethod,
-    setInstallments,
-    setSplitPayments,
-    setNoInterest,
     addItem,
     updateItem,
     removeItem,
@@ -110,39 +97,17 @@ export const InvoiceGenerator = ({
   const handleGenerateInvoice = async () => {
     if (!validateRequiredFields()) return;
 
-    // If onPaymentClick is provided, use the payment dialog flow
-    if (onPaymentClick) {
-      const total = calculateTotalItemsPlusShippingMinusDiscount();
-      
-      // Set default payment method to "Não informado"
-      setClientData({
-        ...clientData,
-        isPaid: false,
-      });
-      
-      const invoiceRef = {
-        generateInvoice,
-        setPaymentMethod,
-        setInstallments,
-        setSplitPayments,
-        setNoInterest
-      };
-      
-      onPaymentClick(total, invoiceRef);
-    } else {
-      // Legacy flow without payment dialog
-      setClientData({
-        ...clientData,
-        isPaid: false,
-      });
+    // flow without payment dialog
+    setClientData({
+      ...clientData,
+      isPaid: false,
+    });
 
-      const invoiceCreated = await generateInvoice();
-      clearCart();
-      clearSessionStorage();
+    const invoiceCreated = await generateInvoice();
+    clearCart();
+    clearSessionStorage();
 
-      navigate("/invoices/history?invoice_id=" + invoiceCreated);
-      if (onInvoiceCreated) onInvoiceCreated();
-    }
+    navigate("/invoices/history?invoice_id=" + invoiceCreated);
   };
 
   const clearSessionStorage = () => {

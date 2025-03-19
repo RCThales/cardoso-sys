@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceGenerator } from "@/components/InvoiceGenerator";
@@ -33,47 +32,30 @@ const CreateInvoice = () => {
     }
   }, [items, navigate]);
 
-  const handleInvoiceCreated = () => {
-    if ("Notification" in window && Notification.permission === "granted") {
-      const notification = new Notification("Fatura Gerada", {
-        body: "Uma nova fatura foi gerada com sucesso!",
-        icon: "/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png",
-        badge: "/lovable-uploads/25a6caa4-8d3c-4b1a-a64c-57409797e579.png",
-      });
-
-      notification.onclick = () => {
-        window.focus();
-        notification.close();
-        navigate("/invoices");
-      };
-    }
-  };
-
   const handlePaymentSelect = async (
-    method: string, 
-    installments?: number, 
+    method: string,
+    installments?: number,
     splitPayments?: any[],
     noInterest?: boolean
   ) => {
     if (invoiceRef) {
       invoiceRef.setPaymentMethod(method);
-      
+
       if (installments) {
         invoiceRef.setInstallments(installments);
       }
-      
+
       if (splitPayments) {
         invoiceRef.setSplitPayments(splitPayments);
       }
-      
+
       if (noInterest !== undefined) {
         invoiceRef.setNoInterest(noInterest);
       }
-      
+
       const invoiceCreated = await invoiceRef.generateInvoice();
       if (invoiceCreated) {
         navigate("/invoices/history?invoice_id=" + invoiceCreated);
-        handleInvoiceCreated();
       }
     }
   };
@@ -94,11 +76,8 @@ const CreateInvoice = () => {
             Preencha os dados para gerar a fatura
           </p>
         </div>
-        <InvoiceGenerator 
-          onInvoiceCreated={handleInvoiceCreated} 
-          onPaymentClick={handlePaymentClick}
-        />
-        
+        <InvoiceGenerator />
+
         <PaymentMethodDialog
           open={isPaymentDialogOpen}
           onOpenChange={setIsPaymentDialogOpen}
