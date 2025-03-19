@@ -1,12 +1,32 @@
-
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { CreditCard, Coins, QrCode, Split, Link as LinkIcon, CreditCard as DebitCard, Plus, Trash2 } from "lucide-react";
+import {
+  CreditCard,
+  Coins,
+  QrCode,
+  Split,
+  Link as LinkIcon,
+  CreditCard as DebitCard,
+  Plus,
+  Trash2,
+} from "lucide-react";
 import { useState, useEffect } from "react";
 import { QrCodePix } from "qrcode-pix";
 import { formatCurrency } from "@/utils/formatters";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { getSettingByName } from "@/services/settingsService";
 import { Label } from "../ui/label";
 import { Form, FormField, FormItem, FormLabel, FormControl } from "../ui/form";
@@ -19,7 +39,12 @@ import { ScrollArea } from "../ui/scroll-area";
 interface PaymentMethodDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (method: string, installments?: number, splitPayments?: SplitPayment[], noInterest?: boolean) => void;
+  onConfirm: (
+    method: string,
+    installments?: number,
+    splitPayments?: SplitPayment[],
+    noInterest?: boolean
+  ) => void;
   total: number;
 }
 
@@ -41,55 +66,85 @@ export const PaymentMethodDialog = ({
   const [qrCode, setQrCode] = useState<string>("");
   const [rawPix, setRawPix] = useState<string>("");
   const [installments, setInstallments] = useState<number>(1);
-  const [installmentFees, setInstallmentFees] = useState<Record<string, number> | null>(null);
-  const [linkInstallmentFees, setLinkInstallmentFees] = useState<Record<string, number> | null>(null);
+  const [installmentFees, setInstallmentFees] = useState<Record<
+    string,
+    number
+  > | null>(null);
+  const [linkInstallmentFees, setLinkInstallmentFees] = useState<Record<
+    string,
+    number
+  > | null>(null);
   const [debitFee, setDebitFee] = useState<number>(0);
   const [loading, setLoading] = useState(false);
   const [totalWithFee, setTotalWithFee] = useState(total);
   const [noInterest, setNoInterest] = useState(false);
   const [linkInstallments, setLinkInstallments] = useState<number>(1);
-  
+
   const splitForm = useForm({
     defaultValues: {
       splitPayments: [
         { method: "Cartão", amount: "", installments: "1", noInterest: false },
-        { method: "Dinheiro", amount: "", installments: "1", noInterest: false }
-      ]
-    }
+        {
+          method: "Dinheiro",
+          amount: "",
+          installments: "1",
+          noInterest: false,
+        },
+      ],
+    },
   });
-  
+
   const { fields, append, remove } = useFieldArray({
     control: splitForm.control,
-    name: "splitPayments"
+    name: "splitPayments",
   });
 
   const paymentMethods = [
-    { value: "Cartão", label: "Cartão de Crédito", icon: <CreditCard className="h-4 w-4 mr-2" /> },
-    { value: "Cartão de Débito", label: "Cartão de Débito", icon: <DebitCard className="h-4 w-4 mr-2" /> },
-    { value: "Dinheiro", label: "Dinheiro", icon: <Coins className="h-4 w-4 mr-2" /> },
+    {
+      value: "Cartão",
+      label: "Cartão de Crédito",
+      icon: <CreditCard className="h-4 w-4 mr-2" />,
+    },
+    {
+      value: "Cartão de Débito",
+      label: "Cartão de Débito",
+      icon: <DebitCard className="h-4 w-4 mr-2" />,
+    },
+    {
+      value: "Dinheiro",
+      label: "Dinheiro",
+      icon: <Coins className="h-4 w-4 mr-2" />,
+    },
     { value: "Pix", label: "PIX", icon: <QrCode className="h-4 w-4 mr-2" /> },
-    { value: "Link de Pagamento", label: "Link de Pagamento", icon: <LinkIcon className="h-4 w-4 mr-2" /> }
+    {
+      value: "Link de Pagamento",
+      label: "Link de Pagamento",
+      icon: <LinkIcon className="h-4 w-4 mr-2" />,
+    },
   ];
 
   useEffect(() => {
     const fetchPaymentSettings = async () => {
       try {
         setLoading(true);
-        
+
         // Fetch credit card settings
         const creditCardSetting = await getSettingByName("Cartão de Crédito");
         if (creditCardSetting && creditCardSetting.installments) {
           setInstallmentFees(creditCardSetting.installments);
-          console.log("Credit card fees loaded:", creditCardSetting.installments);
+          console.log(
+            "Credit card fees loaded:",
+            creditCardSetting.installments
+          );
         }
-        
+
         // Fetch debit card fee
         const debitCardSetting = await getSettingByName("Cartão de Débito");
         if (debitCardSetting) {
           setDebitFee(debitCardSetting.fee);
           console.log("Debit card fee loaded:", debitCardSetting.fee);
         }
-        
+
         // Fetch payment link settings
         const linkSetting = await getSettingByName("Link de Pagamento");
         if (linkSetting && linkSetting.installments) {
@@ -98,7 +153,10 @@ export const PaymentMethodDialog = ({
         } else {
           // If no specific Link settings found, fallback to credit card settings
           setLinkInstallmentFees(creditCardSetting?.installments || null);
-          console.log("Using credit card fees for link (fallback):", creditCardSetting?.installments);
+          console.log(
+            "Using credit card fees for link (fallback):",
+            creditCardSetting?.installments
+          );
         }
       } catch (error) {
         console.error("Error fetching payment settings:", error);
@@ -121,21 +179,36 @@ export const PaymentMethodDialog = ({
     } else if (method === "Cartão de Débito" && !noInterest) {
       const feeAmount = total * (debitFee / 100);
       setTotalWithFee(total + feeAmount);
-    } else if (method === "Link de Pagamento" && linkInstallmentFees && !noInterest) {
+    } else if (
+      method === "Link de Pagamento" &&
+      linkInstallmentFees &&
+      !noInterest
+    ) {
       const fee = linkInstallmentFees[linkInstallments] || 0;
       const feeAmount = total * (fee / 100);
       setTotalWithFee(total + feeAmount);
     } else {
       setTotalWithFee(total);
     }
-  }, [installments, installmentFees, linkInstallments, linkInstallmentFees, method, total, debitFee, noInterest]);
+  }, [
+    installments,
+    installmentFees,
+    linkInstallments,
+    linkInstallmentFees,
+    method,
+    total,
+    debitFee,
+    noInterest,
+  ]);
 
   const handleConfirm = () => {
     onConfirm(
-      method, 
-      method === "Cartão" ? installments : 
-      method === "Link de Pagamento" ? linkInstallments : 
-      undefined,
+      method,
+      method === "Cartão"
+        ? installments
+        : method === "Link de Pagamento"
+        ? linkInstallments
+        : undefined,
       undefined,
       noInterest
     );
@@ -144,18 +217,19 @@ export const PaymentMethodDialog = ({
 
   const handleSplitConfirm = () => {
     const values = splitForm.getValues();
-    
+
     const payments: SplitPayment[] = values.splitPayments
-      .filter(payment => parseFloat(payment.amount as string) > 0)
-      .map(payment => ({
+      .filter((payment) => parseFloat(payment.amount as string) > 0)
+      .map((payment) => ({
         method: payment.method,
         amount: parseFloat(payment.amount as string),
-        installments: (payment.method === "Cartão" || payment.method === "Link de Pagamento") 
-          ? parseInt(payment.installments as string) 
-          : undefined,
-        noInterest: payment.noInterest
+        installments:
+          payment.method === "Cartão" || payment.method === "Link de Pagamento"
+            ? parseInt(payment.installments as string)
+            : undefined,
+        noInterest: payment.noInterest,
       }));
-    
+
     onConfirm("Split", undefined, payments);
     onOpenChange(false);
   };
@@ -168,19 +242,19 @@ export const PaymentMethodDialog = ({
   const calculateSplitTotalWithFees = () => {
     const values = splitForm.getValues();
     let totalWithFees = 0;
-    
+
     // Sum the payment amounts with their respective fees
-    values.splitPayments.forEach(payment => {
+    values.splitPayments.forEach((payment) => {
       const amount = parseFloat(payment.amount as string) || 0;
       if (amount > 0) {
         const installmentCount = parseInt(payment.installments as string) || 1;
         const noInterestOption = payment.noInterest === true;
-        
+
         // Calculate with fee if applicable
         if (!noInterestOption) {
           const fee = calculateSplitFee(
-            payment.method, 
-            amount, 
+            payment.method,
+            amount,
             installmentCount,
             noInterestOption
           );
@@ -190,7 +264,7 @@ export const PaymentMethodDialog = ({
         }
       }
     });
-    
+
     return totalWithFees;
   };
 
@@ -200,17 +274,22 @@ export const PaymentMethodDialog = ({
   };
 
   // Calculate fee amount for a method in split payment
-  const calculateSplitFee = (method: string, amount: number, installments: number, noInterest: boolean): number => {
+  const calculateSplitFee = (
+    method: string,
+    amount: number,
+    installments: number,
+    noInterest: boolean
+  ): number => {
     if (noInterest) return 0;
-    
+
     if (method === "Cartão" && installmentFees) {
-      return amount * (installmentFees[installments] || 0) / 100;
+      return (amount * (installmentFees[installments] || 0)) / 100;
     } else if (method === "Cartão de Débito") {
-      return amount * (debitFee || 0) / 100;
+      return (amount * (debitFee || 0)) / 100;
     } else if (method === "Link de Pagamento" && linkInstallmentFees) {
-      return amount * (linkInstallmentFees[installments] || 0) / 100;
+      return (amount * (linkInstallmentFees[installments] || 0)) / 100;
     }
-    
+
     return 0;
   };
 
@@ -218,35 +297,35 @@ export const PaymentMethodDialog = ({
   const isSplitValid = () => {
     return calculateSplitRemaining() <= 0;
   };
-  
+
   // Check if method can be added (credit card and debit card can be used multiple times)
   const canAddMethod = (method: string) => {
     const values = splitForm.getValues();
-    const methodsInUse = values.splitPayments.map(p => p.method);
-    
+    const methodsInUse = values.splitPayments.map((p) => p.method);
+
     // Return true if credit card or debit card
     if (method === "Cartão" || method === "Cartão de Débito") {
       return true;
     }
-    
+
     // For other methods, check if already in use
     return !methodsInUse.includes(method);
   };
-  
+
   // Get available payment methods for adding
   const getAvailableMethods = () => {
-    return paymentMethods.filter(method => canAddMethod(method.value));
+    return paymentMethods.filter((method) => canAddMethod(method.value));
   };
 
   const addPaymentMethod = () => {
     // Find first available method
     const availableMethods = getAvailableMethods();
     if (availableMethods.length > 0) {
-      append({ 
-        method: availableMethods[0].value, 
-        amount: "", 
-        installments: "1", 
-        noInterest: false 
+      append({
+        method: availableMethods[0].value,
+        amount: "",
+        installments: "1",
+        noInterest: false,
       });
     }
   };
@@ -299,7 +378,7 @@ export const PaymentMethodDialog = ({
 
   // Get method label from value
   const getMethodLabel = (methodValue: string): string => {
-    const method = paymentMethods.find(m => m.value === methodValue);
+    const method = paymentMethods.find((m) => m.value === methodValue);
     return method ? method.label : methodValue;
   };
 
@@ -308,39 +387,62 @@ export const PaymentMethodDialog = ({
       <DialogContent className="max-w-[95vw] md:max-w-[620px] max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle>Forma de Pagamento</DialogTitle>
-          <DialogDescription>Selecione o método de pagamento da fatura</DialogDescription>
+          <DialogDescription>
+            Selecione o método de pagamento da fatura
+          </DialogDescription>
         </DialogHeader>
         <ScrollArea className="flex-1">
           <div className="p-1">
-            <Tabs defaultValue="Cartão" value={method} onValueChange={setMethod}>
-              <TabsList className="grid grid-cols-2 gap-1 mb-2 w-full">
-                <TabsTrigger value="Cartão" className="flex flex-col items-center py-2">
-                  <CreditCard className="h-4 w-4 mb-1" />
+            <Tabs
+              defaultValue="Cartão"
+              value={method}
+              onValueChange={setMethod}
+            >
+              <TabsList className="grid grid-cols-3 gap-2 mb-4 w-full">
+                <TabsTrigger
+                  value="Cartão"
+                  className="flex  items-center justify-center  text-center"
+                >
+                  <CreditCard className="h-4 w-4 mr-1" />
                   <span className="text-xs">Crédito</span>
                 </TabsTrigger>
-                <TabsTrigger value="Cartão de Débito" className="flex flex-col items-center py-2">
-                  <DebitCard className="h-4 w-4 mb-1" />
+                <TabsTrigger
+                  value="Cartão de Débito"
+                  className="flex  items-center justify-center  text-center"
+                >
+                  <DebitCard className="h-4 w-4 mr-1" />
                   <span className="text-xs">Débito</span>
                 </TabsTrigger>
+                <TabsTrigger
+                  value="Link de Pagamento"
+                  className="flex  items-center justify-center  text-center"
+                >
+                  <LinkIcon className="h-4 w-4 mr-1" />
+                  <span className="text-xs">Link</span>
+                </TabsTrigger>
               </TabsList>
-              <TabsList className="grid grid-cols-3 gap-1 mb-4 w-full">
-                <TabsTrigger value="Dinheiro" className="flex flex-col items-center py-2">
-                  <Coins className="h-4 w-4 mb-1" />
+
+              <TabsList className="grid grid-cols-3 gap-4 mb-4 w-full">
+                <TabsTrigger
+                  value="Dinheiro"
+                  className="flex  items-center justify-center  text-center"
+                >
+                  <Coins className="h-4 w-4 mr-1" />
                   <span className="text-xs">Dinheiro</span>
                 </TabsTrigger>
-                <TabsTrigger value="Pix" className="flex flex-col items-center py-2">
-                  <QrCode className="h-4 w-4 mb-1" />
+                <TabsTrigger
+                  value="Pix"
+                  className="flex  items-center justify-center text-center"
+                >
+                  <QrCode className="h-4 w-4 mr-1" />
                   <span className="text-xs">PIX</span>
                 </TabsTrigger>
-                <TabsTrigger value="Split" className="flex flex-col items-center py-2">
-                  <Split className="h-4 w-4 mb-1" />
+                <TabsTrigger
+                  value="Split"
+                  className="flex  items-center justify-center text-center"
+                >
+                  <Split className="h-4 w-4 mr-1" />
                   <span className="text-xs">Dividido</span>
-                </TabsTrigger>
-              </TabsList>
-              <TabsList className="grid grid-cols-1 gap-1 mb-4 w-full">
-                <TabsTrigger value="Link de Pagamento" className="flex items-center">
-                  <LinkIcon className="h-4 w-4 mr-2" />
-                  <span>Link de Pagamento</span>
                 </TabsTrigger>
               </TabsList>
 
@@ -349,19 +451,25 @@ export const PaymentMethodDialog = ({
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="installments">Número de Parcelas:</Label>
-                      <Select 
-                        value={installments.toString()} 
-                        onValueChange={(value) => setInstallments(parseInt(value))}
+                      <Select
+                        value={installments.toString()}
+                        onValueChange={(value) =>
+                          setInstallments(parseInt(value))
+                        }
                       >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Selecione parcelas" />
                         </SelectTrigger>
                         <SelectContent>
-                          {installmentFees && Object.keys(installmentFees).map((installment) => (
-                            <SelectItem key={installment} value={installment}>
-                              {installment}x {!noInterest && installmentFees[installment] ? `(+${installmentFees[installment]}%)` : ''}
-                            </SelectItem>
-                          ))}
+                          {installmentFees &&
+                            Object.keys(installmentFees).map((installment) => (
+                              <SelectItem key={installment} value={installment}>
+                                {installment}x{" "}
+                                {!noInterest && installmentFees[installment]
+                                  ? `(+${installmentFees[installment]}%)`
+                                  : ""}
+                              </SelectItem>
+                            ))}
                         </SelectContent>
                       </Select>
                     </div>
@@ -380,25 +488,46 @@ export const PaymentMethodDialog = ({
                         <span>Total:</span>
                         <span>R$ {formatCurrency(total)}</span>
                       </div>
-                      
+
                       {installmentFees && installments > 1 && !noInterest && (
                         <div className="flex justify-between mb-2">
-                          <span>Taxa ({installmentFees[installments] || 0}%):</span>
-                          <span>R$ {formatCurrency((total * ((installmentFees[installments] || 0) / 100)))}</span>
+                          <span>
+                            Taxa ({installmentFees[installments] || 0}%):
+                          </span>
+                          <span>
+                            R${" "}
+                            {formatCurrency(
+                              total *
+                                ((installmentFees[installments] || 0) / 100)
+                            )}
+                          </span>
                         </div>
                       )}
-                      
+
                       <div className="flex justify-between font-bold">
-                        <span>Total {!noInterest && totalWithFee > total ? "com taxa" : ""}:</span>
-                        <span>R$ {formatCurrency(noInterest ? total : totalWithFee)}</span>
+                        <span>
+                          Total{" "}
+                          {!noInterest && totalWithFee > total
+                            ? "com taxa"
+                            : ""}
+                          :
+                        </span>
+                        <span>
+                          R$ {formatCurrency(noInterest ? total : totalWithFee)}
+                        </span>
                       </div>
-                      
+
                       <div className="flex justify-between mt-2 text-sm text-muted-foreground">
                         <span>Valor por parcela:</span>
-                        <span>R$ {formatCurrency((noInterest ? total : totalWithFee) / installments)}</span>
+                        <span>
+                          R${" "}
+                          {formatCurrency(
+                            (noInterest ? total : totalWithFee) / installments
+                          )}
+                        </span>
                       </div>
                     </div>
-                    
+
                     <Button onClick={handleConfirm} className="w-full">
                       Confirmar Pagamento
                     </Button>
@@ -423,17 +552,23 @@ export const PaymentMethodDialog = ({
                         <span>Total:</span>
                         <span>R$ {formatCurrency(total)}</span>
                       </div>
-                      
+
                       {!noInterest && debitFee > 0 && (
                         <div className="flex justify-between mb-2">
                           <span>Taxa ({debitFee}%):</span>
-                          <span>R$ {formatCurrency((total * (debitFee / 100)))}</span>
+                          <span>
+                            R$ {formatCurrency(total * (debitFee / 100))}
+                          </span>
                         </div>
                       )}
-                      
+
                       <div className="flex justify-between font-bold">
-                        <span>Total {!noInterest && debitFee > 0 ? "com taxa" : ""}:</span>
-                        <span>R$ {formatCurrency(noInterest ? total : totalWithFee)}</span>
+                        <span>
+                          Total {!noInterest && debitFee > 0 ? "com taxa" : ""}:
+                        </span>
+                        <span>
+                          R$ {formatCurrency(noInterest ? total : totalWithFee)}
+                        </span>
                       </div>
                     </div>
                     <Button onClick={handleConfirm} className="w-full">
@@ -447,7 +582,9 @@ export const PaymentMethodDialog = ({
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div>
-                      <label className="text-sm font-medium">Valor Recebido:</label>
+                      <label className="text-sm font-medium">
+                        Valor Recebido:
+                      </label>
                       <input
                         type="number"
                         value={cashReceived}
@@ -463,7 +600,9 @@ export const PaymentMethodDialog = ({
                       </div>
                       <div className="flex justify-between mb-2">
                         <span>Recebido:</span>
-                        <span>R$ {formatCurrency(parseFloat(cashReceived) || 0)}</span>
+                        <span>
+                          R$ {formatCurrency(parseFloat(cashReceived) || 0)}
+                        </span>
                       </div>
                       <div className="flex justify-between font-bold">
                         <span>Troco:</span>
@@ -473,7 +612,9 @@ export const PaymentMethodDialog = ({
                     <Button
                       onClick={handleConfirm}
                       className="w-full"
-                      disabled={!cashReceived || parseFloat(cashReceived) < total}
+                      disabled={
+                        !cashReceived || parseFloat(cashReceived) < total
+                      }
                     >
                       Confirmar Pagamento
                     </Button>
@@ -486,7 +627,11 @@ export const PaymentMethodDialog = ({
                   <CardContent className="pt-6">
                     <div className="flex flex-col items-center space-y-4">
                       {qrCode ? (
-                        <img src={qrCode} alt="QR Code PIX" className="w-48 h-48" />
+                        <img
+                          src={qrCode}
+                          alt="QR Code PIX"
+                          className="w-48 h-48"
+                        />
                       ) : (
                         <div className="w-48 h-48 border-2 border-dashed border-gray-300 flex items-center justify-center text-muted-foreground">
                           Gerando QR Code...
@@ -497,7 +642,9 @@ export const PaymentMethodDialog = ({
                       </p>
                       {rawPix && (
                         <div className="w-full">
-                          <p className="text-sm font-medium mb-2">Código PIX:</p>
+                          <p className="text-sm font-medium mb-2">
+                            Código PIX:
+                          </p>
                           <div className="p-2 bg-muted rounded-md text-xs break-all">
                             {rawPix}
                           </div>
@@ -515,29 +662,49 @@ export const PaymentMethodDialog = ({
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
-                      <Label htmlFor="link-installments">Número de Parcelas:</Label>
-                      <Select 
-                        value={linkInstallments.toString()} 
-                        onValueChange={(value) => setLinkInstallments(parseInt(value))}
+                      <Label htmlFor="link-installments">
+                        Número de Parcelas:
+                      </Label>
+                      <Select
+                        value={linkInstallments.toString()}
+                        onValueChange={(value) =>
+                          setLinkInstallments(parseInt(value))
+                        }
                       >
                         <SelectTrigger className="w-[180px]">
                           <SelectValue placeholder="Selecione parcelas" />
                         </SelectTrigger>
                         <SelectContent>
-                          {linkInstallmentFees ? (
-                            Object.keys(linkInstallmentFees).map((installment) => (
-                              <SelectItem key={installment} value={installment}>
-                                {installment}x {!noInterest && linkInstallmentFees[installment] ? `(+${linkInstallmentFees[installment]}%)` : ''}
-                              </SelectItem>
-                            ))
-                          ) : (
-                            // Fallback to standard installments if no specific fees
-                            installmentFees && Object.keys(installmentFees).map((installment) => (
-                              <SelectItem key={installment} value={installment}>
-                                {installment}x {!noInterest && installmentFees[installment] ? `(+${installmentFees[installment]}%)` : ''}
-                              </SelectItem>
-                            ))
-                          )}
+                          {linkInstallmentFees
+                            ? Object.keys(linkInstallmentFees).map(
+                                (installment) => (
+                                  <SelectItem
+                                    key={installment}
+                                    value={installment}
+                                  >
+                                    {installment}x{" "}
+                                    {!noInterest &&
+                                    linkInstallmentFees[installment]
+                                      ? `(+${linkInstallmentFees[installment]}%)`
+                                      : ""}
+                                  </SelectItem>
+                                )
+                              )
+                            : // Fallback to standard installments if no specific fees
+                              installmentFees &&
+                              Object.keys(installmentFees).map(
+                                (installment) => (
+                                  <SelectItem
+                                    key={installment}
+                                    value={installment}
+                                  >
+                                    {installment}x{" "}
+                                    {!noInterest && installmentFees[installment]
+                                      ? `(+${installmentFees[installment]}%)`
+                                      : ""}
+                                  </SelectItem>
+                                )
+                              )}
                         </SelectContent>
                       </Select>
                     </div>
@@ -556,28 +723,56 @@ export const PaymentMethodDialog = ({
                         <span>Total:</span>
                         <span>R$ {formatCurrency(total)}</span>
                       </div>
-                      
-                      {linkInstallmentFees && linkInstallments > 1 && !noInterest && (
-                        <div className="flex justify-between mb-2">
-                          <span>Taxa ({linkInstallmentFees[linkInstallments] || 0}%):</span>
-                          <span>R$ {formatCurrency((total * ((linkInstallmentFees[linkInstallments] || 0) / 100)))}</span>
-                        </div>
-                      )}
-                      
+
+                      {linkInstallmentFees &&
+                        linkInstallments > 1 &&
+                        !noInterest && (
+                          <div className="flex justify-between mb-2">
+                            <span>
+                              Taxa ({linkInstallmentFees[linkInstallments] || 0}
+                              %):
+                            </span>
+                            <span>
+                              R${" "}
+                              {formatCurrency(
+                                total *
+                                  ((linkInstallmentFees[linkInstallments] ||
+                                    0) /
+                                    100)
+                              )}
+                            </span>
+                          </div>
+                        )}
+
                       <div className="flex justify-between font-bold">
-                        <span>Total {!noInterest && totalWithFee > total ? "com taxa" : ""}:</span>
-                        <span>R$ {formatCurrency(noInterest ? total : totalWithFee)}</span>
+                        <span>
+                          Total{" "}
+                          {!noInterest && totalWithFee > total
+                            ? "com taxa"
+                            : ""}
+                          :
+                        </span>
+                        <span>
+                          R$ {formatCurrency(noInterest ? total : totalWithFee)}
+                        </span>
                       </div>
-                      
+
                       {linkInstallments > 1 && (
                         <div className="flex justify-between mt-2 text-sm text-muted-foreground">
                           <span>Valor por parcela:</span>
-                          <span>R$ {formatCurrency((noInterest ? total : totalWithFee) / linkInstallments)}</span>
+                          <span>
+                            R${" "}
+                            {formatCurrency(
+                              (noInterest ? total : totalWithFee) /
+                                linkInstallments
+                            )}
+                          </span>
                         </div>
                       )}
-                      
+
                       <p className="text-sm mt-2">
-                        Um link de pagamento será enviado ao cliente para processamento.
+                        Um link de pagamento será enviado ao cliente para
+                        processamento.
                       </p>
                     </div>
                     <Button onClick={handleConfirm} className="w-full">
@@ -597,30 +792,48 @@ export const PaymentMethodDialog = ({
                       </div>
                       <div className="flex justify-between mb-2">
                         <span>Total com Taxas:</span>
-                        <span>R$ {formatCurrency(calculateSplitTotalWithFees())}</span>
+                        <span>
+                          R$ {formatCurrency(calculateSplitTotalWithFees())}
+                        </span>
                       </div>
                       <div className="flex justify-between font-bold">
                         <span>Restante a pagar:</span>
-                        <span>R$ {formatCurrency(calculateSplitRemaining())}</span>
+                        <span>
+                          R$ {formatCurrency(calculateSplitRemaining())}
+                        </span>
                       </div>
                     </div>
 
                     <ScrollArea className="h-[360px] md:h-[400px] pr-4">
                       <div className="space-y-6">
                         {fields.map((field, index) => {
-                          const currentMethod = splitForm.watch(`splitPayments.${index}.method`);
-                          const currentAmount = parseFloat(splitForm.watch(`splitPayments.${index}.amount`) as string) || 0;
-                          const currentInstallments = parseInt(splitForm.watch(`splitPayments.${index}.installments`) as string) || 1;
-                          const currentNoInterest = splitForm.watch(`splitPayments.${index}.noInterest`);
-                          
+                          const currentMethod = splitForm.watch(
+                            `splitPayments.${index}.method`
+                          );
+                          const currentAmount =
+                            parseFloat(
+                              splitForm.watch(
+                                `splitPayments.${index}.amount`
+                              ) as string
+                            ) || 0;
+                          const currentInstallments =
+                            parseInt(
+                              splitForm.watch(
+                                `splitPayments.${index}.installments`
+                              ) as string
+                            ) || 1;
+                          const currentNoInterest = splitForm.watch(
+                            `splitPayments.${index}.noInterest`
+                          );
+
                           // Calculate the fee for this payment method
                           const feeAmount = calculateSplitFee(
-                            currentMethod, 
-                            currentAmount, 
+                            currentMethod,
+                            currentAmount,
                             currentInstallments,
                             currentNoInterest
                           );
-                          
+
                           return (
                             <Card key={field.id} className="overflow-hidden">
                               <CardContent className="p-4 pt-4">
@@ -632,8 +845,8 @@ export const PaymentMethodDialog = ({
                                     </h3>
                                   </div>
                                   {fields.length > 2 && (
-                                    <Button 
-                                      variant="ghost" 
+                                    <Button
+                                      variant="ghost"
                                       size="icon"
                                       onClick={() => remove(index)}
                                     >
@@ -641,7 +854,7 @@ export const PaymentMethodDialog = ({
                                     </Button>
                                   )}
                                 </div>
-                                
+
                                 <div className="grid grid-cols-2 gap-3">
                                   <FormField
                                     control={splitForm.control}
@@ -659,16 +872,23 @@ export const PaymentMethodDialog = ({
                                             </SelectTrigger>
                                           </FormControl>
                                           <SelectContent>
-                                            {paymentMethods.map(method => (
-                                              (method.value === field.value || canAddMethod(method.value)) && (
-                                                <SelectItem key={method.value} value={method.value}>
-                                                  <div className="flex items-center">
-                                                    {method.icon}
-                                                    {method.label}
-                                                  </div>
-                                                </SelectItem>
-                                              )
-                                            ))}
+                                            {paymentMethods.map(
+                                              (method) =>
+                                                (method.value === field.value ||
+                                                  canAddMethod(
+                                                    method.value
+                                                  )) && (
+                                                  <SelectItem
+                                                    key={method.value}
+                                                    value={method.value}
+                                                  >
+                                                    <div className="flex items-center">
+                                                      {method.icon}
+                                                      {method.label}
+                                                    </div>
+                                                  </SelectItem>
+                                                )
+                                            )}
                                           </SelectContent>
                                         </Select>
                                       </FormItem>
@@ -695,8 +915,8 @@ export const PaymentMethodDialog = ({
                                     )}
                                   />
                                 </div>
-                                
-                                {(currentMethod === "Cartão" || 
+
+                                {(currentMethod === "Cartão" ||
                                   currentMethod === "Link de Pagamento") && (
                                   <div className="mt-3">
                                     <FormField
@@ -715,28 +935,51 @@ export const PaymentMethodDialog = ({
                                               </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                              {currentMethod === "Cartão" && installmentFees 
-                                                ? Object.keys(installmentFees).map((i) => (
-                                                    <SelectItem key={i} value={i}>
-                                                      {i}x {!currentNoInterest ? `(+${installmentFees[i]}%)` : ''}
+                                              {currentMethod === "Cartão" &&
+                                              installmentFees
+                                                ? Object.keys(
+                                                    installmentFees
+                                                  ).map((i) => (
+                                                    <SelectItem
+                                                      key={i}
+                                                      value={i}
+                                                    >
+                                                      {i}x{" "}
+                                                      {!currentNoInterest
+                                                        ? `(+${installmentFees[i]}%)`
+                                                        : ""}
                                                     </SelectItem>
                                                   ))
-                                                : currentMethod === "Link de Pagamento" && linkInstallmentFees
-                                                  ? Object.keys(linkInstallmentFees).map((i) => (
-                                                      <SelectItem key={i} value={i}>
-                                                        {i}x {!currentNoInterest ? `(+${linkInstallmentFees[i]}%)` : ''}
-                                                      </SelectItem>
-                                                    ))
-                                                  : [...Array(12)].map((_, i) => (
-                                                      <SelectItem key={i+1} value={(i+1).toString()}>{i+1}x</SelectItem>
-                                                    ))
-                                              }
+                                                : currentMethod ===
+                                                    "Link de Pagamento" &&
+                                                  linkInstallmentFees
+                                                ? Object.keys(
+                                                    linkInstallmentFees
+                                                  ).map((i) => (
+                                                    <SelectItem
+                                                      key={i}
+                                                      value={i}
+                                                    >
+                                                      {i}x{" "}
+                                                      {!currentNoInterest
+                                                        ? `(+${linkInstallmentFees[i]}%)`
+                                                        : ""}
+                                                    </SelectItem>
+                                                  ))
+                                                : [...Array(12)].map((_, i) => (
+                                                    <SelectItem
+                                                      key={i + 1}
+                                                      value={(i + 1).toString()}
+                                                    >
+                                                      {i + 1}x
+                                                    </SelectItem>
+                                                  ))}
                                             </SelectContent>
                                           </Select>
                                         </FormItem>
                                       )}
                                     />
-                                    
+
                                     <FormField
                                       control={splitForm.control}
                                       name={`splitPayments.${index}.noInterest`}
@@ -748,41 +991,54 @@ export const PaymentMethodDialog = ({
                                               onCheckedChange={field.onChange}
                                             />
                                           </FormControl>
-                                          <FormLabel className="font-normal">Sem Juros</FormLabel>
+                                          <FormLabel className="font-normal">
+                                            Sem Juros
+                                          </FormLabel>
                                         </FormItem>
                                       )}
                                     />
                                   </div>
                                 )}
-                                
+
                                 {/* Show fee if applicable */}
-                                {feeAmount > 0 && currentAmount > 0 && !currentNoInterest && (
-                                  <div className="mt-3 p-2 bg-muted/40 rounded text-sm">
-                                    <div className="flex justify-between text-muted-foreground">
-                                      <span>Subtotal:</span>
-                                      <span>R$ {formatCurrency(currentAmount)}</span>
+                                {feeAmount > 0 &&
+                                  currentAmount > 0 &&
+                                  !currentNoInterest && (
+                                    <div className="mt-3 p-2 bg-muted/40 rounded text-sm">
+                                      <div className="flex justify-between text-muted-foreground">
+                                        <span>Subtotal:</span>
+                                        <span>
+                                          R$ {formatCurrency(currentAmount)}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between text-muted-foreground">
+                                        <span>Taxa:</span>
+                                        <span>
+                                          R$ {formatCurrency(feeAmount)}
+                                        </span>
+                                      </div>
+                                      <div className="flex justify-between font-medium mt-1 pt-1 border-t border-border">
+                                        <span>Total:</span>
+                                        <span>
+                                          R${" "}
+                                          {formatCurrency(
+                                            currentAmount + feeAmount
+                                          )}
+                                        </span>
+                                      </div>
                                     </div>
-                                    <div className="flex justify-between text-muted-foreground">
-                                      <span>Taxa:</span>
-                                      <span>R$ {formatCurrency(feeAmount)}</span>
-                                    </div>
-                                    <div className="flex justify-between font-medium mt-1 pt-1 border-t border-border">
-                                      <span>Total:</span>
-                                      <span>R$ {formatCurrency(currentAmount + feeAmount)}</span>
-                                    </div>
-                                  </div>
-                                )}
+                                  )}
                               </CardContent>
                             </Card>
                           );
                         })}
                       </div>
                     </ScrollArea>
-                    
+
                     <div className="flex flex-col space-y-3 pt-2">
                       {getAvailableMethods().length > 0 && (
-                        <Button 
-                          variant="outline" 
+                        <Button
+                          variant="outline"
                           className="w-full flex items-center justify-center"
                           onClick={addPaymentMethod}
                         >
@@ -790,10 +1046,10 @@ export const PaymentMethodDialog = ({
                           Adicionar Forma de Pagamento
                         </Button>
                       )}
-                      
-                      <Button 
-                        onClick={handleSplitConfirm} 
-                        className="w-full" 
+
+                      <Button
+                        onClick={handleSplitConfirm}
+                        className="w-full"
                         disabled={!isSplitValid()}
                       >
                         Confirmar Pagamento Dividido
