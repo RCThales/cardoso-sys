@@ -12,6 +12,7 @@ import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
 import { InvoiceTableRow } from "./table/InvoiceTableRow";
 import { returnToInventory } from "@/services/inventoryService";
 import { cn } from "@/lib/utils";
+import { Button } from "../ui/button"; // Importe o componente de botão
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -49,18 +50,17 @@ export const InvoiceTable = ({
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [currentPage, setCurrentPage] = useState(0);
+  const pageSize = 10; // Quantidade de itens por página
   const { width, height } = useWindowSize();
 
   // Função para determinar o tipo da fatura (VENDA, ALUGUEL ou HÍBRIDO)
   const getInvoiceType = (
     invoice: Invoice
   ): "VENDA" | "ALUGUEL" | "HÍBRIDO" => {
-    // Filtra os itens, ignorando o item com ID "delivery-fee"
     const filteredItems = invoice.items.filter(
       (item) => item.productId !== "delivery-fee"
     );
-
-    // Verifica se todos os itens filtrados são VENDA ou ALUGUEL
     const allSales = filteredItems.every((item) => item.is_sale);
     const allRentals = filteredItems.every((item) => !item.is_sale);
 
@@ -106,6 +106,27 @@ export const InvoiceTable = ({
       (filterType === "hybrid" && type === "HÍBRIDO")
     );
   });
+
+  // Paginação: pega os 10 itens correspondentes à página atual
+  const paginatedInvoices = filteredInvoices.slice(
+    currentPage * pageSize,
+    (currentPage + 1) * pageSize
+  );
+
+  // Controle de páginas
+  const totalPages = Math.ceil(filteredInvoices.length / pageSize);
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages - 1) {
+      setCurrentPage(currentPage + 1);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 0) {
+      setCurrentPage(currentPage - 1);
+    }
+  };
 
   const handlePaymentToggle = (invoice: Invoice) => {
     if (invoice.is_paid) {
@@ -216,9 +237,9 @@ export const InvoiceTable = ({
             />
           )}
 
-          {/* Exibe as outras faturas filtradas */}
-          {filteredInvoices.length > 0 ? (
-            filteredInvoices.map((invoice) => (
+          {/* Exibe as outras faturas filtradas e paginadas */}
+          {paginatedInvoices.length > 0 ? (
+            paginatedInvoices.map((invoice) => (
               <InvoiceTableRow
                 key={invoice.id}
                 current={false}
@@ -245,6 +266,27 @@ export const InvoiceTable = ({
           )}
         </TableBody>
       </Table>
+
+      {/* Controles de Paginação */}
+      <div className="flex justify-between items-center mt-4">
+        <Button
+          onClick={handlePreviousPage}
+          disabled={currentPage === 0}
+          variant="outline"
+        >
+          Anterior
+        </Button>
+        <span>
+          Página {currentPage + 1} de {totalPages}
+        </span>
+        <Button
+          onClick={handleNextPage}
+          disabled={currentPage >= totalPages - 1}
+          variant="outline"
+        >
+          Próxima
+        </Button>
+      </div>
 
       <ReturnConfirmDialog
         open={returnDialogOpen}
