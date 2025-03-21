@@ -165,14 +165,14 @@ export const PaymentMethodDialog = ({
     if (method === "credito" && installmentFees && !noInterest) {
       const fee = installmentFees[installments] || 0;
       const feeAmount = total * (fee / 100);
-      setTotalWithFee(total + feeAmount);
+      setTotalWithFee(total - feeAmount);
     } else if (method === "debito" && !noInterest) {
       const feeAmount = total * (debitFee / 100);
-      setTotalWithFee(total + feeAmount);
+      setTotalWithFee(total - feeAmount);
     } else if (method === "link" && linkInstallmentFees && !noInterest) {
       const fee = linkInstallmentFees[linkInstallments] || 0;
       const feeAmount = total * (fee / 100);
-      setTotalWithFee(total + feeAmount);
+      setTotalWithFee(total - feeAmount);
     } else {
       setTotalWithFee(total);
     }
@@ -247,7 +247,7 @@ export const PaymentMethodDialog = ({
             installmentCount,
             noInterestOption
           );
-          totalWithFees += amount + fee;
+          totalWithFees += amount - fee;
         } else {
           totalWithFees += amount;
         }
@@ -1010,7 +1010,7 @@ export const PaymentMethodDialog = ({
                                         <span>
                                           R${" "}
                                           {formatCurrency(
-                                            currentAmount + feeAmount
+                                            currentAmount - feeAmount
                                           )}
                                         </span>
                                       </div>

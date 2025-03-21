@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -108,44 +107,50 @@ export const InvoiceHistory = ({
     const updateData: any = {
       is_paid: !currentStatus,
     };
-    
+
     // Se estiver marcando como pago E tiver um método de pagamento
     if (!currentStatus && method) {
       updateData.payment_method = method;
-      
+
       // Se tiver um valor de taxa de pagamento (percentual), inclui no update
       if (fee !== undefined && fee !== null) {
         updateData.payment_fee = fee;
-        
+
         // Ajustar o total para incluir a taxa de pagamento
-        const invoice = invoices.find(inv => inv.id === invoiceId);
+        const invoice = invoices.find((inv) => inv.id === invoiceId);
         if (invoice) {
           // Calcular subtotal dos itens
-          const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
-          
+          const subtotal = invoice.items.reduce(
+            (sum, item) => sum + item.total,
+            0
+          );
+
           // Calcular valor da taxa (percentual do subtotal)
           const feeAmount = (subtotal * fee) / 100;
-          
+
           // Atualizar o total com a taxa incluída
-          updateData.total = subtotal + feeAmount;
+          updateData.total = subtotal - feeAmount;
         }
       }
     }
-    
+
     // Se estiver marcando como não pago, remover o método de pagamento e a taxa
     if (currentStatus) {
-      const invoice = invoices.find(inv => inv.id === invoiceId);
+      const invoice = invoices.find((inv) => inv.id === invoiceId);
       if (invoice && invoice.payment_fee) {
         // Calcular subtotal dos itens
-        const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
-        
+        const subtotal = invoice.items.reduce(
+          (sum, item) => sum + item.total,
+          0
+        );
+
         // Atualizar o total para remover a taxa de pagamento
         updateData.total = subtotal;
         updateData.payment_fee = null;
       }
       updateData.payment_method = null;
     }
-    
+
     const { error } = await supabase
       .from("invoices")
       .update(updateData)

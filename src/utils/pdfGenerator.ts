@@ -137,7 +137,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
 
   // Calcular o subtotal para a taxa de pagamento
   const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
-  
+
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const feePercentage = invoice.payment_fee || 0;
   const feeAmount = (subtotal * feePercentage) / 100;
@@ -225,12 +225,15 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
 
   // Taxa de pagamento (se houver)
   if (invoice.payment_fee && invoice.payment_fee > 0) {
-    summaryData.push([`Taxa de Pagamento (${invoice.payment_fee}%)`, `R$ ${formatCurrency(feeAmount)}`]);
+    summaryData.push([
+      `Taxa de Pagamento (${invoice.payment_fee}%)`,
+      `R$ ${formatCurrency(feeAmount)}`,
+    ]);
   }
 
   // Desconto (se houver)
   // O desconto agora deve considerar o subtotal + taxa de pagamento - total
-  const totalWithFee = subtotal + feeAmount;
+  const totalWithFee = subtotal - feeAmount;
   const discount = totalWithFee - invoice.total;
   if (discount > 0) {
     summaryData.push(["Desconto", `- R$ ${formatCurrency(discount)}`]);
