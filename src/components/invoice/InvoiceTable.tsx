@@ -12,14 +12,15 @@ import { InvoiceTableHeader } from "./table/InvoiceTableHeader";
 import { InvoiceTableRow } from "./table/InvoiceTableRow";
 import { returnToInventory } from "@/services/inventoryService";
 import { cn } from "@/lib/utils";
-import { Button } from "../ui/button"; // Importe o componente de botão
+import { Button } from "../ui/button";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
   onTogglePaid: (
     invoiceId: number,
     currentStatus: boolean,
-    method?: string
+    method?: string,
+    fee?: number
   ) => void;
   onToggleReturned: (invoiceId: number, currentStatus: boolean) => void;
   onDownload: (invoice: Invoice) => void;
@@ -147,9 +148,9 @@ export const InvoiceTable = ({
     setPaymentDialogOpen(true);
   };
 
-  const handlePaymentConfirm = async (method: string) => {
+  const handlePaymentConfirm = async (method: string, fee?: number) => {
     if (selectedInvoice) {
-      await onTogglePaid(selectedInvoice.id, selectedInvoice.is_paid, method);
+      await onTogglePaid(selectedInvoice.id, selectedInvoice.is_paid, method, fee);
       setPaymentDialogOpen(false);
       setSelectedInvoice(null);
     }

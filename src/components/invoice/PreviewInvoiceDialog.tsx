@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Invoice } from "./types";
-import { Tag, Calendar, Truck } from "lucide-react"; // Importe os ícones necessários
+import { Tag, Calendar, Truck, CreditCard } from "lucide-react"; // Added CreditCard icon
 
 interface PreviewInvoiceDialogProps {
   invoice: Invoice | null;
@@ -81,7 +81,17 @@ export const PreviewInvoiceDialog = ({
               {invoice.return_date && <p>Duração: {days} dias</p>}
               <p>Status: {invoice.is_paid ? "Pago" : "Pendente"}</p>
               {invoice.is_paid && invoice.payment_method && (
-                <p>Forma de Pagamento: {invoice.payment_method}</p>
+                <div>
+                  <p className="flex items-center">
+                    <CreditCard className="h-4 w-4 mr-1" />
+                    Forma de Pagamento: {invoice.payment_method}
+                  </p>
+                  {invoice.payment_fee && invoice.payment_fee > 0 && (
+                    <p className="text-muted-foreground text-sm ml-5">
+                      Taxa de pagamento: R$ {formatCurrency(invoice.payment_fee)}
+                    </p>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -91,7 +101,7 @@ export const PreviewInvoiceDialog = ({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Tipo</TableHead> {/* Nova coluna para o tipo */}
+                  <TableHead>Tipo</TableHead>
                   <TableHead>Descrição</TableHead>
                   <TableHead>Dias</TableHead>
                   <TableHead>Quantidade</TableHead>

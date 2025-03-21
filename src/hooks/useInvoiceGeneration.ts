@@ -26,6 +26,7 @@ export const useInvoiceGeneration = () => {
     SplitPayment[] | undefined
   >(undefined);
   const [noInterest, setNoInterest] = useState<boolean>(false);
+  const [paymentFee, setPaymentFee] = useState<number>(0);
 
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
@@ -113,7 +114,8 @@ export const useInvoiceGeneration = () => {
         items,
         clientData,
         total,
-        user.id
+        user.id,
+        paymentFee
       );
 
       await updateInventory(items);
@@ -151,6 +153,8 @@ export const useInvoiceGeneration = () => {
     setSplitPayments,
     noInterest,
     setNoInterest,
+    paymentFee,
+    setPaymentFee,
     addItem,
     updateItem,
     removeItem,

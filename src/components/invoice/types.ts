@@ -1,3 +1,4 @@
+
 export interface InvoiceItem {
   is_sale: any;
   description: string;
@@ -37,6 +38,7 @@ export interface Invoice {
   invoice_date: string;
   due_date: string;
   payment_method?: string;
+  payment_fee?: number; // Added payment fee field
   extensions?: InvoiceExtension[];
   user_id?: string;
   return_date?: string;

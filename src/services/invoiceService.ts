@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
@@ -36,7 +37,8 @@ export const createInvoice = async (
   items: InvoiceItem[],
   clientData: ClientData,
   total: number,
-  userId: string
+  userId: string,
+  paymentFee: number = 0
 ) => {
   // First update client information if needed
   await updateClientInfoIfNeeded(clientData);
@@ -74,7 +76,7 @@ export const createInvoice = async (
     client_address: clientData.address,
     client_address_number: clientData.addressNumber,
     client_address_complement: clientData.addressComplement,
-    client_neighborhood: clientData.neighborhood, // Added neighborhood field
+    client_neighborhood: clientData.neighborhood,
     client_city: clientData.city,
     client_state: clientData.state,
     client_postal_code: clientData.postalCode,
@@ -86,6 +88,7 @@ export const createInvoice = async (
     total: finalTotal,
     is_paid: clientData.isPaid,
     payment_method: "Não informado",
+    payment_fee: paymentFee > 0 ? paymentFee : null,
     user_id: userId,
   });
 

@@ -99,14 +99,24 @@ export const InvoiceHistory = ({
   const handleTogglePaid = async (
     invoiceId: number,
     currentStatus: boolean,
-    method?: string
+    method?: string,
+    fee?: number
   ) => {
+    const updateData: any = {
+      is_paid: !currentStatus,
+    };
+    
+    if (method) {
+      updateData.payment_method = method;
+    }
+    
+    if (fee !== undefined) {
+      updateData.payment_fee = fee;
+    }
+    
     const { error } = await supabase
       .from("invoices")
-      .update({
-        is_paid: !currentStatus,
-        payment_method: method,
-      })
+      .update(updateData)
       .eq("id", invoiceId);
 
     if (error) {

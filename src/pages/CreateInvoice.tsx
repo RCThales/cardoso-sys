@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Navbar } from "@/components/Navbar";
 import { InvoiceGenerator } from "@/components/InvoiceGenerator";
@@ -19,6 +20,7 @@ const CreateInvoice = () => {
     setInstallments: (installments?: number) => void;
     setSplitPayments: (payments?: any[]) => void;
     setNoInterest: (noInterest: boolean) => void;
+    setPaymentFee: (fee: number) => void;
   } | null>(null);
 
   useEffect(() => {
@@ -36,7 +38,8 @@ const CreateInvoice = () => {
     method: string,
     installments?: number,
     splitPayments?: any[],
-    noInterest?: boolean
+    noInterest?: boolean,
+    fee?: number
   ) => {
     if (invoiceRef) {
       invoiceRef.setPaymentMethod(method);
@@ -51,6 +54,10 @@ const CreateInvoice = () => {
 
       if (noInterest !== undefined) {
         invoiceRef.setNoInterest(noInterest);
+      }
+
+      if (fee !== undefined) {
+        invoiceRef.setPaymentFee(fee);
       }
 
       const invoiceCreated = await invoiceRef.generateInvoice();

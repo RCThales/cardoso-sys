@@ -118,20 +118,22 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     "dd/MM/yyyy"
   );
 
-  doc.text(
-    [
-      `Período: ${invoiceDateFormatted} ${
-        invoiceType !== "VENDA" ? `a ${returnDateFormatted}` : ""
-      }`,
-      invoiceType !== "VENDA" ? `Duração: ${days} dias` : "",
-      `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
-      invoice.payment_method
-        ? `Forma de Pagamento: ${invoice.payment_method}`
-        : "",
-    ].filter(Boolean),
-    pageWidth - 60,
-    75
-  );
+  // Create an array of invoice info and filter out empty strings
+  const invoiceInfo = [
+    `Período: ${invoiceDateFormatted} ${
+      invoiceType !== "VENDA" ? `a ${returnDateFormatted}` : ""
+    }`,
+    invoiceType !== "VENDA" ? `Duração: ${days} dias` : "",
+    `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
+    invoice.payment_method
+      ? `Forma de Pagamento: ${invoice.payment_method}`
+      : "",
+    (invoice.is_paid && invoice.payment_fee && invoice.payment_fee > 0) 
+      ? `Taxa de pagamento: R$ ${formatCurrency(invoice.payment_fee)}`
+      : "",
+  ].filter(Boolean);
+
+  doc.text(invoiceInfo, pageWidth - 60, 75);
 
   // Tabela de Itens
   const itemsTableData: RowInput[] = [];
