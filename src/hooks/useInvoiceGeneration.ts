@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -77,6 +76,14 @@ export const useInvoiceGeneration = () => {
 
   const removeItem = (index: number) => {
     setItems(items.filter((_, i) => i !== index));
+  };
+
+  const updateRentalDays = (index: number, days: string) => {
+    const newItems = [...items];
+    const item = { ...newItems[index] };
+    item.rentalDays = Number(days) || 1;
+    newItems[index] = item;
+    setItems(newItems);
   };
 
   const calculateSubtotal = (): number => {
@@ -168,6 +175,7 @@ export const useInvoiceGeneration = () => {
     addItem,
     updateItem,
     removeItem,
+    updateRentalDays,
     calculateSubtotal,
     generateInvoice,
     validateRequiredFields,
