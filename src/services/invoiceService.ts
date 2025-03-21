@@ -38,14 +38,15 @@ export const createInvoice = async (
   clientData: ClientData,
   total: number,
   userId: string,
-  paymentFee: number = 0
+  paymentFee: number = 0,
+  startDate?: Date
 ) => {
   // First update client information if needed
   await updateClientInfoIfNeeded(clientData);
 
   const invoiceNumber = `INV-${Date.now()}`;
-  const today = new Date();
-  const dueDate = new Date();
+  const today = startDate || new Date();
+  const dueDate = new Date(today);
   dueDate.setDate(today.getDate() + 30);
 
   // The payment_fee is now stored as a percentage in the database

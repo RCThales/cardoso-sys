@@ -1,8 +1,10 @@
+
 import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { InvoiceItem } from "./types";
 import { Tag, Calendar } from "lucide-react"; // Importe os ícones necessários
+import { Input } from "../ui/input";
 
 interface InvoiceItemsProps {
   items: InvoiceItem[];
@@ -13,10 +15,16 @@ interface InvoiceItemsProps {
     value: string
   ) => void;
   onRemoveItem?: (index: number) => void;
+  onUpdateRentalDays?: (index: number, days: string) => void;
   readOnly?: boolean;
 }
 
-export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
+export const InvoiceItems = ({ 
+  items, 
+  onUpdateItem,
+  onUpdateRentalDays,
+  readOnly = false
+}: InvoiceItemsProps) => {
   const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
@@ -96,7 +104,17 @@ export const InvoiceItems = ({ items }: InvoiceItemsProps) => {
                   </td>
                   <td className="px-4 py-3 align-middle">{productName}</td>
                   <td className="px-4 py-3 align-middle">
-                    {item.rentalDays || 1}
+                    {!item.is_sale && onUpdateRentalDays ? (
+                      <Input 
+                        type="number"
+                        min="1"
+                        value={item.rentalDays || 1}
+                        onChange={(e) => onUpdateRentalDays(index, e.target.value)}
+                        className="w-16 h-8 text-center"
+                      />
+                    ) : (
+                      item.rentalDays || 1
+                    )}
                   </td>
                   <td className="px-4 py-3 align-middle">
                     {item.quantity || 1}

@@ -28,6 +28,7 @@ export const useInvoiceGeneration = () => {
   >(undefined);
   const [noInterest, setNoInterest] = useState<boolean>(false);
   const [paymentFee, setPaymentFee] = useState<number>(0);
+  const [startDate, setStartDate] = useState<Date>(new Date());
 
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
@@ -121,7 +122,8 @@ export const useInvoiceGeneration = () => {
         clientData,
         total,
         user.id,
-        paymentFee
+        paymentFee,
+        startDate
       );
 
       await updateInventory(items);
@@ -161,6 +163,8 @@ export const useInvoiceGeneration = () => {
     setNoInterest,
     paymentFee,
     setPaymentFee,
+    startDate,
+    setStartDate,
     addItem,
     updateItem,
     removeItem,

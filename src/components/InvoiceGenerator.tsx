@@ -1,3 +1,4 @@
+
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -11,6 +12,12 @@ import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
 import { useNavigate } from "react-router-dom";
 import Loader from "./loader";
+import { Calendar } from "./ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
+import { CalendarIcon } from "lucide-react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 
 export const InvoiceGenerator = () => {
   const navigate = useNavigate();
@@ -25,6 +32,8 @@ export const InvoiceGenerator = () => {
     calculateSubtotal,
     generateInvoice,
     validateRequiredFields,
+    startDate,
+    setStartDate,
   } = useInvoiceGeneration();
 
   const cartItems = useCartStore((state) => state.items);
@@ -94,6 +103,10 @@ export const InvoiceGenerator = () => {
     return itemSubTotalPlusShipping() - clientData.specialDiscount;
   };
 
+  const handleUpdateRentalDays = (index: number, days: string) => {
+    updateItem(index, "rentalDays", days);
+  };
+
   const handleGenerateInvoice = async () => {
     if (!validateRequiredFields()) return;
 
@@ -143,11 +156,48 @@ export const InvoiceGenerator = () => {
           onClientDataChange={setClientData}
         />
 
+        {/* Date and Rental Days Section */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Data de Início</label>
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant={"outline"}
+                  className={cn(
+                    "w-full justify-start text-left font-normal",
+                    !startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {startDate ? (
+                    format(startDate, "PPP", { locale: ptBR })
+                  ) : (
+                    <span>Selecione uma data</span>
+                  )}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={startDate}
+                  onSelect={(date) => date && setStartDate(date)}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            <p className="text-xs text-muted-foreground">
+              Escolha a data em que começa o aluguel
+            </p>
+          </div>
+        </div>
+
         <InvoiceItems
           items={items}
           onAddItem={addItem}
           onUpdateItem={updateItem}
           onRemoveItem={removeItem}
+          onUpdateRentalDays={handleUpdateRentalDays}
           readOnly
         />
 
