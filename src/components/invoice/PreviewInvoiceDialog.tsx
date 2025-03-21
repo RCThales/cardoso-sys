@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Invoice } from "./types";
-import { Tag, Calendar, Truck, CreditCard, Percent } from "lucide-react"; // Adicionado ícone Percent
+import { Tag, Calendar, Truck, CreditCard, Percent } from "lucide-react";
 
 interface PreviewInvoiceDialogProps {
   invoice: Invoice | null;
@@ -48,6 +48,10 @@ export const PreviewInvoiceDialog = ({
   // Calcular o subtotal (sem taxa de pagamento)
   const itemsTotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
   const subtotalWithoutFee = itemsTotal;
+  
+  // Calcular o valor da taxa de pagamento (percentual do subtotal)
+  const feePercentage = invoice.payment_fee || 0;
+  const feeAmount = (subtotalWithoutFee * feePercentage) / 100;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -164,11 +168,11 @@ export const PreviewInvoiceDialog = ({
                         <span>Taxa</span>
                       </div>
                     </TableCell>
-                    <TableCell>Taxa de pagamento</TableCell>
+                    <TableCell>Taxa de pagamento ({invoice.payment_fee}%)</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell className="text-right">
-                      R$ {formatCurrency(invoice.payment_fee)}
+                      R$ {formatCurrency(feeAmount)}
                     </TableCell>
                   </TableRow>
                 )}
@@ -212,7 +216,7 @@ export const PreviewInvoiceDialog = ({
             </p>
             {invoice.payment_fee && invoice.payment_fee > 0 && (
               <p className="text-sm text-muted-foreground">
-                Taxa de pagamento: R$ {formatCurrency(invoice.payment_fee)}
+                Taxa de pagamento ({invoice.payment_fee}%): R$ {formatCurrency(feeAmount)}
               </p>
             )}
             <p className="font-semibold">

@@ -48,8 +48,8 @@ export const createInvoice = async (
   const dueDate = new Date();
   dueDate.setDate(today.getDate() + 30);
 
-  // Calculate the total with any payment method fees included
-  let finalTotal = total;
+  // The payment_fee is now stored as a percentage in the database
+  // The total should already include the calculated fee amount
 
   const allItems = [
     ...items.map((item) => ({
@@ -85,10 +85,10 @@ export const createInvoice = async (
     payment_terms: "30 dias",
     items: allItems,
     subtotal: total,
-    total: finalTotal,
+    total: total,
     is_paid: clientData.isPaid,
     payment_method: "Não informado",
-    payment_fee: paymentFee > 0 ? paymentFee : null,
+    payment_fee: paymentFee > 0 ? paymentFee : null, // Store as percentage
     user_id: userId,
   });
 

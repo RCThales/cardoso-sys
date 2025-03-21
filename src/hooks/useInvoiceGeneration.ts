@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -84,7 +85,8 @@ export const useInvoiceGeneration = () => {
     }, 0);
 
     const subtotal = itemsTotal + (clientData.deliveryFee || 0);
-
+    
+    // Retorna o subtotal com desconto (sem incluir a taxa de pagamento)
     return subtotal - clientData.specialDiscount;
   };
 
@@ -108,7 +110,11 @@ export const useInvoiceGeneration = () => {
         return;
       }
 
-      const total = calculateSubtotal();
+      const subtotal = calculateSubtotal();
+      
+      // Calcular o valor total (subtotal + taxa percentual)
+      const feeAmount = (subtotal * paymentFee) / 100;
+      const total = subtotal + feeAmount;
 
       const invoiceCreated = await createInvoice(
         items,

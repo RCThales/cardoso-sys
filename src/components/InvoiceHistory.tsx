@@ -113,15 +113,21 @@ export const InvoiceHistory = ({
     if (!currentStatus && method) {
       updateData.payment_method = method;
       
-      // Se tiver um valor de taxa de pagamento, inclui no update
+      // Se tiver um valor de taxa de pagamento (percentual), inclui no update
       if (fee !== undefined && fee !== null) {
         updateData.payment_fee = fee;
         
         // Ajustar o total para incluir a taxa de pagamento
         const invoice = invoices.find(inv => inv.id === invoiceId);
         if (invoice) {
-          // Calculate total + fee
-          updateData.total = invoice.total + fee;
+          // Calcular subtotal dos itens
+          const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+          
+          // Calcular valor da taxa (percentual do subtotal)
+          const feeAmount = (subtotal * fee) / 100;
+          
+          // Atualizar o total com a taxa incluída
+          updateData.total = subtotal + feeAmount;
         }
       }
     }
@@ -130,8 +136,11 @@ export const InvoiceHistory = ({
     if (currentStatus) {
       const invoice = invoices.find(inv => inv.id === invoiceId);
       if (invoice && invoice.payment_fee) {
+        // Calcular subtotal dos itens
+        const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+        
         // Atualizar o total para remover a taxa de pagamento
-        updateData.total = invoice.total - invoice.payment_fee;
+        updateData.total = subtotal;
         updateData.payment_fee = null;
       }
       updateData.payment_method = null;

@@ -136,6 +136,13 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Tabela de Itens
   const itemsTableData: RowInput[] = [];
 
+  // Calcular o subtotal para a taxa de pagamento
+  const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+  
+  // Calcular o valor da taxa de pagamento (percentual do subtotal)
+  const feePercentage = invoice.payment_fee || 0;
+  const feeAmount = (subtotal * feePercentage) / 100;
+
   // Adiciona os itens principais
   invoice.items.forEach((item) => {
     const description = item.size
@@ -173,10 +180,10 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   if (invoice.payment_fee && invoice.payment_fee > 0) {
     itemsTableData.push([
       "Taxa", // Tipo
-      "Taxa de pagamento", // Descrição
+      `Taxa de pagamento (${invoice.payment_fee}%)`, // Descrição com percentual
       "-", // Dias
       "-", // Quantidade
-      `R$ ${formatCurrency(invoice.payment_fee)}`, // Valor
+      `R$ ${formatCurrency(feeAmount)}`, // Valor calculado
     ]);
   }
 
@@ -215,17 +222,16 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   const summaryData = [];
 
   // Subtotal (itens sem a taxa de pagamento)
-  const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
   summaryData.push(["Subtotal", `R$ ${formatCurrency(subtotal)}`]);
 
   // Taxa de pagamento (se houver)
   if (invoice.payment_fee && invoice.payment_fee > 0) {
-    summaryData.push(["Taxa de Pagamento", `R$ ${formatCurrency(invoice.payment_fee)}`]);
+    summaryData.push([`Taxa de Pagamento (${invoice.payment_fee}%)`, `R$ ${formatCurrency(feeAmount)}`]);
   }
 
   // Desconto (se houver)
   // O desconto agora deve considerar o subtotal + taxa de pagamento - total
-  const totalWithFee = subtotal + (invoice.payment_fee || 0);
+  const totalWithFee = subtotal + feeAmount;
   const discount = totalWithFee - invoice.total;
   if (discount > 0) {
     summaryData.push(["Desconto", `- R$ ${formatCurrency(discount)}`]);

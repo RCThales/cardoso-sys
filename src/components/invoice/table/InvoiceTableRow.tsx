@@ -114,6 +114,15 @@ export const InvoiceTableRow = ({
 
   // Verificar se tem taxa de pagamento
   const hasPaymentFee = invoice.payment_fee && invoice.payment_fee > 0;
+  
+  // Calcular o valor da taxa de pagamento (percentual do subtotal)
+  const calculateFeeAmount = () => {
+    if (!hasPaymentFee) return 0;
+    const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+    return (subtotal * invoice.payment_fee) / 100;
+  };
+  
+  const feeAmount = calculateFeeAmount();
 
   return (
     <TableRow
@@ -169,7 +178,7 @@ export const InvoiceTableRow = ({
           {hasPaymentFee && (
             <div className="text-xs text-muted-foreground flex items-center justify-end mt-1">
               <Percent className="h-3 w-3 mr-1 text-orange-500" />
-              Taxa: R$ {formatCurrency(invoice.payment_fee)}
+              Taxa: {invoice.payment_fee}% (R$ {formatCurrency(feeAmount)})
             </div>
           )}
         </div>
