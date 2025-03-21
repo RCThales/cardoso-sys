@@ -9,6 +9,7 @@ const InvoicePage = () => {
       filterStatus="all"
       dateSortType="invoice"
       filterType="all"
+      showFeeInfo={true}
     />
   );
 };

@@ -15,6 +15,7 @@ interface InvoiceHistoryProps {
   dateSortType: "invoice" | "return";
   filterType: "all" | "rental" | "sale" | "hybrid";
   invoiceId?: string | null;
+  showFeeInfo?: boolean;
 }
 
 export const InvoiceHistory = ({
@@ -24,6 +25,7 @@ export const InvoiceHistory = ({
   dateSortType,
   invoiceId,
   filterType,
+  showFeeInfo = true,
 }: InvoiceHistoryProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
