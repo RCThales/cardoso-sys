@@ -61,7 +61,7 @@ export const PaymentMethodDialog = ({
   onConfirm,
   total,
 }: PaymentMethodDialogProps) => {
-  const [method, setMethod] = useState<string>("Cartão");
+  const [method, setMethod] = useState<string>("credito");
   const [cashReceived, setCashReceived] = useState<string>("");
   const [qrCode, setQrCode] = useState<string>("");
   const [rawPix, setRawPix] = useState<string>("");
@@ -83,9 +83,9 @@ export const PaymentMethodDialog = ({
   const splitForm = useForm({
     defaultValues: {
       splitPayments: [
-        { method: "Cartão", amount: "", installments: "1", noInterest: false },
+        { method: "credito", amount: "", installments: "1", noInterest: false },
         {
-          method: "Dinheiro",
+          method: "dinheiro",
           amount: "",
           installments: "1",
           noInterest: false,
@@ -101,23 +101,23 @@ export const PaymentMethodDialog = ({
 
   const paymentMethods = [
     {
-      value: "Cartão",
+      value: "credito",
       label: "Cartão de Crédito",
       icon: <CreditCard className="h-4 w-4 mr-2" />,
     },
     {
-      value: "Cartão de Débito",
+      value: "debito",
       label: "Cartão de Débito",
       icon: <DebitCard className="h-4 w-4 mr-2" />,
     },
     {
-      value: "Dinheiro",
+      value: "dinheiro",
       label: "Dinheiro",
       icon: <Coins className="h-4 w-4 mr-2" />,
     },
-    { value: "Pix", label: "PIX", icon: <QrCode className="h-4 w-4 mr-2" /> },
+    { value: "pix", label: "PIX", icon: <QrCode className="h-4 w-4 mr-2" /> },
     {
-      value: "Link de Pagamento",
+      value: "link",
       label: "Link de Pagamento",
       icon: <LinkIcon className="h-4 w-4 mr-2" />,
     },
@@ -132,31 +132,21 @@ export const PaymentMethodDialog = ({
         const creditCardSetting = await getSettingByName("Cartão de Crédito");
         if (creditCardSetting && creditCardSetting.installments) {
           setInstallmentFees(creditCardSetting.installments);
-          console.log(
-            "Credit card fees loaded:",
-            creditCardSetting.installments
-          );
         }
 
         // Fetch debit card fee
         const debitCardSetting = await getSettingByName("Cartão de Débito");
         if (debitCardSetting) {
           setDebitFee(debitCardSetting.fee);
-          console.log("Debit card fee loaded:", debitCardSetting.fee);
         }
 
         // Fetch payment link settings
-        const linkSetting = await getSettingByName("Link de Pagamento");
+        const linkSetting = await getSettingByName("Link");
         if (linkSetting && linkSetting.installments) {
           setLinkInstallmentFees(linkSetting.installments);
-          console.log("Link fees loaded:", linkSetting.installments);
         } else {
           // If no specific Link settings found, fallback to credit card settings
           setLinkInstallmentFees(creditCardSetting?.installments || null);
-          console.log(
-            "Using credit card fees for link (fallback):",
-            creditCardSetting?.installments
-          );
         }
       } catch (error) {
         console.error("Error fetching payment settings:", error);
@@ -172,18 +162,14 @@ export const PaymentMethodDialog = ({
 
   useEffect(() => {
     // Calculate total with fee based on payment method
-    if (method === "Cartão" && installmentFees && !noInterest) {
+    if (method === "credito" && installmentFees && !noInterest) {
       const fee = installmentFees[installments] || 0;
       const feeAmount = total * (fee / 100);
       setTotalWithFee(total + feeAmount);
-    } else if (method === "Cartão de Débito" && !noInterest) {
+    } else if (method === "debito" && !noInterest) {
       const feeAmount = total * (debitFee / 100);
       setTotalWithFee(total + feeAmount);
-    } else if (
-      method === "Link de Pagamento" &&
-      linkInstallmentFees &&
-      !noInterest
-    ) {
+    } else if (method === "link" && linkInstallmentFees && !noInterest) {
       const fee = linkInstallmentFees[linkInstallments] || 0;
       const feeAmount = total * (fee / 100);
       setTotalWithFee(total + feeAmount);
@@ -202,12 +188,15 @@ export const PaymentMethodDialog = ({
   ]);
 
   const handleConfirm = () => {
+    console.log(debitFee);
     onConfirm(
       method,
-      method === "Cartão"
+      method === "credito"
         ? installments
-        : method === "Link de Pagamento"
+        : method === "link"
         ? linkInstallments
+        : method === "debito"
+        ? debitFee
         : undefined,
       undefined,
       noInterest
@@ -224,7 +213,7 @@ export const PaymentMethodDialog = ({
         method: payment.method,
         amount: parseFloat(payment.amount as string),
         installments:
-          payment.method === "Cartão" || payment.method === "Link de Pagamento"
+          payment.method === "credito" || payment.method === "link"
             ? parseInt(payment.installments as string)
             : undefined,
         noInterest: payment.noInterest,
@@ -282,11 +271,11 @@ export const PaymentMethodDialog = ({
   ): number => {
     if (noInterest) return 0;
 
-    if (method === "Cartão" && installmentFees) {
+    if (method === "credito" && installmentFees) {
       return (amount * (installmentFees[installments] || 0)) / 100;
-    } else if (method === "Cartão de Débito") {
+    } else if (method === "debito") {
       return (amount * (debitFee || 0)) / 100;
-    } else if (method === "Link de Pagamento" && linkInstallmentFees) {
+    } else if (method === "link" && linkInstallmentFees) {
       return (amount * (linkInstallmentFees[installments] || 0)) / 100;
     }
 
@@ -304,7 +293,7 @@ export const PaymentMethodDialog = ({
     const methodsInUse = values.splitPayments.map((p) => p.method);
 
     // Return true if credit card or debit card
-    if (method === "Cartão" || method === "Cartão de Débito") {
+    if (method === "credito" || method === "debito") {
       return true;
     }
 
@@ -353,7 +342,7 @@ export const PaymentMethodDialog = ({
       }
     }
 
-    if (method === "Pix" && open) {
+    if (method === "pix" && open) {
       void generateDynamicPix();
     }
   }, [method, total, open]);
@@ -361,15 +350,15 @@ export const PaymentMethodDialog = ({
   // Render method icon based on method name
   const renderMethodIcon = (methodName: string) => {
     switch (methodName) {
-      case "Cartão":
+      case "credito":
         return <CreditCard className="h-4 w-4" />;
-      case "Cartão de Débito":
+      case "debito":
         return <DebitCard className="h-4 w-4" />;
-      case "Dinheiro":
+      case "dinheiro":
         return <Coins className="h-4 w-4" />;
-      case "Pix":
+      case "pix":
         return <QrCode className="h-4 w-4" />;
-      case "Link de Pagamento":
+      case "link":
         return <LinkIcon className="h-4 w-4" />;
       default:
         return null;
@@ -394,27 +383,27 @@ export const PaymentMethodDialog = ({
         <ScrollArea className="flex-1">
           <div className="p-1">
             <Tabs
-              defaultValue="Cartão"
+              defaultValue="credito"
               value={method}
               onValueChange={setMethod}
             >
               <TabsList className="grid grid-cols-3 gap-2 mb-4 w-full">
                 <TabsTrigger
-                  value="Cartão"
+                  value="credito"
                   className="flex  items-center justify-center  text-center"
                 >
                   <CreditCard className="h-4 w-4 mr-1" />
                   <span className="text-xs">Crédito</span>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="Cartão de Débito"
+                  value="debito"
                   className="flex  items-center justify-center  text-center"
                 >
                   <DebitCard className="h-4 w-4 mr-1" />
                   <span className="text-xs">Débito</span>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="Link de Pagamento"
+                  value="link"
                   className="flex  items-center justify-center  text-center"
                 >
                   <LinkIcon className="h-4 w-4 mr-1" />
@@ -424,21 +413,21 @@ export const PaymentMethodDialog = ({
 
               <TabsList className="grid grid-cols-3 gap-4 mb-4 w-full">
                 <TabsTrigger
-                  value="Dinheiro"
+                  value="dinheiro"
                   className="flex  items-center justify-center  text-center"
                 >
                   <Coins className="h-4 w-4 mr-1" />
                   <span className="text-xs">Dinheiro</span>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="Pix"
+                  value="pix"
                   className="flex  items-center justify-center text-center"
                 >
                   <QrCode className="h-4 w-4 mr-1" />
                   <span className="text-xs">PIX</span>
                 </TabsTrigger>
                 <TabsTrigger
-                  value="Split"
+                  value="split"
                   className="flex  items-center justify-center text-center"
                 >
                   <Split className="h-4 w-4 mr-1" />
@@ -446,7 +435,7 @@ export const PaymentMethodDialog = ({
                 </TabsTrigger>
               </TabsList>
 
-              <TabsContent value="Cartão" className="mt-4">
+              <TabsContent value="credito" className="mt-4">
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
@@ -535,7 +524,7 @@ export const PaymentMethodDialog = ({
                 </Card>
               </TabsContent>
 
-              <TabsContent value="Cartão de Débito" className="mt-4">
+              <TabsContent value="debito" className="mt-4">
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center space-x-2">
@@ -578,7 +567,7 @@ export const PaymentMethodDialog = ({
                 </Card>
               </TabsContent>
 
-              <TabsContent value="Dinheiro" className="mt-4">
+              <TabsContent value="dinheiro" className="mt-4">
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div>
@@ -622,7 +611,7 @@ export const PaymentMethodDialog = ({
                 </Card>
               </TabsContent>
 
-              <TabsContent value="Pix" className="mt-4">
+              <TabsContent value="pix" className="mt-4">
                 <Card>
                   <CardContent className="pt-6">
                     <div className="flex flex-col items-center space-y-4">
@@ -658,7 +647,7 @@ export const PaymentMethodDialog = ({
                 </Card>
               </TabsContent>
 
-              <TabsContent value="Link de Pagamento" className="mt-4">
+              <TabsContent value="link" className="mt-4">
                 <Card>
                   <CardContent className="pt-6 space-y-4">
                     <div className="flex items-center justify-between">
@@ -782,7 +771,7 @@ export const PaymentMethodDialog = ({
                 </Card>
               </TabsContent>
 
-              <TabsContent value="Split" className="mt-4">
+              <TabsContent value="split" className="mt-4">
                 <Form {...splitForm}>
                   <div className="space-y-6">
                     <div className="p-4 bg-muted rounded-md mb-4">
@@ -916,8 +905,8 @@ export const PaymentMethodDialog = ({
                                   />
                                 </div>
 
-                                {(currentMethod === "Cartão" ||
-                                  currentMethod === "Link de Pagamento") && (
+                                {(currentMethod === "credito" ||
+                                  currentMethod === "link") && (
                                   <div className="mt-3">
                                     <FormField
                                       control={splitForm.control}
@@ -935,7 +924,7 @@ export const PaymentMethodDialog = ({
                                               </SelectTrigger>
                                             </FormControl>
                                             <SelectContent>
-                                              {currentMethod === "Cartão" &&
+                                              {currentMethod === "credito" &&
                                               installmentFees
                                                 ? Object.keys(
                                                     installmentFees
@@ -950,8 +939,7 @@ export const PaymentMethodDialog = ({
                                                         : ""}
                                                     </SelectItem>
                                                   ))
-                                                : currentMethod ===
-                                                    "Link de Pagamento" &&
+                                                : currentMethod === "link" &&
                                                   linkInstallmentFees
                                                 ? Object.keys(
                                                     linkInstallmentFees

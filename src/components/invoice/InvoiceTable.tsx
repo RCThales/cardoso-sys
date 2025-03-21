@@ -149,8 +149,14 @@ export const InvoiceTable = ({
   };
 
   const handlePaymentConfirm = async (method: string, fee?: number) => {
+    console.log(method, fee);
     if (selectedInvoice) {
-      await onTogglePaid(selectedInvoice.id, selectedInvoice.is_paid, method, fee);
+      await onTogglePaid(
+        selectedInvoice.id,
+        selectedInvoice.is_paid,
+        method,
+        fee
+      );
       setPaymentDialogOpen(false);
       setSelectedInvoice(null);
     }
