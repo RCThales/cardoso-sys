@@ -1,3 +1,4 @@
+
 import { format, parseISO, differenceInDays } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -12,6 +13,7 @@ import {
   Circle,
   StickyNote,
   AlertOctagon,
+  Percent,
 } from "lucide-react";
 import { Invoice, InvoiceExtension } from "../types";
 import { cn } from "@/lib/utils";
@@ -110,6 +112,9 @@ export const InvoiceTableRow = ({
   // Check if notes exist
   const hasNotes = invoice.notes && invoice.notes.trim().length > 0;
 
+  // Verificar se tem taxa de pagamento
+  const hasPaymentFee = invoice.payment_fee && invoice.payment_fee > 0;
+
   return (
     <TableRow
       className={cn({
@@ -159,7 +164,15 @@ export const InvoiceTableRow = ({
       </TableCell>
 
       <TableCell className="text-right">
-        R$ {formatCurrency(invoice.total)}
+        <div>
+          R$ {formatCurrency(invoice.total)}
+          {hasPaymentFee && (
+            <div className="text-xs text-muted-foreground flex items-center justify-end mt-1">
+              <Percent className="h-3 w-3 mr-1 text-orange-500" />
+              Taxa: R$ {formatCurrency(invoice.payment_fee)}
+            </div>
+          )}
+        </div>
       </TableCell>
       <TableCell>
         {invoice.is_paid && (invoice.is_returned || isSale) ? (

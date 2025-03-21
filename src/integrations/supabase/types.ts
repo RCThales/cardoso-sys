@@ -123,6 +123,7 @@ export type Database = {
           is_returned: boolean
           items: Json
           notes: string | null
+          payment_fee: number | null
           payment_method: string | null
           payment_terms: string | null
           subtotal: number
@@ -150,6 +151,7 @@ export type Database = {
           is_returned?: boolean
           items: Json
           notes?: string | null
+          payment_fee?: number | null
           payment_method?: string | null
           payment_terms?: string | null
           subtotal: number
@@ -177,6 +179,7 @@ export type Database = {
           is_returned?: boolean
           items?: Json
           notes?: string | null
+          payment_fee?: number | null
           payment_method?: string | null
           payment_terms?: string | null
           subtotal?: number

@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { InvoiceTable } from "./invoice/InvoiceTable";
@@ -108,12 +109,32 @@ export const InvoiceHistory = ({
       is_paid: !currentStatus,
     };
     
-    if (method) {
+    // Se estiver marcando como pago E tiver um método de pagamento
+    if (!currentStatus && method) {
       updateData.payment_method = method;
+      
+      // Se tiver um valor de taxa de pagamento, inclui no update
+      if (fee !== undefined && fee !== null) {
+        updateData.payment_fee = fee;
+        
+        // Ajustar o total para incluir a taxa de pagamento
+        const invoice = invoices.find(inv => inv.id === invoiceId);
+        if (invoice) {
+          // Calculate total + fee
+          updateData.total = invoice.total + fee;
+        }
+      }
     }
     
-    if (fee !== undefined) {
-      updateData.payment_fee = fee;
+    // Se estiver marcando como não pago, remover o método de pagamento e a taxa
+    if (currentStatus) {
+      const invoice = invoices.find(inv => inv.id === invoiceId);
+      if (invoice && invoice.payment_fee) {
+        // Atualizar o total para remover a taxa de pagamento
+        updateData.total = invoice.total - invoice.payment_fee;
+        updateData.payment_fee = null;
+      }
+      updateData.payment_method = null;
     }
     
     const { error } = await supabase
@@ -132,6 +153,8 @@ export const InvoiceHistory = ({
 
     await fetchInvoices();
   };
+
+  // ... resto do código mantido como estava
 
   const handleToggleReturned = async (
     invoiceId: number,

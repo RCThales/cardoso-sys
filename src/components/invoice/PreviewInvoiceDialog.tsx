@@ -17,7 +17,7 @@ import {
   TableRow,
 } from "../ui/table";
 import { Invoice } from "./types";
-import { Tag, Calendar, Truck, CreditCard } from "lucide-react"; // Added CreditCard icon
+import { Tag, Calendar, Truck, CreditCard, Percent } from "lucide-react"; // Adicionado ícone Percent
 
 interface PreviewInvoiceDialogProps {
   invoice: Invoice | null;
@@ -44,6 +44,10 @@ export const PreviewInvoiceDialog = ({
   const days = invoice.return_date 
     ? differenceInDays(parseISO(invoice.return_date), parseISO(invoice.invoice_date))
     : 0;
+
+  // Calcular o subtotal (sem taxa de pagamento)
+  const itemsTotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
+  const subtotalWithoutFee = itemsTotal;
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -86,11 +90,6 @@ export const PreviewInvoiceDialog = ({
                     <CreditCard className="h-4 w-4 mr-1" />
                     Forma de Pagamento: {invoice.payment_method}
                   </p>
-                  {invoice.payment_fee && invoice.payment_fee > 0 && (
-                    <p className="text-muted-foreground text-sm ml-5">
-                      Taxa de pagamento: R$ {formatCurrency(invoice.payment_fee)}
-                    </p>
-                  )}
                 </div>
               )}
             </div>
@@ -155,6 +154,24 @@ export const PreviewInvoiceDialog = ({
                     </TableRow>
                   );
                 })}
+
+                {/* Adiciona a linha para a taxa de pagamento se existir */}
+                {invoice.payment_fee && invoice.payment_fee > 0 && (
+                  <TableRow>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Percent className="h-4 w-4 text-orange-500" />
+                        <span>Taxa</span>
+                      </div>
+                    </TableCell>
+                    <TableCell>Taxa de pagamento</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell>-</TableCell>
+                    <TableCell className="text-right">
+                      R$ {formatCurrency(invoice.payment_fee)}
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
@@ -190,6 +207,14 @@ export const PreviewInvoiceDialog = ({
           )}
 
           <div className="text-right space-y-1">
+            <p className="text-sm text-muted-foreground">
+              Subtotal: R$ {formatCurrency(subtotalWithoutFee)}
+            </p>
+            {invoice.payment_fee && invoice.payment_fee > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Taxa de pagamento: R$ {formatCurrency(invoice.payment_fee)}
+              </p>
+            )}
             <p className="font-semibold">
               Total: R$ {formatCurrency(invoice.total)}
             </p>

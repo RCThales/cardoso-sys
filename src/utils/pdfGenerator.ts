@@ -1,3 +1,4 @@
+
 import { jsPDF } from "jspdf";
 import autoTable, { RowInput } from "jspdf-autotable";
 import { Invoice, InvoiceExtension } from "@/components/invoice/types";
@@ -128,9 +129,6 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     invoice.payment_method
       ? `Forma de Pagamento: ${invoice.payment_method}`
       : "",
-    (invoice.is_paid && invoice.payment_fee && invoice.payment_fee > 0) 
-      ? `Taxa de pagamento: R$ ${formatCurrency(invoice.payment_fee)}`
-      : "",
   ].filter(Boolean);
 
   doc.text(invoiceInfo, pageWidth - 60, 75);
@@ -171,6 +169,17 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     ]);
   });
 
+  // Adiciona a taxa de pagamento como uma linha adicional na tabela
+  if (invoice.payment_fee && invoice.payment_fee > 0) {
+    itemsTableData.push([
+      "Taxa", // Tipo
+      "Taxa de pagamento", // Descrição
+      "-", // Dias
+      "-", // Quantidade
+      `R$ ${formatCurrency(invoice.payment_fee)}`, // Valor
+    ]);
+  }
+
   autoTable(doc, {
     head: [["Tipo", "Descrição", "Dias", "Quantidade", "Total"]], // Nova coluna "Tipo"
     body: itemsTableData,
@@ -205,12 +214,19 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Resumo financeiro
   const summaryData = [];
 
-  // Subtotal
+  // Subtotal (itens sem a taxa de pagamento)
   const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
   summaryData.push(["Subtotal", `R$ ${formatCurrency(subtotal)}`]);
 
+  // Taxa de pagamento (se houver)
+  if (invoice.payment_fee && invoice.payment_fee > 0) {
+    summaryData.push(["Taxa de Pagamento", `R$ ${formatCurrency(invoice.payment_fee)}`]);
+  }
+
   // Desconto (se houver)
-  const discount = subtotal - invoice.total;
+  // O desconto agora deve considerar o subtotal + taxa de pagamento - total
+  const totalWithFee = subtotal + (invoice.payment_fee || 0);
+  const discount = totalWithFee - invoice.total;
   if (discount > 0) {
     summaryData.push(["Desconto", `- R$ ${formatCurrency(discount)}`]);
   }
