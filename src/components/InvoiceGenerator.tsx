@@ -1,4 +1,3 @@
-
 import { Card } from "./ui/card";
 import { Button } from "./ui/button";
 import { CompanyHeader } from "./invoice/CompanyHeader";
@@ -156,6 +155,14 @@ export const InvoiceGenerator = () => {
           onClientDataChange={setClientData}
         />
 
+        <InvoiceItems
+          items={items}
+          onAddItem={addItem}
+          onUpdateItem={updateItem}
+          onRemoveItem={removeItem}
+          onUpdateRentalDays={handleUpdateRentalDays}
+          readOnly
+        />
         {/* Date and Rental Days Section */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="space-y-2">
@@ -165,7 +172,7 @@ export const InvoiceGenerator = () => {
                 <Button
                   variant={"outline"}
                   className={cn(
-                    "w-full justify-start text-left font-normal",
+                    "w-full justify-start text-left font-normal bg-white hover:bg-white focus:bg-white dark:bg-card dark:hover:bg-card dark:focus:bg-card",
                     !startDate && "text-muted-foreground"
                   )}
                 >
@@ -191,15 +198,6 @@ export const InvoiceGenerator = () => {
             </p>
           </div>
         </div>
-
-        <InvoiceItems
-          items={items}
-          onAddItem={addItem}
-          onUpdateItem={updateItem}
-          onRemoveItem={removeItem}
-          onUpdateRentalDays={handleUpdateRentalDays}
-          readOnly
-        />
 
         <div className="space-y-4">
           <div className="flex justify-between items-center">

@@ -1,4 +1,3 @@
-
 import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
 import { fetchProducts } from "@/utils/priceCalculator";
@@ -19,11 +18,11 @@ interface InvoiceItemsProps {
   readOnly?: boolean;
 }
 
-export const InvoiceItems = ({ 
-  items, 
+export const InvoiceItems = ({
+  items,
   onUpdateItem,
   onUpdateRentalDays,
-  readOnly = false
+  readOnly = false,
 }: InvoiceItemsProps) => {
   const { data: products } = useQuery({
     queryKey: ["products"],
@@ -48,7 +47,7 @@ export const InvoiceItems = ({
         <h3 className="text-lg font-medium">Itens do Pedido</h3>
       </div>
 
-      <div className="border rounded-lg overflow-x-auto">
+      <div className="border rounded-lg overflow-x-auto bg-white dark:bg-card">
         <table className="w-full">
           <thead className="bg-muted">
             <tr>
@@ -105,11 +104,13 @@ export const InvoiceItems = ({
                   <td className="px-4 py-3 align-middle">{productName}</td>
                   <td className="px-4 py-3 align-middle">
                     {!item.is_sale && onUpdateRentalDays ? (
-                      <Input 
+                      <Input
                         type="number"
                         min="1"
                         value={item.rentalDays || 1}
-                        onChange={(e) => onUpdateRentalDays(index, e.target.value)}
+                        onChange={(e) =>
+                          onUpdateRentalDays(index, e.target.value)
+                        }
                         className="w-16 h-8 text-center"
                       />
                     ) : (
