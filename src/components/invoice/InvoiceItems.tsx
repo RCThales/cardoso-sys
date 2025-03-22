@@ -60,6 +60,7 @@ export const InvoiceItems = ({
               <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                 Produto
               </th>
+
               <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                 Dias
               </th>
@@ -114,7 +115,7 @@ export const InvoiceItems = ({
                         onUpdateTotal={onUpdateTotal}
                       />
                     ) : (
-                      item.rentalDays || 1
+                      <span>-</span>
                     )}
                   </td>
                   <td className="px-4 py-3 align-middle">
