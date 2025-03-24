@@ -85,12 +85,6 @@ export const InvoiceGenerator = () => {
     });
   };
 
-  const handleUpdateTotal = (index: number, newTotal: number) => {
-    const updatedItems = [...items];
-    updatedItems[index].total = newTotal;
-    setItems(updatedItems); // Assuming setItems is the state setter for your items array
-  };
-
   const itemsSubtotal = useMemo(
     () =>
       items.reduce((sum, item) => {
@@ -167,7 +161,6 @@ export const InvoiceGenerator = () => {
           onUpdateItem={updateItem}
           onRemoveItem={removeItem}
           onUpdateRentalDays={handleUpdateRentalDays}
-          onUpdateTotal={handleUpdateTotal}
           readOnly
         />
         {/* Date and Rental Days Section */}

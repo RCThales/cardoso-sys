@@ -48,7 +48,7 @@ export const RentalCalculator = () => {
   });
 
   // Filter products with base_price > 0
-  const filteredProducts = products?.filter((p) => p.base_price > 0) || [];
+  const filteredProducts = products?.filter(p => p.base_price > 0) || [];
 
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
@@ -71,10 +71,7 @@ export const RentalCalculator = () => {
   }, [filteredProducts]);
 
   useEffect(() => {
-    const base_price = getProductBasePrice(
-      filteredProducts || [],
-      selectedProduct
-    );
+    const base_price = getProductBasePrice(filteredProducts || [], selectedProduct);
 
     if (base_price) {
       setBasePrice(base_price); // Armazena o base_price no estado
@@ -172,9 +169,7 @@ export const RentalCalculator = () => {
   };
 
   // Dados derivados
-  const selectedProductData = filteredProducts?.find(
-    (p) => p.id === selectedProduct
-  );
+  const selectedProductData = filteredProducts?.find((p) => p.id === selectedProduct);
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
   const isProductInCart = items.some(
     (item) => item.productId === selectedProduct && item.size === selectedSize
@@ -188,10 +183,9 @@ export const RentalCalculator = () => {
   const productItems = filteredProducts.map((product) => ({
     id: product.id,
     name: product.name,
-    label:
-      product.sizes && product.sizes.length > 0
-        ? "(verificar tamanhos)"
-        : `(${getAvailableQuantity(product.id)} disponíveis)`,
+    label: product.sizes && product.sizes.length > 0
+      ? "(verificar tamanhos)"
+      : `(${getAvailableQuantity(product.id)} disponíveis)`
   }));
 
   return (
@@ -227,7 +221,6 @@ export const RentalCalculator = () => {
               <div className="space-y-2">
                 <span className="text-sm font-medium">Produto</span>
                 <SearchableSelect
-                  className="bg-white dark:bg-card"
                   items={productItems}
                   value={selectedProduct}
                   onValueChange={handleProductChange}

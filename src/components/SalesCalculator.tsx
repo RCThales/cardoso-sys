@@ -36,7 +36,7 @@ export const SalesCalculator = () => {
   });
 
   // Filter products with sale_price > 0
-  const filteredProducts = products?.filter((p) => p.sale_price > 0) || [];
+  const filteredProducts = products?.filter(p => p.sale_price > 0) || [];
 
   const { data: inventory } = useQuery({
     queryKey: ["inventory"],
@@ -137,9 +137,7 @@ export const SalesCalculator = () => {
     });
   };
 
-  const selectedProductData = filteredProducts?.find(
-    (p) => p.id === selectedProduct
-  );
+  const selectedProductData = filteredProducts?.find((p) => p.id === selectedProduct);
   const availableQuantity = getAvailableQuantity(selectedProduct, selectedSize);
   const isProductInCart = items.some(
     (item) => item.productId === selectedProduct && item.size === selectedSize
@@ -150,15 +148,13 @@ export const SalesCalculator = () => {
   }
 
   // Format products for the searchable select
-  const productItems =
-    filteredProducts?.map((product) => ({
-      id: product.id,
-      name: product.name,
-      label:
-        product.sizes && product.sizes.length > 0
-          ? "(verificar tamanhos)"
-          : `(${getAvailableQuantity(product.id)} disponíveis)`,
-    })) || [];
+  const productItems = filteredProducts?.map((product) => ({
+    id: product.id,
+    name: product.name,
+    label: product.sizes && product.sizes.length > 0
+      ? "(verificar tamanhos)"
+      : `(${getAvailableQuantity(product.id)} disponíveis)`
+  })) || [];
 
   return (
     <div className="h-full">
@@ -193,7 +189,6 @@ export const SalesCalculator = () => {
               <div className="space-y-2">
                 <span className="text-sm font-medium">Produto</span>
                 <SearchableSelect
-                  className="bg-white dark:bg-card"
                   items={productItems}
                   value={selectedProduct}
                   onValueChange={handleProductChange}

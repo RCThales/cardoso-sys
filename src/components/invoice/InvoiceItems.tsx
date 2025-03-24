@@ -1,10 +1,9 @@
 import { Button } from "../ui/button";
 import { useQuery } from "@tanstack/react-query";
-import { calculateTotalPrice, fetchProducts } from "@/utils/priceCalculator";
+import { fetchProducts } from "@/utils/priceCalculator";
 import { InvoiceItem } from "./types";
-import { Tag, Calendar } from "lucide-react"; // Import necessary icons
+import { Tag, Calendar } from "lucide-react"; // Importe os ícones necessários
 import { Input } from "../ui/input";
-import { useState } from "react";
 
 interface InvoiceItemsProps {
   items: InvoiceItem[];
@@ -16,14 +15,12 @@ interface InvoiceItemsProps {
   ) => void;
   onRemoveItem?: (index: number) => void;
   onUpdateRentalDays?: (index: number, days: string) => void;
-  onUpdateTotal?: (index: number, total: number) => void; // Function to update total
   readOnly?: boolean;
 }
 
 export const InvoiceItems = ({
   items,
   onUpdateItem,
-  onUpdateTotal, // Add this as a prop
   onUpdateRentalDays,
   readOnly = false,
 }: InvoiceItemsProps) => {
@@ -60,7 +57,6 @@ export const InvoiceItems = ({
               <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                 Produto
               </th>
-
               <th className="px-4 py-2 text-left text-sm font-medium text-muted-foreground">
                 Dias
               </th>
@@ -78,6 +74,7 @@ export const InvoiceItems = ({
               const productName = product ? (
                 <>
                   {product.name}
+
                   {product.sizes.length > 0 && (
                     <span className="text-muted-foreground ml-2">
                       ({item.size})
@@ -88,7 +85,7 @@ export const InvoiceItems = ({
                 item.description
               );
 
-              // Determine the type of the item (SALE or RENTAL)
+              // Determina o tipo do item (VENDA ou ALUGUEL)
               const itemType = item.is_sale ? "VENDA" : "ALUGUEL";
               const itemIcon = item.is_sale ? (
                 <Tag className="h-4 w-4 text-blue-500" />
@@ -107,15 +104,17 @@ export const InvoiceItems = ({
                   <td className="px-4 py-3 align-middle">{productName}</td>
                   <td className="px-4 py-3 align-middle">
                     {!item.is_sale && onUpdateRentalDays ? (
-                      <RentalDaysInput
-                        index={index}
-                        rentalDays={item.rentalDays || 1}
-                        basePrice={product ? product.base_price : 0}
-                        onUpdateRentalDays={onUpdateRentalDays}
-                        onUpdateTotal={onUpdateTotal}
+                      <Input
+                        type="number"
+                        min="1"
+                        value={item.rentalDays || 1}
+                        onChange={(e) =>
+                          onUpdateRentalDays(index, e.target.value)
+                        }
+                        className="w-16 h-8 text-center"
                       />
                     ) : (
-                      <span>-</span>
+                      item.rentalDays || 1
                     )}
                   </td>
                   <td className="px-4 py-3 align-middle">
@@ -131,60 +130,5 @@ export const InvoiceItems = ({
         </table>
       </div>
     </div>
-  );
-};
-
-const RentalDaysInput = ({
-  index,
-  rentalDays,
-  basePrice,
-  onUpdateRentalDays,
-  onUpdateTotal,
-}: {
-  index: number;
-  rentalDays: number;
-  basePrice: number;
-  onUpdateRentalDays: (index: number, days: string) => void;
-  onUpdateTotal: (index: number, total: number) => void; // Function to update total
-}) => {
-  const [inputValue, setInputValue] = useState<string>(rentalDays.toString());
-  const [previousValue, setPreviousValue] = useState<string>(
-    rentalDays.toString()
-  );
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setInputValue(value);
-
-    // Recalculate the total price whenever the rental days change
-    if (value !== "") {
-      const newTotal = calculateTotalPrice(Number(value), basePrice);
-      // Update the total in parent component
-      if (onUpdateTotal) {
-        onUpdateTotal(index, newTotal);
-      }
-    }
-  };
-
-  const handleBlur = () => {
-    if (inputValue === "") {
-      // If empty, revert to previous value
-      setInputValue(previousValue);
-    } else {
-      // If a valid number, update previous value and propagate change
-      setPreviousValue(inputValue);
-      onUpdateRentalDays(index, inputValue);
-    }
-  };
-
-  return (
-    <Input
-      type="number"
-      min="1"
-      value={inputValue}
-      onChange={handleChange}
-      onBlur={handleBlur}
-      className="w-16 h-8 text-center"
-    />
   );
 };
