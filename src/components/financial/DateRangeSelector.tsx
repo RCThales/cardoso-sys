@@ -30,6 +30,19 @@ export const DateRangeSelector = ({
   const [isStartOpen, setIsStartOpen] = useState(false);
   const [isEndOpen, setIsEndOpen] = useState(false);
 
+  // Auto-apply date filter when both dates are selected
+  const handleDateChange = (isStart: boolean, date: Date | undefined) => {
+    if (isStart) {
+      onStartDateChange(date);
+      setIsStartOpen(false);
+      if (endDate) onApply(); // Auto-apply if end date is already set
+    } else {
+      onEndDateChange(date);
+      setIsEndOpen(false);
+      if (startDate) onApply(); // Auto-apply if start date is already set
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center">
       <div className="space-y-2">
@@ -55,10 +68,7 @@ export const DateRangeSelector = ({
             <Calendar
               mode="single"
               selected={startDate}
-              onSelect={(date) => {
-                onStartDateChange(date);
-                setIsStartOpen(false);
-              }}
+              onSelect={(date) => handleDateChange(true, date)}
               initialFocus
               disabled={(date) => endDate ? date > endDate : false}
               className="pointer-events-auto"
@@ -90,10 +100,7 @@ export const DateRangeSelector = ({
             <Calendar
               mode="single"
               selected={endDate}
-              onSelect={(date) => {
-                onEndDateChange(date);
-                setIsEndOpen(false);
-              }}
+              onSelect={(date) => handleDateChange(false, date)}
               initialFocus
               disabled={(date) => startDate ? date < startDate : false}
               className="pointer-events-auto"
@@ -101,15 +108,6 @@ export const DateRangeSelector = ({
           </PopoverContent>
         </Popover>
       </div>
-
-      <Button 
-        onClick={onApply} 
-        variant="default" 
-        className="mt-6 sm:mt-0"
-        disabled={!startDate || !endDate}
-      >
-        Aplicar
-      </Button>
     </div>
   );
 };

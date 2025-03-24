@@ -69,19 +69,21 @@ const Financial = () => {
           
           <TabsContent value="period">
             <div className="space-y-8">
-              <DateRangeSelector
-                startDate={startDate}
-                endDate={endDate}
-                onStartDateChange={setStartDate}
-                onEndDateChange={setEndDate}
-                onApply={applyDateFilter}
-              />
+              <div className="flex flex-col sm:flex-row gap-4 items-start">
+                <DateRangeSelector
+                  startDate={startDate}
+                  endDate={endDate}
+                  onStartDateChange={setStartDate}
+                  onEndDateChange={setEndDate}
+                  onApply={applyDateFilter}
+                />
 
-              <PeriodReportButton
-                startDate={startDate}
-                endDate={endDate}
-                months={filteredMonths}
-              />
+                <PeriodReportButton
+                  startDate={startDate}
+                  endDate={endDate}
+                  months={filteredMonths}
+                />
+              </div>
 
               {isLoading ? (
                 <Loader />
