@@ -33,11 +33,25 @@ export const DateRangeSelector = ({
   // Auto-apply date filter when both dates are selected
   const handleDateChange = (isStart: boolean, date: Date | undefined) => {
     if (isStart) {
-      onStartDateChange(date);
+      // For start date, set it to beginning of day (00:00:00)
+      if (date) {
+        const startOfDay = new Date(date);
+        startOfDay.setHours(0, 0, 0, 0);
+        onStartDateChange(startOfDay);
+      } else {
+        onStartDateChange(date);
+      }
       setIsStartOpen(false);
       if (endDate) onApply(); // Auto-apply if end date is already set
     } else {
-      onEndDateChange(date);
+      // For end date, set it to end of day (23:59:59)
+      if (date) {
+        const endOfDay = new Date(date);
+        endOfDay.setHours(23, 59, 59, 999);
+        onEndDateChange(endOfDay);
+      } else {
+        onEndDateChange(date);
+      }
       setIsEndOpen(false);
       if (startDate) onApply(); // Auto-apply if start date is already set
     }
