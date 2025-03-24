@@ -234,7 +234,7 @@ export const useFinancialData = () => {
   }, []);
 
   // Filtrar meses com base no intervalo de datas selecionado
-  const applyDateFilter = () => {
+  const applyDateFilter = async () => {
     if (!startDate || !endDate) {
       // Se não houver intervalo de datas, mostrar apenas o ano selecionado
       setFilteredMonths(monthsByYear[selectedYear] || []);
@@ -261,74 +261,78 @@ export const useFinancialData = () => {
         continue;
       }
       
-      // Filtrar cada categoria de dados (invoices, expenses, investments, recurring)
-      // para incluir apenas os itens que estão dentro do intervalo selecionado
-      let totalInvoices = 0;
-      let totalInvestments = 0;
-      let totalExpenses = 0;
-      let totalRecurring = 0;
-      
-      // Buscar dados de faturas filtrados pelo intervalo de datas
-      const { data: filteredInvoices } = await supabase
-        .from("invoices")
-        .select("*")
-        .gte("invoice_date", startDate.toISOString().split('T')[0])
-        .lte("invoice_date", endDate.toISOString().split('T')[0])
-        .eq("invoice_date", format(new Date(monthData.year, monthData.month), "yyyy-MM"));
+      try {
+        // Filtrar cada categoria de dados (invoices, expenses, investments, recurring)
+        // para incluir apenas os itens que estão dentro do intervalo selecionado
+        let totalInvoices = 0;
+        let totalInvestments = 0;
+        let totalExpenses = 0;
+        let totalRecurring = 0;
         
-      // Buscar dados de investimentos filtrados pelo intervalo de datas
-      const { data: filteredInvestments } = await supabase
-        .from("investments")
-        .select("*")
-        .gte("date", startDate.toISOString().split('T')[0])
-        .lte("date", endDate.toISOString().split('T')[0])
-        .eq("date", format(new Date(monthData.year, monthData.month), "yyyy-MM"));
+        // Buscar dados de faturas filtrados pelo intervalo de datas
+        const { data: filteredInvoices } = await supabase
+          .from("invoices")
+          .select("*")
+          .gte("invoice_date", startDate.toISOString().split('T')[0])
+          .lte("invoice_date", endDate.toISOString().split('T')[0])
+          .eq("invoice_date", format(new Date(monthData.year, monthData.month), "yyyy-MM"));
+          
+        // Buscar dados de investimentos filtrados pelo intervalo de datas
+        const { data: filteredInvestments } = await supabase
+          .from("investments")
+          .select("*")
+          .gte("date", startDate.toISOString().split('T')[0])
+          .lte("date", endDate.toISOString().split('T')[0])
+          .eq("date", format(new Date(monthData.year, monthData.month), "yyyy-MM"));
+          
+        // Buscar dados de despesas filtrados pelo intervalo de datas
+        const { data: filteredExpenses } = await supabase
+          .from("expenses")
+          .select("*")
+          .gte("date", startDate.toISOString().split('T')[0])
+          .lte("date", endDate.toISOString().split('T')[0])
+          .eq("date", format(new Date(monthData.year, monthData.month), "yyyy-MM"));
+          
+        // Buscar dados de despesas recorrentes filtrados pelo intervalo de datas
+        const { data: filteredRecurring } = await supabase
+          .from("recurring")
+          .select("*")
+          .gte("date", startDate.toISOString().split('T')[0])
+          .lte("date", endDate.toISOString().split('T')[0]);
         
-      // Buscar dados de despesas filtrados pelo intervalo de datas
-      const { data: filteredExpenses } = await supabase
-        .from("expenses")
-        .select("*")
-        .gte("date", startDate.toISOString().split('T')[0])
-        .lte("date", endDate.toISOString().split('T')[0])
-        .eq("date", format(new Date(monthData.year, monthData.month), "yyyy-MM"));
+        // Sumar os totais filtrados
+        if (filteredInvoices) {
+          totalInvoices = filteredInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
+        }
         
-      // Buscar dados de despesas recorrentes filtrados pelo intervalo de datas
-      const { data: filteredRecurring } = await supabase
-        .from("recurring")
-        .select("*")
-        .gte("date", startDate.toISOString().split('T')[0])
-        .lte("date", endDate.toISOString().split('T')[0]);
-      
-      // Sumar os totais filtrados
-      if (filteredInvoices) {
-        totalInvoices = filteredInvoices.reduce((sum, inv) => sum + Number(inv.total), 0);
-      }
-      
-      if (filteredInvestments) {
-        totalInvestments = filteredInvestments.reduce((sum, inv) => sum + Number(inv.amount), 0);
-      }
-      
-      if (filteredExpenses) {
-        totalExpenses = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
-      }
-      
-      if (filteredRecurring) {
-        totalRecurring = filteredRecurring.reduce((sum, rec) => sum + Number(rec.amount), 0);
-      }
-      
-      // Calcular o saldo
-      const balance = totalInvoices - totalExpenses - totalInvestments - totalRecurring;
-      
-      // Se houver algum valor, adicionar ao array de meses filtrados
-      if (totalInvoices > 0 || totalExpenses > 0 || totalInvestments > 0 || totalRecurring > 0) {
-        filtered.push({
-          ...monthData,
-          totalInvoices,
-          totalExpenses,
-          totalInvestments,
-          totalRecurring,
-          balance
-        });
+        if (filteredInvestments) {
+          totalInvestments = filteredInvestments.reduce((sum, inv) => sum + Number(inv.amount), 0);
+        }
+        
+        if (filteredExpenses) {
+          totalExpenses = filteredExpenses.reduce((sum, exp) => sum + Number(exp.amount), 0);
+        }
+        
+        if (filteredRecurring) {
+          totalRecurring = filteredRecurring.reduce((sum, rec) => sum + Number(rec.amount), 0);
+        }
+        
+        // Calcular o saldo
+        const balance = totalInvoices - totalExpenses - totalInvestments - totalRecurring;
+        
+        // Se houver algum valor, adicionar ao array de meses filtrados
+        if (totalInvoices > 0 || totalExpenses > 0 || totalInvestments > 0 || totalRecurring > 0) {
+          filtered.push({
+            ...monthData,
+            totalInvoices,
+            totalExpenses,
+            totalInvestments,
+            totalRecurring,
+            balance
+          });
+        }
+      } catch (error) {
+        console.error("Erro ao filtrar dados financeiros:", error);
       }
     }
 
@@ -343,7 +347,11 @@ export const useFinancialData = () => {
 
   // Aplicar o filtro quando as datas ou o ano selecionado mudar
   useEffect(() => {
-    applyDateFilter();
+    if (startDate && endDate) {
+      applyDateFilter();
+    } else {
+      setFilteredMonths(monthsByYear[selectedYear] || []);
+    }
   }, [startDate, endDate, selectedYear, monthsByYear]);
 
   return { 

@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -19,7 +18,7 @@ interface FinancialDetail {
   date?: string;
 }
 
-interface MonthFinancialData {
+export interface MonthFinancialData {
   month: number;
   year: number;
   label: string;
@@ -30,16 +29,23 @@ interface MonthFinancialData {
   balance: number;
 }
 
-interface FinancialDetailsDialogProps {
+export interface FinancialDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  monthData: MonthFinancialData;
+  monthData?: MonthFinancialData;
+  // Add the missing props that are being used
+  title?: string;
+  details?: FinancialDetail[];
+  total?: number;
 }
 
 export const FinancialDetailsDialog = ({
   open,
   onOpenChange,
   monthData,
+  title,
+  details,
+  total,
 }: FinancialDetailsDialogProps) => {
   const [invoices, setInvoices] = useState<FinancialDetail[]>([]);
   const [expenses, setExpenses] = useState<FinancialDetail[]>([]);
@@ -49,7 +55,7 @@ export const FinancialDetailsDialog = ({
 
   useEffect(() => {
     const fetchFinancialDetails = async () => {
-      if (!open) return;
+      if (!open || !monthData) return;
       
       setIsLoading(true);
       
@@ -137,7 +143,41 @@ export const FinancialDetailsDialog = ({
     fetchFinancialDetails();
   }, [open, monthData]);
 
+  // For direct details rendering mode (when title, details and total are provided)
+  const renderDirectDetails = () => {
+    if (!details || !details.length) {
+      return <div className="py-4 text-center text-muted-foreground">Nenhum registro encontrado</div>;
+    }
+
+    return (
+      <div className="space-y-4">
+        {details.map((detail, index) => (
+          <div
+            key={`${detail.name}_${index}`}
+            className="flex justify-between items-start py-2 border-b last:border-b-0"
+          >
+            <div className="space-y-1">
+              <div className="font-medium">{detail.name}</div>
+              <div className="text-sm text-muted-foreground">{detail.description}</div>
+              {detail.date && (
+                <div className="text-xs text-muted-foreground">{formatDate(detail.date)}</div>
+              )}
+            </div>
+            <span className="font-medium">
+              R$ {formatCurrency(detail.amount)}
+            </span>
+          </div>
+        ))}
+        <div className="flex justify-between items-center pt-4 border-t-2">
+          <span className="font-bold">Total</span>
+          <span className="font-bold">R$ {formatCurrency(total || 0)}</span>
+        </div>
+      </div>
+    );
+  };
+
   const formatMonthTitle = () => {
+    if (!monthData) return title || "Detalhes Financeiros";
     const monthName = monthData.label.charAt(0).toUpperCase() + monthData.label.slice(1);
     return `${monthName} de ${monthData.year}`;
   };
@@ -183,6 +223,24 @@ export const FinancialDetailsDialog = ({
     );
   };
 
+  // If we have direct details, render those instead of the tabs
+  if (title && details) {
+    return (
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl">{title}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="mt-4 px-1">
+            {renderDirectDetails()}
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  }
+
+  // Otherwise, render the month data with tabs
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
@@ -190,39 +248,43 @@ export const FinancialDetailsDialog = ({
           <DialogTitle className="text-xl">{formatMonthTitle()}</DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="invoices" className="mt-4">
-          <TabsList className="grid grid-cols-4 mb-4">
-            <TabsTrigger value="invoices">Receitas</TabsTrigger>
-            <TabsTrigger value="expenses">Despesas</TabsTrigger>
-            <TabsTrigger value="investments">Investimentos</TabsTrigger>
-            <TabsTrigger value="recurring">Recorrentes</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="invoices" className="px-1">
-            {renderDetails(invoices, monthData.totalInvoices)}
-          </TabsContent>
-          
-          <TabsContent value="expenses" className="px-1">
-            {renderDetails(expenses, monthData.totalExpenses)}
-          </TabsContent>
-          
-          <TabsContent value="investments" className="px-1">
-            {renderDetails(investments, monthData.totalInvestments)}
-          </TabsContent>
-          
-          <TabsContent value="recurring" className="px-1">
-            {renderDetails(recurring, monthData.totalRecurring)}
-          </TabsContent>
-        </Tabs>
-        
-        <div className="mt-6 pt-4 border-t">
-          <div className="flex justify-between items-center text-lg font-bold">
-            <span>Saldo Final</span>
-            <span className={monthData.balance >= 0 ? "text-green-600" : "text-red-600"}>
-              R$ {formatCurrency(monthData.balance)}
-            </span>
-          </div>
-        </div>
+        {monthData && (
+          <>
+            <Tabs defaultValue="invoices" className="mt-4">
+              <TabsList className="grid grid-cols-4 mb-4">
+                <TabsTrigger value="invoices">Receitas</TabsTrigger>
+                <TabsTrigger value="expenses">Despesas</TabsTrigger>
+                <TabsTrigger value="investments">Investimentos</TabsTrigger>
+                <TabsTrigger value="recurring">Recorrentes</TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="invoices" className="px-1">
+                {renderDetails(invoices, monthData.totalInvoices)}
+              </TabsContent>
+              
+              <TabsContent value="expenses" className="px-1">
+                {renderDetails(expenses, monthData.totalExpenses)}
+              </TabsContent>
+              
+              <TabsContent value="investments" className="px-1">
+                {renderDetails(investments, monthData.totalInvestments)}
+              </TabsContent>
+              
+              <TabsContent value="recurring" className="px-1">
+                {renderDetails(recurring, monthData.totalRecurring)}
+              </TabsContent>
+            </Tabs>
+            
+            <div className="mt-6 pt-4 border-t">
+              <div className="flex justify-between items-center text-lg font-bold">
+                <span>Saldo Final</span>
+                <span className={monthData.balance >= 0 ? "text-green-600" : "text-red-600"}>
+                  R$ {formatCurrency(monthData.balance)}
+                </span>
+              </div>
+            </div>
+          </>
+        )}
       </DialogContent>
     </Dialog>
   );
