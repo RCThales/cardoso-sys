@@ -1,5 +1,6 @@
+
 import { useState, useEffect } from "react";
-import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isAfter, isBefore, isEqual } from "date-fns";
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isAfter, isBefore, isEqual, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -243,41 +244,52 @@ export const useFinancialData = () => {
     setIsLoading(true);
     
     try {
-      // Filtrar APENAS os meses que estão totalmente dentro do intervalo
-      const startYear = startDate.getFullYear();
-      const startMonth = startDate.getMonth();
-      const endYear = endDate.getFullYear();
-      const endMonth = endDate.getMonth();
+      // Ensure start date is at the beginning of the day (00:00:00)
+      const startOfDayDate = startOfDay(startDate);
+      
+      // Ensure end date is at the end of the day (23:59:59)
+      const endOfDayDate = endOfDay(endDate);
+      
+      console.log("Filtering dates:", {
+        startDate: startOfDayDate.toISOString(),
+        endDate: endOfDayDate.toISOString()
+      });
       
       // Criar array de meses filtrados
       const filtered: MonthData[] = [];
       
       // Para cada mês entre a data inicial e final (inclusive)
-      for (let year = startYear; year <= endYear; year++) {
+      for (let year = startOfDayDate.getFullYear(); year <= endOfDayDate.getFullYear(); year++) {
         // Determinar o mês inicial e final para este ano
-        const firstMonth = year === startYear ? startMonth : 0;
-        const lastMonth = year === endYear ? endMonth : 11;
+        const firstMonth = year === startOfDayDate.getFullYear() ? startOfDayDate.getMonth() : 0;
+        const lastMonth = year === endOfDayDate.getFullYear() ? endOfDayDate.getMonth() : 11;
         
         for (let month = firstMonth; month <= lastMonth; month++) {
           // Verificar se temos dados para este mês e ano
           if (monthsByYear[year]?.some(m => m.month === month)) {
-            // Precisamos filtrar os dados deste mês para o intervalo exato
-            const monthStart = new Date(year, month, 1);
-            const monthEnd = endOfMonth(monthStart);
-            
-            // Dias exatos que devemos considerar (respeitando startDate e endDate)
-            const startDay = year === startYear && month === startMonth 
-              ? startDate 
-              : monthStart;
-              
-            const endDay = year === endYear && month === endMonth 
-              ? endDate 
-              : monthEnd;
-            
             try {
-              // Formatar datas para filtro no Supabase
-              const startDateStr = startDay.toISOString().split('T')[0];
-              const endDateStr = endDay.toISOString().split('T')[0];
+              // Formatar datas para filtro no Supabase - use the exact day boundaries
+              const monthStart = new Date(year, month, 1);
+              const monthEnd = endOfMonth(monthStart);
+              
+              // Dias exatos que devemos considerar (respeitando startDate e endDate)
+              const effectiveStartDate = new Date(Math.max(
+                monthStart.getTime(),
+                startOfDayDate.getTime()
+              ));
+              
+              const effectiveEndDate = new Date(Math.min(
+                monthEnd.getTime(),
+                endOfDayDate.getTime()
+              ));
+              
+              const startDateStr = effectiveStartDate.toISOString();
+              const endDateStr = effectiveEndDate.toISOString();
+              
+              console.log(`Fetching data for ${year}-${month+1}:`, {
+                effectiveStartDate: startDateStr,
+                effectiveEndDate: endDateStr
+              });
               
               // Buscar dados filtrados pelas datas exatas para cada categoria
               const { data: filteredInvoices } = await supabase
@@ -303,6 +315,14 @@ export const useFinancialData = () => {
                 .select("*")
                 .gte("date", startDateStr)
                 .lte("date", endDateStr);
+              
+              // Log the data we're getting
+              console.log(`Data fetched for ${year}-${month+1}:`, {
+                invoices: filteredInvoices?.length || 0,
+                investments: filteredInvestments?.length || 0,
+                expenses: filteredExpenses?.length || 0,
+                recurring: filteredRecurring?.length || 0
+              });
               
               // Calcular totais
               const totalInvoices = filteredInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;

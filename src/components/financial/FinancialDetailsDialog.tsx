@@ -1,3 +1,4 @@
+
 import {
   Dialog,
   DialogContent,
@@ -8,7 +9,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { formatCurrency } from "@/utils/formatters";
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { format } from "date-fns";
+import { format, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface FinancialDetail {
@@ -33,7 +34,7 @@ export interface FinancialDetailsDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   monthData?: MonthFinancialData;
-  // Add the missing props that are being used
+  // Include the direct detail props
   title?: string;
   details?: FinancialDetail[];
   total?: number;
@@ -60,11 +61,19 @@ export const FinancialDetailsDialog = ({
       setIsLoading(true);
       
       try {
-        const startDate = new Date(monthData.year, monthData.month, 1);
-        const endDate = new Date(monthData.year, monthData.month + 1, 0);
+        // Create exact day boundaries for the month
+        const startDate = startOfDay(new Date(monthData.year, monthData.month, 1));
+        const endDate = endOfDay(new Date(monthData.year, monthData.month + 1, 0));
         
-        const startDateStr = startDate.toISOString().split('T')[0];
-        const endDateStr = endDate.toISOString().split('T')[0];
+        const startDateStr = startDate.toISOString();
+        const endDateStr = endDate.toISOString();
+        
+        console.log("Fetching financial details for dialog:", {
+          month: monthData.label,
+          year: monthData.year,
+          startDate: startDateStr,
+          endDate: endDateStr
+        });
         
         // Fetch invoices
         const { data: invoicesData } = await supabase
@@ -93,6 +102,13 @@ export const FinancialDetailsDialog = ({
           .select("*")
           .gte("date", startDateStr)
           .lte("date", endDateStr);
+        
+        console.log("Dialog data fetched:", {
+          invoices: invoicesData?.length || 0,
+          expenses: expensesData?.length || 0,
+          investments: investmentsData?.length || 0,
+          recurring: recurringData?.length || 0
+        });
         
         // Process invoices
         setInvoices(
