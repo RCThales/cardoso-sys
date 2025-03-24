@@ -1,41 +1,101 @@
 
-import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { MonthData } from "@/hooks/useFinancialData";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface MonthGridProps {
   months: MonthData[];
   selectedYear: number;
+  isPeriodView?: boolean;
 }
 
-export const MonthGrid = ({ months, selectedYear }: MonthGridProps) => {
+export const MonthGrid = ({ months, selectedYear, isPeriodView = false }: MonthGridProps) => {
   const navigate = useNavigate();
 
+  // Função para capitalizar a primeira letra de cada palavra
+  const capitalize = (str: string) => {
+    return str
+      .split(" ")
+      .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(" ");
+  };
+
+  const handleMonthClick = (month: MonthData) => {
+    navigate(`/financial/${month.year}/${month.month + 1}`);
+  };
+
+  if (months.length === 0) {
+    return (
+      <div className="text-center py-8 text-gray-600">
+        {isPeriodView
+          ? "Nenhum dado encontrado para o período selecionado."
+          : "Nenhum dado financeiro disponível para este ano."}
+      </div>
+    );
+  }
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat("pt-BR", {
+      style: "currency",
+      currency: "BRL",
+    }).format(value);
+  };
+
   return (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-      {months?.map((month) => (
-        <Button
-          key={`${selectedYear}-${month.month}`}
-          variant="outline"
-          className="h-auto py-8 flex flex-col gap-2"
-          onClick={() =>
-            navigate(`/financial/${selectedYear}/${month.month + 1}`)
-          }
+    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {months.map((month) => (
+        <div
+          key={`${month.year}-${month.month}`}
+          className="bg-white dark:bg-card rounded-lg shadow hover:shadow-md transition-shadow cursor-pointer overflow-hidden"
+          onClick={() => handleMonthClick(month)}
         >
-          <span className="text-lg font-semibold capitalize">
-            {month.label}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {month.count} faturas
-          </span>
-          <span className="text-sm text-muted-foreground">
-            Saldo:{" "}
-            {month.balance.toLocaleString("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-            })}
-          </span>
-        </Button>
+          <div className="bg-blue-500 text-white px-4 py-3 flex justify-between items-center">
+            <h3 className="font-medium capitalize">
+              {isPeriodView 
+                ? `${capitalize(month.label)} de ${month.year}`
+                : capitalize(month.label)}
+            </h3>
+            <ChevronRight className="h-5 w-5" />
+          </div>
+          <div className="p-4 space-y-3">
+            <div className="flex justify-between pb-2 border-b">
+              <span className="font-medium">Receita</span>
+              <span className="text-green-600">
+                {formatCurrency(month.totalInvoices)}
+              </span>
+            </div>
+            <div className="flex justify-between pb-2 border-b">
+              <span className="font-medium">Despesas</span>
+              <span className="text-red-600">
+                {formatCurrency(month.totalExpenses)}
+              </span>
+            </div>
+            <div className="flex justify-between pb-2 border-b">
+              <span className="font-medium">Investimentos</span>
+              <span className="text-blue-600">
+                {formatCurrency(month.totalInvestments)}
+              </span>
+            </div>
+            <div className="flex justify-between pb-2 border-b">
+              <span className="font-medium">Recorrentes</span>
+              <span className="text-amber-600">
+                {formatCurrency(month.totalRecurring)}
+              </span>
+            </div>
+            <div className="flex justify-between font-bold pt-1">
+              <span>Saldo</span>
+              <span
+                className={
+                  month.balance >= 0 ? "text-green-600" : "text-red-600"
+                }
+              >
+                {formatCurrency(month.balance)}
+              </span>
+            </div>
+          </div>
+        </div>
       ))}
     </div>
   );

@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -25,7 +25,10 @@ export interface MonthData {
 export const useFinancialData = () => {
   const [years, setYears] = useState<number[]>([]);
   const [monthsByYear, setMonthsByYear] = useState<Record<number, MonthData[]>>({});
+  const [filteredMonths, setFilteredMonths] = useState<MonthData[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -230,5 +233,60 @@ export const useFinancialData = () => {
     fetchData();
   }, []);
 
-  return { years, monthsByYear, selectedYear, setSelectedYear, isLoading };
+  // Filtrar meses com base no intervalo de datas selecionado
+  const applyDateFilter = () => {
+    if (!startDate || !endDate) {
+      // Se não houver intervalo de datas, mostrar apenas o ano selecionado
+      setFilteredMonths(monthsByYear[selectedYear] || []);
+      return;
+    }
+
+    // Criar um array com todos os meses de todos os anos
+    const allMonths: MonthData[] = [];
+    years.forEach(year => {
+      if (monthsByYear[year]) {
+        allMonths.push(...monthsByYear[year]);
+      }
+    });
+
+    // Filtrar os meses que estão dentro do intervalo de datas
+    const filtered = allMonths.filter(monthData => {
+      const monthStart = startOfMonth(new Date(monthData.year, monthData.month));
+      const monthEnd = endOfMonth(new Date(monthData.year, monthData.month));
+      
+      // Verificar se há interseção entre o intervalo de meses e o intervalo de datas selecionado
+      return (
+        (startDate <= monthEnd && endDate >= monthStart) ||
+        isWithinInterval(monthStart, { start: startDate, end: endDate }) ||
+        isWithinInterval(monthEnd, { start: startDate, end: endDate })
+      );
+    });
+
+    // Ordenar os meses por data
+    filtered.sort((a, b) => {
+      if (a.year !== b.year) return a.year - b.year;
+      return a.month - b.month;
+    });
+
+    setFilteredMonths(filtered);
+  };
+
+  // Aplicar o filtro quando as datas ou o ano selecionado mudar
+  useEffect(() => {
+    applyDateFilter();
+  }, [startDate, endDate, selectedYear, monthsByYear]);
+
+  return { 
+    years, 
+    monthsByYear, 
+    filteredMonths,
+    selectedYear, 
+    setSelectedYear, 
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    applyDateFilter,
+    isLoading 
+  };
 };
