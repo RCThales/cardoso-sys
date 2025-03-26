@@ -1,4 +1,3 @@
-
 import { format, parseISO, differenceInDays } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,6 +13,7 @@ import {
   StickyNote,
   AlertOctagon,
   Percent,
+  PlusCircle,
 } from "lucide-react";
 import { Invoice, InvoiceExtension } from "../types";
 import { cn } from "@/lib/utils";
@@ -28,6 +28,7 @@ interface InvoiceTableRowProps {
   onPreview: () => void;
   onDelete: () => void;
   onNotesClick: () => void;
+  onExtendRental: () => void;
   formatCurrency: (value: number | string | null | undefined) => string;
   isPaidDisabled: boolean;
   isReturnedDisabled: boolean;
@@ -43,6 +44,7 @@ export const InvoiceTableRow = ({
   onPreview,
   onDelete,
   onNotesClick,
+  onExtendRental,
   formatCurrency,
   current,
   isPaidDisabled,
@@ -282,23 +284,38 @@ export const InvoiceTableRow = ({
         )}
       </TableCell>
       <TableCell>
-        <Button
-          variant={hasNotes ? "outline" : "ghost"}
-          size="icon"
-          onClick={onNotesClick}
-          title={hasNotes ? "Editar notas" : "Adicionar notas"}
-          className="relative"
-        >
-          <StickyNote
-            className={cn(
-              "h-4 w-4",
-              hasNotes ? "text-blue-500" : "text-muted-foreground"
+        <div className="flex gap-2">
+          <Button
+            variant={hasNotes ? "outline" : "ghost"}
+            size="icon"
+            onClick={onNotesClick}
+            title={hasNotes ? "Editar notas" : "Adicionar notas"}
+            className="relative"
+          >
+            <StickyNote
+              className={cn(
+                "h-4 w-4",
+                hasNotes ? "text-blue-500" : "text-muted-foreground"
+              )}
+            />
+            {hasNotes && (
+              <AlertOctagon className="h-3 w-3 text-amber-500 absolute -top-1 -right-1" />
             )}
-          />
-          {hasNotes && (
-            <AlertOctagon className="h-3 w-3 text-amber-500 absolute -top-1 -right-1" />
+          </Button>
+          
+          {/* Add Extend Rental button (only show for non-sale items that haven't been returned) */}
+          {!isSale && !invoice.is_returned && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onExtendRental}
+              title="Estender aluguel"
+              className="relative"
+            >
+              <PlusCircle className="h-4 w-4 text-green-500" />
+            </Button>
           )}
-        </Button>
+        </div>
       </TableCell>
       <TableCell className="text-right space-x-2 space-y-2">
         <Button
