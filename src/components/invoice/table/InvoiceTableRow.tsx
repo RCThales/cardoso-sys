@@ -17,6 +17,8 @@ import {
 } from "lucide-react";
 import { Invoice, InvoiceExtension } from "../types";
 import { cn } from "@/lib/utils";
+import { usePaymentSettingsStore } from "@/store/paymentSettingsStore";
+import { useEffect } from "react";
 
 interface InvoiceTableRowProps {
   invoice: Invoice;
@@ -47,6 +49,13 @@ export const InvoiceTableRow = ({
   isReturnedDisabled,
   invoiceType,
 }: InvoiceTableRowProps) => {
+  const { fetchSettings, getFeeByMethod } = usePaymentSettingsStore();
+  
+  // Fetch payment settings when component mounts
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+  
   // Ícone e texto com base no tipo da fatura
   const invoiceTypeIcon =
     invoiceType === "VENDA" ? (
@@ -115,11 +124,28 @@ export const InvoiceTableRow = ({
   // Verificar se tem taxa de pagamento
   const hasPaymentFee = invoice.payment_fee && invoice.payment_fee > 0;
   
+  // Get actual fee percentage from payment settings store instead of using saved value
+  const getActualFeePercentage = () => {
+    if (!invoice.payment_method) return 0;
+    
+    // Extract installment number if present in the payment_method
+    const methodParts = invoice.payment_method.split('_');
+    const installments = methodParts.length > 1 && !isNaN(Number(methodParts[1])) 
+      ? Number(methodParts[1]) 
+      : 1;
+    
+    const baseMethod = methodParts[0];
+    return getFeeByMethod(baseMethod, installments);
+  };
+  
+  // Use either the stored fee or the actual fee from settings
+  const feePercentage = getActualFeePercentage() || invoice.payment_fee || 0;
+  
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const calculateFeeAmount = () => {
     if (!hasPaymentFee) return 0;
     const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
-    return (subtotal * invoice.payment_fee) / 100;
+    return (subtotal * feePercentage) / 100;
   };
   
   const feeAmount = calculateFeeAmount();
@@ -128,6 +154,36 @@ export const InvoiceTableRow = ({
   const paymentMethodDisplay = invoice.payment_method 
     ? invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())
     : "";
+    
+  // Generate list of products in the invoice
+  const renderProductsList = () => {
+    // Filter out delivery fees for display
+    const displayItems = invoice.items.filter(item => item.productId !== "delivery-fee");
+    
+    return (
+      <div className="text-xs space-y-1 max-w-48">
+        {displayItems.map((item, index) => {
+          const itemDesc = item.size ? `${item.description} (${item.size})` : item.description;
+          return (
+            <div key={index} className="flex items-center gap-1 truncate">
+              {item.is_sale ? (
+                <Tag className="h-3 w-3 text-blue-500 flex-shrink-0" />
+              ) : (
+                <Calendar className="h-3 w-3 text-green-500 flex-shrink-0" />
+              )}
+              <span className="truncate">{itemDesc}</span>
+              {item.quantity > 1 && <span className="text-muted-foreground">x{item.quantity}</span>}
+            </div>
+          );
+        })}
+        {invoice.items.some(item => item.productId === "delivery-fee") && (
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">+ Frete</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <TableRow
@@ -161,8 +217,9 @@ export const InvoiceTableRow = ({
         </div>
       </TableCell>
 
+      {/* Substituto da coluna de número da fatura - Lista de produtos */}
       <TableCell>
-        {invoice.invoice_number}
+        {renderProductsList()}
         {invoice.extensions && invoice.extensions.length > 0 && (
           <div className="text-xs text-muted-foreground mt-1">
             <span className="font-medium">Extensões:</span>
@@ -183,7 +240,7 @@ export const InvoiceTableRow = ({
           {hasPaymentFee && (
             <div className="text-xs text-muted-foreground flex items-center justify-end mt-1">
               <Percent className="h-3 w-3 mr-1 text-orange-500" />
-              Taxa: {invoice.payment_fee.toFixed(2)}% (R$ {formatCurrency(feeAmount)})
+              Taxa: {feePercentage.toFixed(2)}% (R$ {formatCurrency(feeAmount)})
             </div>
           )}
         </div>

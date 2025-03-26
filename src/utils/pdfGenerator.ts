@@ -119,6 +119,11 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     "dd/MM/yyyy"
   );
 
+  // Get the payment method formatted for display
+  const paymentMethodDisplay = invoice.payment_method 
+    ? invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())
+    : "";
+
   // Create an array of invoice info and filter out empty strings
   const invoiceInfo = [
     `Período: ${invoiceDateFormatted} ${
@@ -127,7 +132,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     invoiceType !== "VENDA" ? `Duração: ${days} dias` : "",
     `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
     invoice.payment_method
-      ? `Forma de Pagamento: ${invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())}`
+      ? `Forma de Pagamento: ${paymentMethodDisplay}`
       : "",
   ].filter(Boolean);
 

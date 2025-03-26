@@ -17,7 +17,7 @@ const InvoiceHistory = () => {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
   const [filterStatus, setFilterStatus] = useState<
     "all" | "paid" | "unpaid" | "returned" | "not-returned"
-  >("not-returned"); // Alterado para "not-returned" como padrão
+  >("not-returned"); // Default set to "not-returned"
   const [dateSortType, setDateSortType] = useState<"invoice" | "return">(
     "return"
   );
