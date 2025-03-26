@@ -1,4 +1,3 @@
-
 import { format, parseISO, differenceInDays } from "date-fns";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -114,14 +113,15 @@ export const InvoiceTableRow = ({
 
   // Verificar se tem taxa de pagamento
   const hasPaymentFee = invoice.payment_fee && invoice.payment_fee > 0;
-  
+
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const calculateFeeAmount = () => {
+    console.log(invoice);
     if (!hasPaymentFee) return 0;
     const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
     return (subtotal * invoice.payment_fee) / 100;
   };
-  
+
   const feeAmount = calculateFeeAmount();
 
   return (

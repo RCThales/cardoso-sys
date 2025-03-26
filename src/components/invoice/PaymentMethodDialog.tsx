@@ -188,7 +188,6 @@ export const PaymentMethodDialog = ({
   ]);
 
   const handleConfirm = () => {
-    console.log(debitFee);
     onConfirm(
       method,
       method === "credito"

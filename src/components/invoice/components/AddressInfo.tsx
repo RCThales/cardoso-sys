@@ -14,6 +14,7 @@ import { useState } from "react";
 import { useToast } from "../../ui/use-toast";
 import { ClientData } from "../types/clientForm";
 import { cn } from "@/lib/utils";
+import { Button } from "../../ui/button";
 
 interface AddressInfoProps {
   clientData: ClientData;
@@ -67,9 +68,21 @@ export const AddressInfo = ({
   return (
     <>
       <div className="space-y-2">
-        <label className="text-sm font-medium">CEP *</label>
+        <div>
+          <label
+            onClick={() =>
+              window.open(
+                "https://buscacepinter.correios.com.br/app/endereco/index.php/",
+                "_blank"
+              )
+            }
+            className="text-sm font-medium cursor-pointer underline hover:text-blue-500 transition-all"
+          >
+            CEP
+          </label>
+        </div>
+
         <Input
-          required
           value={clientData.postalCode}
           onChange={(e) => {
             const cep = e.target.value.replace(/\D/g, "");
