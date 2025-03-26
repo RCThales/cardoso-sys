@@ -19,7 +19,23 @@ export const ExtendRentalDialog = ({
   calculateAdditionalCost,
 }: ExtendRentalDialogProps) => {
   const [days, setDays] = useState(1);
+  const [previousValue, setPreviousValue] = useState("1");
   const additionalCost = calculateAdditionalCost(days);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setDays(Math.max(1, parseInt(value) || 1));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    if (!e.target.value.trim()) {
+      // If the input is empty when blurred, restore the previous value
+      setDays(parseInt(previousValue) || 1);
+    } else {
+      // Save the current value as the previous value
+      setPreviousValue(days.toString());
+    }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -34,7 +50,8 @@ export const ExtendRentalDialog = ({
               type="number"
               min="1"
               value={days}
-              onChange={(e) => setDays(Math.max(1, parseInt(e.target.value) || 1))}
+              onChange={handleChange}
+              onBlur={handleBlur}
             />
           </div>
           

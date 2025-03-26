@@ -13,9 +13,12 @@ import {
   StickyNote,
   AlertOctagon,
   Percent,
+  PlusCircle,
 } from "lucide-react";
 import { Invoice, InvoiceExtension } from "../types";
 import { cn } from "@/lib/utils";
+import { usePaymentSettingsStore } from "@/store/paymentSettingsStore";
+import { useEffect } from "react";
 
 interface InvoiceTableRowProps {
   invoice: Invoice;
@@ -25,6 +28,7 @@ interface InvoiceTableRowProps {
   onPreview: () => void;
   onDelete: () => void;
   onNotesClick: () => void;
+  onExtendRental: () => void;
   formatCurrency: (value: number | string | null | undefined) => string;
   isPaidDisabled: boolean;
   isReturnedDisabled: boolean;
@@ -40,12 +44,20 @@ export const InvoiceTableRow = ({
   onPreview,
   onDelete,
   onNotesClick,
+  onExtendRental,
   formatCurrency,
   current,
   isPaidDisabled,
   isReturnedDisabled,
   invoiceType,
 }: InvoiceTableRowProps) => {
+  const { fetchSettings, getFeeByMethod } = usePaymentSettingsStore();
+
+  // Fetch payment settings when component mounts
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+
   // Ícone e texto com base no tipo da fatura
   const invoiceTypeIcon =
     invoiceType === "VENDA" ? (
@@ -113,16 +125,64 @@ export const InvoiceTableRow = ({
 
   // Verificar se tem taxa de pagamento
   const hasPaymentFee = invoice.payment_fee && invoice.payment_fee > 0;
-
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const calculateFeeAmount = () => {
     console.log(invoice);
     if (!hasPaymentFee) return 0;
     const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
-    return (subtotal * invoice.payment_fee) / 100;
+    return (subtotal * feePercentage) / 100;
   };
 
   const feeAmount = calculateFeeAmount();
+
+  // Recuperar o método de pagamento e formatar para exibição
+  const paymentMethodDisplay = invoice.payment_method
+    ? invoice.payment_method
+        .replace("_", " ")
+        .replace(/^\w/, (c) => c.toUpperCase())
+    : "";
+
+  // Generate list of products in the invoice
+  const renderProductsList = () => {
+    // Filter out delivery fees for display
+    const displayItems = invoice.items.filter(
+      (item) => item.productId !== "delivery-fee"
+    );
+
+    // Check if there's a delivery fee with value greater than 0
+    const hasDeliveryFee = invoice.items.some(
+      (item) => item.productId === "delivery-fee" && item.total > 0
+    );
+
+    return (
+      <div className="text-xs space-y-1 max-w-48">
+        {displayItems.map((item, index) => {
+          const itemDesc = item.size
+            ? `${item.description} (${item.size})`
+            : item.description;
+          return (
+            <div key={index} className="flex items-center gap-1 truncate">
+              {item.is_sale ? (
+                <Tag className="h-3 w-3 text-blue-500 flex-shrink-0" />
+              ) : (
+                <Calendar className="h-3 w-3 text-green-500 flex-shrink-0" />
+              )}
+              <span className="truncate">{itemDesc}</span>
+              {item.quantity > 1 && (
+                <span className="text-muted-foreground">x{item.quantity}</span>
+              )}
+            </div>
+          );
+        })}
+        {/* Only display freight if it's greater than 0 */}
+        {hasDeliveryFee && (
+          <div className="flex items-center gap-1">
+            <span className="text-muted-foreground">+ Frete</span>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   return (
     <TableRow
@@ -156,8 +216,9 @@ export const InvoiceTableRow = ({
         </div>
       </TableCell>
 
+      {/* Substituto da coluna de número da fatura - Lista de produtos */}
       <TableCell>
-        {invoice.invoice_number}
+        {renderProductsList()}
         {invoice.extensions && invoice.extensions.length > 0 && (
           <div className="text-xs text-muted-foreground mt-1">
             <span className="font-medium">Extensões:</span>
@@ -178,7 +239,7 @@ export const InvoiceTableRow = ({
           {hasPaymentFee && (
             <div className="text-xs text-muted-foreground flex items-center justify-end mt-1">
               <Percent className="h-3 w-3 mr-1 text-orange-500" />
-              Taxa: {invoice.payment_fee}% (R$ {formatCurrency(feeAmount)})
+              Taxa: {feePercentage.toFixed(2)}% (R$ {formatCurrency(feeAmount)})
             </div>
           )}
         </div>
@@ -188,7 +249,7 @@ export const InvoiceTableRow = ({
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-600" />
             <span className="text-xs text-muted-foreground">
-              {invoice.payment_method}
+              {paymentMethodDisplay}
             </span>
           </div>
         ) : (
@@ -214,23 +275,38 @@ export const InvoiceTableRow = ({
         )}
       </TableCell>
       <TableCell>
-        <Button
-          variant={hasNotes ? "outline" : "ghost"}
-          size="icon"
-          onClick={onNotesClick}
-          title={hasNotes ? "Editar notas" : "Adicionar notas"}
-          className="relative"
-        >
-          <StickyNote
-            className={cn(
-              "h-4 w-4",
-              hasNotes ? "text-blue-500" : "text-muted-foreground"
+        <div className="flex gap-2">
+          <Button
+            variant={hasNotes ? "outline" : "ghost"}
+            size="icon"
+            onClick={onNotesClick}
+            title={hasNotes ? "Editar notas" : "Adicionar notas"}
+            className="relative"
+          >
+            <StickyNote
+              className={cn(
+                "h-4 w-4",
+                hasNotes ? "text-blue-500" : "text-muted-foreground"
+              )}
+            />
+            {hasNotes && (
+              <AlertOctagon className="h-3 w-3 text-amber-500 absolute -top-1 -right-1" />
             )}
-          />
-          {hasNotes && (
-            <AlertOctagon className="h-3 w-3 text-amber-500 absolute -top-1 -right-1" />
+          </Button>
+
+          {/* Add Extend Rental button (only show for non-sale items that haven't been returned) */}
+          {!isSale && !invoice.is_returned && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={onExtendRental}
+              title="Estender aluguel"
+              className="relative"
+            >
+              <PlusCircle className="h-4 w-4 text-green-500" />
+            </Button>
           )}
-        </Button>
+        </div>
       </TableCell>
       <TableCell className="text-right space-x-2 space-y-2">
         <Button

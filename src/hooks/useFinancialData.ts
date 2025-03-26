@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { format, parseISO } from "date-fns";
+import { format, parseISO, isWithinInterval, startOfMonth, endOfMonth, isAfter, isBefore, isEqual, startOfDay, endOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { supabase } from "@/integrations/supabase/client";
 import type { Database } from "@/integrations/supabase/types";
@@ -25,7 +25,10 @@ export interface MonthData {
 export const useFinancialData = () => {
   const [years, setYears] = useState<number[]>([]);
   const [monthsByYear, setMonthsByYear] = useState<Record<number, MonthData[]>>({});
+  const [filteredMonths, setFilteredMonths] = useState<MonthData[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear());
+  const [startDate, setStartDate] = useState<Date | undefined>(undefined);
+  const [endDate, setEndDate] = useState<Date | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -230,5 +233,173 @@ export const useFinancialData = () => {
     fetchData();
   }, []);
 
-  return { years, monthsByYear, selectedYear, setSelectedYear, isLoading };
+  // Filtrar meses com base no intervalo de datas selecionado
+  const applyDateFilter = async () => {
+    if (!startDate || !endDate) {
+      // Se não houver intervalo de datas, mostrar apenas o ano selecionado
+      setFilteredMonths(monthsByYear[selectedYear] || []);
+      return;
+    }
+
+    setIsLoading(true);
+    
+    try {
+      // Ensure start date is at the beginning of the day (00:00:00)
+      const startOfDayDate = startOfDay(startDate);
+      
+      // Ensure end date is at the end of the day (23:59:59)
+      const endOfDayDate = endOfDay(endDate);
+      
+      console.log("Filtering dates:", {
+        startDate: startOfDayDate.toISOString(),
+        endDate: endOfDayDate.toISOString()
+      });
+      
+      // Criar array de meses filtrados
+      const filtered: MonthData[] = [];
+      
+      // Para cada mês entre a data inicial e final (inclusive)
+      for (let year = startOfDayDate.getFullYear(); year <= endOfDayDate.getFullYear(); year++) {
+        // Determinar o mês inicial e final para este ano
+        const firstMonth = year === startOfDayDate.getFullYear() ? startOfDayDate.getMonth() : 0;
+        const lastMonth = year === endOfDayDate.getFullYear() ? endOfDayDate.getMonth() : 11;
+        
+        for (let month = firstMonth; month <= lastMonth; month++) {
+          // Verificar se temos dados para este mês e ano
+          if (monthsByYear[year]?.some(m => m.month === month)) {
+            try {
+              // Formatar datas para filtro no Supabase - use the exact day boundaries
+              const monthStart = new Date(year, month, 1);
+              const monthEnd = endOfMonth(monthStart);
+              
+              // Dias exatos que devemos considerar (respeitando startDate e endDate)
+              const effectiveStartDate = new Date(Math.max(
+                monthStart.getTime(),
+                startOfDayDate.getTime()
+              ));
+              
+              const effectiveEndDate = new Date(Math.min(
+                monthEnd.getTime(),
+                endOfDayDate.getTime()
+              ));
+              
+              const startDateStr = effectiveStartDate.toISOString();
+              const endDateStr = effectiveEndDate.toISOString();
+              
+              console.log(`Fetching data for ${year}-${month+1}:`, {
+                effectiveStartDate: startDateStr,
+                effectiveEndDate: endDateStr
+              });
+              
+              // Buscar dados filtrados pelas datas exatas para cada categoria
+              const { data: filteredInvoices } = await supabase
+                .from("invoices")
+                .select("*")
+                .gte("invoice_date", startDateStr)
+                .lte("invoice_date", endDateStr);
+                
+              const { data: filteredInvestments } = await supabase
+                .from("investments")
+                .select("*")
+                .gte("date", startDateStr)
+                .lte("date", endDateStr);
+                
+              const { data: filteredExpenses } = await supabase
+                .from("expenses")
+                .select("*")
+                .gte("date", startDateStr)
+                .lte("date", endDateStr);
+                
+              const { data: filteredRecurring } = await supabase
+                .from("recurring")
+                .select("*")
+                .gte("date", startDateStr)
+                .lte("date", endDateStr);
+              
+              // Log the data we're getting
+              console.log(`Data fetched for ${year}-${month+1}:`, {
+                invoices: filteredInvoices?.length || 0,
+                investments: filteredInvestments?.length || 0,
+                expenses: filteredExpenses?.length || 0,
+                recurring: filteredRecurring?.length || 0
+              });
+              
+              // Calcular totais
+              const totalInvoices = filteredInvoices?.reduce((sum, inv) => sum + Number(inv.total), 0) || 0;
+              const totalInvestments = filteredInvestments?.reduce((sum, inv) => sum + Number(inv.amount), 0) || 0;
+              const totalExpenses = filteredExpenses?.reduce((sum, exp) => sum + Number(exp.amount), 0) || 0;
+              const totalRecurring = filteredRecurring?.reduce((sum, rec) => sum + Number(rec.amount), 0) || 0;
+              
+              // Somente adicionar meses que têm pelo menos algum registro no período
+              if (filteredInvoices?.length || filteredInvestments?.length || 
+                  filteredExpenses?.length || filteredRecurring?.length) {
+                
+                // Encontrar o modelo base deste mês ou criar um novo
+                const baseMonth = monthsByYear[year]?.find(m => m.month === month) || {
+                  month,
+                  year,
+                  label: format(new Date(year, month), "MMMM", { locale: ptBR }),
+                  count: 0,
+                  totalInvoices: 0,
+                  totalExpenses: 0,
+                  totalInvestments: 0,
+                  totalRecurring: 0,
+                  balance: 0
+                };
+                
+                // Criar um novo objeto de mês com os dados filtrados
+                const filteredMonth: MonthData = {
+                  ...baseMonth,
+                  totalInvoices,
+                  totalInvestments,
+                  totalExpenses,
+                  totalRecurring,
+                  balance: totalInvoices - totalExpenses - totalInvestments - totalRecurring
+                };
+                
+                filtered.push(filteredMonth);
+              }
+            } catch (error) {
+              console.error("Erro ao filtrar dados para o mês:", year, month, error);
+            }
+          }
+        }
+      }
+
+      // Ordenar os meses por data
+      filtered.sort((a, b) => {
+        if (a.year !== b.year) return a.year - b.year;
+        return a.month - b.month;
+      });
+
+      setFilteredMonths(filtered);
+    } catch (error) {
+      console.error("Erro ao aplicar filtro de datas:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Aplicar o filtro quando as datas ou o ano selecionado mudar
+  useEffect(() => {
+    if (startDate && endDate) {
+      applyDateFilter();
+    } else {
+      setFilteredMonths(monthsByYear[selectedYear] || []);
+    }
+  }, [startDate, endDate, selectedYear, monthsByYear]);
+
+  return { 
+    years, 
+    monthsByYear, 
+    filteredMonths,
+    selectedYear, 
+    setSelectedYear, 
+    startDate,
+    setStartDate,
+    endDate,
+    setEndDate,
+    applyDateFilter,
+    isLoading 
+  };
 };

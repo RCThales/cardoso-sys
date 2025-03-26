@@ -8,7 +8,7 @@ export const InvoiceTableHeader = () => {
         <TableHead>Cliente</TableHead>
         <TableHead>Período</TableHead>
         <TableHead>Tipo</TableHead>
-        <TableHead>Nº Fatura</TableHead>
+        <TableHead>Produtos</TableHead>
         <TableHead className="text-right">Total</TableHead>
         <TableHead>Pago</TableHead>
         <TableHead>Devolvido</TableHead>

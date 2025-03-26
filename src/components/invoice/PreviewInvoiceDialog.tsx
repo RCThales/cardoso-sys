@@ -18,6 +18,8 @@ import {
 } from "../ui/table";
 import { Invoice } from "./types";
 import { Tag, Calendar, Truck, CreditCard, Percent } from "lucide-react";
+import { usePaymentSettingsStore } from "@/store/paymentSettingsStore";
+import { useEffect } from "react";
 
 interface PreviewInvoiceDialogProps {
   invoice: Invoice | null;
@@ -34,6 +36,12 @@ export const PreviewInvoiceDialog = ({
   onDownload,
   formatCurrency,
 }: PreviewInvoiceDialogProps) => {
+  const { fetchSettings, getFeeByMethod } = usePaymentSettingsStore();
+  
+  useEffect(() => {
+    fetchSettings();
+  }, [fetchSettings]);
+  
   if (!invoice) return null;
   
   // Calcular o período e dias para mostrar na visualização
@@ -49,8 +57,24 @@ export const PreviewInvoiceDialog = ({
   const itemsTotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
   const subtotalWithoutFee = itemsTotal;
   
+  // Get actual fee percentage from payment settings if available
+  const getActualFeePercentage = () => {
+    if (!invoice.payment_method) return 0;
+    
+    // Extract installment number if present in the payment_method
+    const methodParts = invoice.payment_method.split('_');
+    const installments = methodParts.length > 1 && !isNaN(Number(methodParts[1])) 
+      ? Number(methodParts[1]) 
+      : 1;
+    
+    const baseMethod = methodParts[0];
+    return getFeeByMethod(baseMethod, installments);
+  };
+  
+  // Use either the actual fee from settings or the stored fee
+  const feePercentage = getActualFeePercentage() || invoice.payment_fee || 0;
+  
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
-  const feePercentage = invoice.payment_fee || 0;
   const feeAmount = (subtotalWithoutFee * feePercentage) / 100;
 
   return (
@@ -92,7 +116,7 @@ export const PreviewInvoiceDialog = ({
                 <div>
                   <p className="flex items-center">
                     <CreditCard className="h-4 w-4 mr-1" />
-                    Forma de Pagamento: {invoice.payment_method}
+                    Forma de Pagamento: {invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())}
                   </p>
                 </div>
               )}
@@ -113,6 +137,11 @@ export const PreviewInvoiceDialog = ({
               </TableHeader>
               <TableBody>
                 {invoice.items.map((item, index) => {
+                  // Skip delivery fee items with zero value
+                  if (item.productId === "delivery-fee" && item.total === 0) {
+                    return null;
+                  }
+                  
                   const description = item.size
                     ? `${item.description} (${item.size})`
                     : item.description;
@@ -168,7 +197,7 @@ export const PreviewInvoiceDialog = ({
                         <span>Taxa</span>
                       </div>
                     </TableCell>
-                    <TableCell>Taxa de pagamento ({invoice.payment_fee}%)</TableCell>
+                    <TableCell>Taxa de pagamento ({feePercentage.toFixed(2)}%)</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell className="text-right">
@@ -216,7 +245,7 @@ export const PreviewInvoiceDialog = ({
             </p>
             {invoice.payment_fee && invoice.payment_fee > 0 && (
               <p className="text-sm text-muted-foreground">
-                Taxa de pagamento ({invoice.payment_fee}%): R$ {formatCurrency(feeAmount)}
+                Taxa de pagamento ({feePercentage.toFixed(2)}%): R$ {formatCurrency(feeAmount)}
               </p>
             )}
             <p className="font-semibold">

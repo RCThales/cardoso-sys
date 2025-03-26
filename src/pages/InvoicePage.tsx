@@ -6,7 +6,7 @@ const InvoicePage = () => {
     <InvoiceHistoryComponent
       search=""
       sortOrder="desc"
-      filterStatus="all"
+      filterStatus="not-returned"
       dateSortType="invoice"
       filterType="all"
       showFeeInfo={true}

@@ -13,6 +13,10 @@ import { InvoiceTableRow } from "./table/InvoiceTableRow";
 import { returnToInventory } from "@/services/inventoryService";
 import { cn } from "@/lib/utils";
 import { Button } from "../ui/button";
+import { ExtendRentalDialog } from "./ExtendRentalDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { calculateTotalPrice } from "@/utils/priceCalculator";
+import { format } from "date-fns";
 
 interface InvoiceTableProps {
   invoices: Invoice[];
@@ -49,6 +53,7 @@ export const InvoiceTable = ({
   const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [notesDialogOpen, setNotesDialogOpen] = useState(false);
+  const [extendRentalDialogOpen, setExtendRentalDialogOpen] = useState(false);
   const [selectedInvoice, setSelectedInvoice] = useState<Invoice | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
@@ -212,6 +217,111 @@ export const InvoiceTable = ({
     setNotesDialogOpen(true);
   };
 
+  // New function to handle extending rental
+  const handleExtendRentalClick = (invoice: Invoice) => {
+    // Only allow rental extension for non-sale items and if not returned
+    if (getInvoiceType(invoice) === "VENDA") {
+      toast({
+        title: "Ação não permitida",
+        description: "Não é possível estender uma fatura de venda",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (invoice.is_returned) {
+      toast({
+        title: "Ação não permitida",
+        description: "Não é possível estender um aluguel já devolvido",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedInvoice(invoice);
+    setExtendRentalDialogOpen(true);
+  };
+
+  // Calculate additional cost based on rental items
+  const calculateAdditionalCost = (additionalDays: number): number => {
+    if (!selectedInvoice) return 0;
+
+    // Only calculate for rental items (not sales, not delivery fee)
+    const rentalItems = selectedInvoice.items.filter(
+      item => !item.is_sale && item.productId !== "delivery-fee"
+    );
+
+    // Calculate the additional cost for each rental item
+    return rentalItems.reduce((total, item) => {
+      const product = invoices
+        .flatMap(inv => inv.items)
+        .find(i => i.productId === item.productId && i.size === item.size);
+      
+      if (!product) return total;
+      
+      const basePrice = product.price / product.rentalDays; // Approximate base price
+      const itemAdditionalCost = calculateTotalPrice(basePrice, additionalDays) * item.quantity;
+      
+      return total + itemAdditionalCost;
+    }, 0);
+  };
+
+  // Handle the extension confirmation
+  const handleExtendRentalConfirm = async (days: number, additionalCost: number) => {
+    if (!selectedInvoice) return;
+
+    try {
+      // Create the extension object
+      const today = new Date();
+      const extension = {
+        date: format(today, 'yyyy-MM-dd'),
+        days: days,
+        additionalCost: additionalCost
+      };
+
+      // Get current extensions or initialize empty array
+      const currentExtensions = selectedInvoice.extensions || [];
+      
+      // Add the new extension
+      const updatedExtensions = [...currentExtensions, extension];
+      
+      // Calculate new total
+      const newTotal = selectedInvoice.total + additionalCost;
+
+      // Update the invoice
+      const { error } = await supabase
+        .from("invoices")
+        .update({
+          extensions: updatedExtensions,
+          total: newTotal,
+          is_paid: false, // Reset paid status
+          is_returned: false, // Reset returned status
+        })
+        .eq("id", selectedInvoice.id);
+
+      if (error) {
+        throw error;
+      }
+
+      toast({
+        title: "Aluguel estendido",
+        description: `Aluguel estendido por ${days} dias adicionais`,
+      });
+
+      // Close the dialog and refresh the invoices
+      setExtendRentalDialogOpen(false);
+      setSelectedInvoice(null);
+      onRefresh();
+    } catch (error) {
+      console.error("Error extending rental:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível estender o aluguel",
+        variant: "destructive",
+      });
+    }
+  };
+
   return (
     <>
       {showConfetti && (
@@ -235,6 +345,7 @@ export const InvoiceTable = ({
               onPreview={() => onPreview(filteredCurrentInvoice)}
               onDelete={() => handleDeleteClick(filteredCurrentInvoice)}
               onNotesClick={() => handleNotesClick(filteredCurrentInvoice)}
+              onExtendRental={() => handleExtendRentalClick(filteredCurrentInvoice)}
               formatCurrency={formatCurrency}
               isPaidDisabled={filteredCurrentInvoice.is_returned}
               isReturnedDisabled={
@@ -258,6 +369,7 @@ export const InvoiceTable = ({
                 onPreview={() => onPreview(invoice)}
                 onDelete={() => handleDeleteClick(invoice)}
                 onNotesClick={() => handleNotesClick(invoice)}
+                onExtendRental={() => handleExtendRentalClick(invoice)}
                 formatCurrency={formatCurrency}
                 isPaidDisabled={invoice.is_returned}
                 isReturnedDisabled={!invoice.is_paid || invoice.is_returned}
@@ -322,6 +434,13 @@ export const InvoiceTable = ({
         invoiceId={selectedInvoice?.id || 0}
         initialNotes={selectedInvoice?.notes || ""}
         onNotesSaved={onRefresh}
+      />
+
+      <ExtendRentalDialog
+        open={extendRentalDialogOpen}
+        onOpenChange={setExtendRentalDialogOpen}
+        onConfirm={handleExtendRentalConfirm}
+        calculateAdditionalCost={calculateAdditionalCost}
       />
     </>
   );
