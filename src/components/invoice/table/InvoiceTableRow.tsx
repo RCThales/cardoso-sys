@@ -160,6 +160,11 @@ export const InvoiceTableRow = ({
     // Filter out delivery fees for display
     const displayItems = invoice.items.filter(item => item.productId !== "delivery-fee");
     
+    // Check if there's a delivery fee with value greater than 0
+    const hasDeliveryFee = invoice.items.some(
+      item => item.productId === "delivery-fee" && item.total > 0
+    );
+    
     return (
       <div className="text-xs space-y-1 max-w-48">
         {displayItems.map((item, index) => {
@@ -176,7 +181,8 @@ export const InvoiceTableRow = ({
             </div>
           );
         })}
-        {invoice.items.some(item => item.productId === "delivery-fee") && (
+        {/* Only display freight if it's greater than 0 */}
+        {hasDeliveryFee && (
           <div className="flex items-center gap-1">
             <span className="text-muted-foreground">+ Frete</span>
           </div>

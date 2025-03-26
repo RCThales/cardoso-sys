@@ -148,8 +148,13 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   const feePercentage = invoice.payment_fee || 0;
   const feeAmount = (subtotal * feePercentage) / 100;
 
-  // Adiciona os itens principais
+  // Adiciona os itens principais (filtrados para remover delivery-fee com valor 0)
   invoice.items.forEach((item) => {
+    // Skip delivery fee items with zero value
+    if (item.productId === "delivery-fee" && item.total === 0) {
+      return;
+    }
+    
     const description = item.size
       ? `${item.description} (${item.size})`
       : item.description;

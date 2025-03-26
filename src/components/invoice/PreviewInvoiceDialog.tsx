@@ -137,6 +137,11 @@ export const PreviewInvoiceDialog = ({
               </TableHeader>
               <TableBody>
                 {invoice.items.map((item, index) => {
+                  // Skip delivery fee items with zero value
+                  if (item.productId === "delivery-fee" && item.total === 0) {
+                    return null;
+                  }
+                  
                   const description = item.size
                     ? `${item.description} (${item.size})`
                     : item.description;
