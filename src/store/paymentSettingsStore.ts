@@ -34,8 +34,6 @@ export const usePaymentSettingsStore = create<PaymentSettingsState>(
     getFeeByMethod: (method: string, installments: number = 1) => {
       const { settings } = get();
 
-      console.log(settings);
-
       // Find the corresponding setting based on payment method
       let settingName = "";
 

@@ -153,7 +153,6 @@ export const generateFinancialPDF = async (
     doc.text("Detalhamento dos Investimentos", 20, currentY);
     currentY += 10;
 
-    console.log(investmentDetails);
     autoTable(doc, {
       startY: currentY,
       head: [["Nome", "Valor"]],
@@ -226,7 +225,9 @@ export const generateYearlyFinancialPDF = async (
 
   // Cabeçalho
   doc.setFontSize(20);
-  doc.text("RELATÓRIO FINANCEIRO ANUAL", pageWidth / 2, 20, { align: "center" });
+  doc.text("RELATÓRIO FINANCEIRO ANUAL", pageWidth / 2, 20, {
+    align: "center",
+  });
 
   // Ano
   doc.setFontSize(16);
@@ -316,14 +317,7 @@ export const generateYearlyFinancialPDF = async (
   autoTable(doc, {
     startY: currentY,
     head: [
-      [
-        "Mês",
-        "Receita",
-        "Despesas",
-        "Investimentos",
-        "Recorrentes",
-        "Saldo",
-      ],
+      ["Mês", "Receita", "Despesas", "Investimentos", "Recorrentes", "Saldo"],
     ],
     body: monthlyData,
     theme: "grid",
@@ -381,16 +375,28 @@ export const generatePeriodFinancialPDF = async (
   const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
 
   // Format the start and end dates for display
-  const startDateFormatted = format(periodData.startDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
-  const endDateFormatted = format(periodData.endDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+  const startDateFormatted = format(
+    periodData.startDate,
+    "dd 'de' MMMM 'de' yyyy",
+    { locale: ptBR }
+  );
+  const endDateFormatted = format(
+    periodData.endDate,
+    "dd 'de' MMMM 'de' yyyy",
+    { locale: ptBR }
+  );
 
   // Cabeçalho
   doc.setFontSize(20);
-  doc.text("RELATÓRIO FINANCEIRO DO PERÍODO", pageWidth / 2, 20, { align: "center" });
+  doc.text("RELATÓRIO FINANCEIRO DO PERÍODO", pageWidth / 2, 20, {
+    align: "center",
+  });
 
   // Período
   doc.setFontSize(16);
-  doc.text(`${startDateFormatted} até ${endDateFormatted}`, pageWidth / 2, 30, { align: "center" });
+  doc.text(`${startDateFormatted} até ${endDateFormatted}`, pageWidth / 2, 30, {
+    align: "center",
+  });
 
   // Informações da empresa
   doc.setFontSize(10);

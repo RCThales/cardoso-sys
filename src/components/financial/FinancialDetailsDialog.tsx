@@ -1,4 +1,3 @@
-
 import {
   Dialog,
   DialogContent,
@@ -57,59 +56,49 @@ export const FinancialDetailsDialog = ({
   useEffect(() => {
     const fetchFinancialDetails = async () => {
       if (!open || !monthData) return;
-      
+
       setIsLoading(true);
-      
+
       try {
         // Create exact day boundaries for the month
-        const startDate = startOfDay(new Date(monthData.year, monthData.month, 1));
-        const endDate = endOfDay(new Date(monthData.year, monthData.month + 1, 0));
-        
+        const startDate = startOfDay(
+          new Date(monthData.year, monthData.month, 1)
+        );
+        const endDate = endOfDay(
+          new Date(monthData.year, monthData.month + 1, 0)
+        );
+
         const startDateStr = startDate.toISOString();
         const endDateStr = endDate.toISOString();
-        
-        console.log("Fetching financial details for dialog:", {
-          month: monthData.label,
-          year: monthData.year,
-          startDate: startDateStr,
-          endDate: endDateStr
-        });
-        
+
         // Fetch invoices
         const { data: invoicesData } = await supabase
           .from("invoices")
           .select("*")
           .gte("invoice_date", startDateStr)
           .lte("invoice_date", endDateStr);
-          
+
         // Fetch expenses
         const { data: expensesData } = await supabase
           .from("expenses")
           .select("*")
           .gte("date", startDateStr)
           .lte("date", endDateStr);
-          
+
         // Fetch investments
         const { data: investmentsData } = await supabase
           .from("investments")
           .select("*")
           .gte("date", startDateStr)
           .lte("date", endDateStr);
-          
+
         // Fetch recurring
         const { data: recurringData } = await supabase
           .from("recurring")
           .select("*")
           .gte("date", startDateStr)
           .lte("date", endDateStr);
-        
-        console.log("Dialog data fetched:", {
-          invoices: invoicesData?.length || 0,
-          expenses: expensesData?.length || 0,
-          investments: investmentsData?.length || 0,
-          recurring: recurringData?.length || 0
-        });
-        
+
         // Process invoices
         setInvoices(
           invoicesData?.map((invoice) => ({
@@ -119,7 +108,7 @@ export const FinancialDetailsDialog = ({
             date: invoice.invoice_date,
           })) || []
         );
-        
+
         // Process expenses
         setExpenses(
           expensesData?.map((expense) => ({
@@ -129,7 +118,7 @@ export const FinancialDetailsDialog = ({
             date: expense.date,
           })) || []
         );
-        
+
         // Process investments
         setInvestments(
           investmentsData?.map((investment) => ({
@@ -139,7 +128,7 @@ export const FinancialDetailsDialog = ({
             date: investment.date,
           })) || []
         );
-        
+
         // Process recurring
         setRecurring(
           recurringData?.map((rec) => ({
@@ -162,7 +151,11 @@ export const FinancialDetailsDialog = ({
   // For direct details rendering mode (when title, details and total are provided)
   const renderDirectDetails = () => {
     if (!details || !details.length) {
-      return <div className="py-4 text-center text-muted-foreground">Nenhum registro encontrado</div>;
+      return (
+        <div className="py-4 text-center text-muted-foreground">
+          Nenhum registro encontrado
+        </div>
+      );
     }
 
     return (
@@ -174,9 +167,13 @@ export const FinancialDetailsDialog = ({
           >
             <div className="space-y-1">
               <div className="font-medium">{detail.name}</div>
-              <div className="text-sm text-muted-foreground">{detail.description}</div>
+              <div className="text-sm text-muted-foreground">
+                {detail.description}
+              </div>
               {detail.date && (
-                <div className="text-xs text-muted-foreground">{formatDate(detail.date)}</div>
+                <div className="text-xs text-muted-foreground">
+                  {formatDate(detail.date)}
+                </div>
               )}
             </div>
             <span className="font-medium">
@@ -194,7 +191,8 @@ export const FinancialDetailsDialog = ({
 
   const formatMonthTitle = () => {
     if (!monthData) return title || "Detalhes Financeiros";
-    const monthName = monthData.label.charAt(0).toUpperCase() + monthData.label.slice(1);
+    const monthName =
+      monthData.label.charAt(0).toUpperCase() + monthData.label.slice(1);
     return `${monthName} de ${monthData.year}`;
   };
 
@@ -203,13 +201,21 @@ export const FinancialDetailsDialog = ({
     return format(new Date(dateString), "dd/MM/yyyy", { locale: ptBR });
   };
 
-  const renderDetails = (details: FinancialDetail[], total: number, showDates = true) => {
+  const renderDetails = (
+    details: FinancialDetail[],
+    total: number,
+    showDates = true
+  ) => {
     if (isLoading) {
       return <div className="py-4 text-center">Carregando...</div>;
     }
 
     if (!details.length) {
-      return <div className="py-4 text-center text-muted-foreground">Nenhum registro encontrado</div>;
+      return (
+        <div className="py-4 text-center text-muted-foreground">
+          Nenhum registro encontrado
+        </div>
+      );
     }
 
     return (
@@ -221,9 +227,13 @@ export const FinancialDetailsDialog = ({
           >
             <div className="space-y-1">
               <div className="font-medium">{detail.name}</div>
-              <div className="text-sm text-muted-foreground">{detail.description}</div>
+              <div className="text-sm text-muted-foreground">
+                {detail.description}
+              </div>
               {showDates && detail.date && (
-                <div className="text-xs text-muted-foreground">{formatDate(detail.date)}</div>
+                <div className="text-xs text-muted-foreground">
+                  {formatDate(detail.date)}
+                </div>
               )}
             </div>
             <span className="font-medium">
@@ -247,10 +257,8 @@ export const FinancialDetailsDialog = ({
           <DialogHeader>
             <DialogTitle className="text-xl">{title}</DialogTitle>
           </DialogHeader>
-          
-          <div className="mt-4 px-1">
-            {renderDirectDetails()}
-          </div>
+
+          <div className="mt-4 px-1">{renderDirectDetails()}</div>
         </DialogContent>
       </Dialog>
     );
@@ -263,7 +271,7 @@ export const FinancialDetailsDialog = ({
         <DialogHeader>
           <DialogTitle className="text-xl">{formatMonthTitle()}</DialogTitle>
         </DialogHeader>
-        
+
         {monthData && (
           <>
             <Tabs defaultValue="invoices" className="mt-4">
@@ -273,28 +281,32 @@ export const FinancialDetailsDialog = ({
                 <TabsTrigger value="investments">Investimentos</TabsTrigger>
                 <TabsTrigger value="recurring">Recorrentes</TabsTrigger>
               </TabsList>
-              
+
               <TabsContent value="invoices" className="px-1">
                 {renderDetails(invoices, monthData.totalInvoices)}
               </TabsContent>
-              
+
               <TabsContent value="expenses" className="px-1">
                 {renderDetails(expenses, monthData.totalExpenses)}
               </TabsContent>
-              
+
               <TabsContent value="investments" className="px-1">
                 {renderDetails(investments, monthData.totalInvestments)}
               </TabsContent>
-              
+
               <TabsContent value="recurring" className="px-1">
                 {renderDetails(recurring, monthData.totalRecurring)}
               </TabsContent>
             </Tabs>
-            
+
             <div className="mt-6 pt-4 border-t">
               <div className="flex justify-between items-center text-lg font-bold">
                 <span>Saldo Final</span>
-                <span className={monthData.balance >= 0 ? "text-green-600" : "text-red-600"}>
+                <span
+                  className={
+                    monthData.balance >= 0 ? "text-green-600" : "text-red-600"
+                  }
+                >
                   R$ {formatCurrency(monthData.balance)}
                 </span>
               </div>

@@ -284,8 +284,6 @@ export const InvoiceHistory = ({
       const { data: inventoryItem, error: inventoryError } =
         await query.single();
 
-      console.log(inventoryItem);
-
       if (inventoryError || !inventoryItem) {
         throw new Error(`Erro ao buscar estoque para ${item.productId}`);
       }

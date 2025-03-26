@@ -58,8 +58,6 @@ export const updateInventory = async (items: InvoiceItem[]) => {
     // Ignorar taxa de entrega
     if (item.productId === "delivery-fee") continue;
 
-    console.log(`Processando item: ${item.description} ${item.size || ""}`);
-
     try {
       const inventoryItem = await getInventoryItem(item.productId, item.size);
 
@@ -71,9 +69,6 @@ export const updateInventory = async (items: InvoiceItem[]) => {
         // - Incrementa a quantidade alugada
         const newTotalQuantity = inventoryItem.total_quantity - item.quantity;
 
-        console.log(
-          `Atualizando estoque para venda. Nova quantidade total: ${newTotalQuantity}`
-        );
         await updateInventoryItem(
           item.productId,
           item.size,
@@ -84,9 +79,6 @@ export const updateInventory = async (items: InvoiceItem[]) => {
         // Se for apenas aluguel, só atualiza a quantidade alugada
         const newRentedQuantity = inventoryItem.rented_quantity + item.quantity;
 
-        console.log(
-          `Atualizando estoque para aluguel. Nova quantidade alugada: ${newRentedQuantity}`
-        );
         await updateInventoryItem(
           item.productId,
           item.size,
@@ -94,12 +86,6 @@ export const updateInventory = async (items: InvoiceItem[]) => {
           inventoryItem.total_quantity
         );
       }
-
-      console.log(
-        `Estoque atualizado com sucesso para: ${item.description} ${
-          item.size || ""
-        }`
-      );
     } catch (error) {
       console.error("Erro ao processar item:", error);
     }

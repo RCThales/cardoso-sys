@@ -128,7 +128,6 @@ export const InvoiceTableRow = ({
   const feePercentage = getFeeByMethod(invoice.payment_method);
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const calculateFeeAmount = () => {
-    console.log(invoice);
     if (!hasPaymentFee) return 0;
     const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
     return (subtotal * feePercentage) / 100;
