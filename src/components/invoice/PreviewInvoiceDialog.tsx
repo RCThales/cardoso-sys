@@ -168,7 +168,7 @@ export const PreviewInvoiceDialog = ({
                         <span>Taxa</span>
                       </div>
                     </TableCell>
-                    <TableCell>Taxa de pagamento ({invoice.payment_fee}%)</TableCell>
+                    <TableCell>Taxa de pagamento ({invoice.payment_fee.toFixed(2)}%)</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell className="text-right">
@@ -216,7 +216,7 @@ export const PreviewInvoiceDialog = ({
             </p>
             {invoice.payment_fee && invoice.payment_fee > 0 && (
               <p className="text-sm text-muted-foreground">
-                Taxa de pagamento ({invoice.payment_fee}%): R$ {formatCurrency(feeAmount)}
+                Taxa de pagamento ({invoice.payment_fee.toFixed(2)}%): R$ {formatCurrency(feeAmount)}
               </p>
             )}
             <p className="font-semibold">

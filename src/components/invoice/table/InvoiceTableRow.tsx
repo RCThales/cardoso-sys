@@ -124,6 +124,11 @@ export const InvoiceTableRow = ({
   
   const feeAmount = calculateFeeAmount();
 
+  // Recuperar o método de pagamento e formatar para exibição
+  const paymentMethodDisplay = invoice.payment_method 
+    ? invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())
+    : "";
+
   return (
     <TableRow
       className={cn({
@@ -178,7 +183,7 @@ export const InvoiceTableRow = ({
           {hasPaymentFee && (
             <div className="text-xs text-muted-foreground flex items-center justify-end mt-1">
               <Percent className="h-3 w-3 mr-1 text-orange-500" />
-              Taxa: {invoice.payment_fee}% (R$ {formatCurrency(feeAmount)})
+              Taxa: {invoice.payment_fee.toFixed(2)}% (R$ {formatCurrency(feeAmount)})
             </div>
           )}
         </div>
@@ -188,7 +193,7 @@ export const InvoiceTableRow = ({
           <div className="flex items-center gap-2">
             <Check className="h-4 w-4 text-green-600" />
             <span className="text-xs text-muted-foreground">
-              {invoice.payment_method}
+              {paymentMethodDisplay}
             </span>
           </div>
         ) : (
