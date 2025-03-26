@@ -1,15 +1,15 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import { useState } from "react";
 import { formatCurrency } from "@/utils/formatters";
+import { useEffect } from "react";
 
 interface ExtendRentalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onConfirm: (days: number, additionalCost: number) => void;
-  calculateAdditionalCost: (days: number) => number;
+  calculateAdditionalCost: (days: number) => Promise<number>; // Fix: Ensure it's an async function
 }
 
 export const ExtendRentalDialog = ({
@@ -20,7 +20,15 @@ export const ExtendRentalDialog = ({
 }: ExtendRentalDialogProps) => {
   const [days, setDays] = useState(1);
   const [previousValue, setPreviousValue] = useState("1");
-  const additionalCost = calculateAdditionalCost(days);
+  const [additionalCost, setAdditionalCost] = useState(0);
+
+  useEffect(() => {
+    const fetchAdditionalCost = async () => {
+      const cost = await calculateAdditionalCost(days);
+      setAdditionalCost(cost);
+    };
+    fetchAdditionalCost();
+  }, [days, calculateAdditionalCost]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -54,7 +62,7 @@ export const ExtendRentalDialog = ({
               onBlur={handleBlur}
             />
           </div>
-          
+
           <div className="p-4 bg-muted rounded-md">
             <div className="flex justify-between font-medium">
               <span>Custo Adicional:</span>
@@ -62,8 +70,8 @@ export const ExtendRentalDialog = ({
             </div>
           </div>
 
-          <Button 
-            onClick={() => onConfirm(days, additionalCost)} 
+          <Button
+            onClick={() => onConfirm(days, additionalCost)}
             className="w-full"
           >
             Confirmar Extensão

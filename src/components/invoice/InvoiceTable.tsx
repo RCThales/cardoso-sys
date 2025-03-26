@@ -194,7 +194,6 @@ export const InvoiceTable = ({
 
   const handleConfirmReturn = async () => {
     if (selectedInvoice) {
-
       try {
         await returnToInventory(selectedInvoice.items);
         await onToggleReturned(selectedInvoice.id, selectedInvoice.is_returned);
@@ -217,7 +216,6 @@ export const InvoiceTable = ({
     setNotesDialogOpen(true);
   };
 
-  // New function to handle extending rental
   const handleExtendRentalClick = (invoice: Invoice) => {
     // Only allow rental extension for non-sale items and if not returned
     if (getInvoiceType(invoice) === "VENDA") {
@@ -243,7 +241,9 @@ export const InvoiceTable = ({
   };
 
   // Calculate additional cost based on rental items
-  const calculateAdditionalCost = (additionalDays: number): number => {
+  const calculateAdditionalCost = async (
+    additionalDays: number
+  ): Promise<number> => {
     if (!selectedInvoice) return 0;
 
     // Only calculate for rental items (not sales, not delivery fee)
@@ -251,21 +251,35 @@ export const InvoiceTable = ({
       (item) => !item.is_sale && item.productId !== "delivery-fee"
     );
 
-    // Calculate the additional cost for each rental item
-    return rentalItems.reduce((total, item) => {
-      const product = invoices
-        .flatMap((inv) => inv.items)
-        .find((i) => i.productId === item.productId && i.size === item.size);
+    let totalCost = 0;
 
-      if (!product) return total;
+    await Promise.all(
+      rentalItems.map(async (item) => {
+        // Fetch base price from Supabase
+        const { data, error } = await supabase
+          .from("products")
+          .select("base_price")
+          .eq("id", item.productId)
+          .single();
 
-      const basePrice = product.price / product.rentalDays; // Approximate base price
+        if (error) {
+          console.error(
+            `Error fetching base price for product ${item.productId}:`,
+            error
+          );
+          return;
+        }
 
-      const itemAdditionalCost =
-        calculateTotalPrice(additionalDays, basePrice) * item.quantity;
+        if (!data) return;
 
-      return total + itemAdditionalCost;
-    }, 0);
+        const basePrice = data.base_price;
+        const itemAdditionalCost =
+          calculateTotalPrice(additionalDays, basePrice) * item.quantity;
+        totalCost += itemAdditionalCost;
+      })
+    );
+
+    return totalCost;
   };
 
   // Handle the extension confirmation
