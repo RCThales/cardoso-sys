@@ -125,6 +125,7 @@ export const InvoiceTableRow = ({
 
   // Verificar se tem taxa de pagamento
   const hasPaymentFee = invoice.payment_fee && invoice.payment_fee > 0;
+  const feePercentage = getFeeByMethod(invoice.payment_method);
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const calculateFeeAmount = () => {
     console.log(invoice);

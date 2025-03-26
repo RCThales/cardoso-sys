@@ -248,43 +248,48 @@ export const InvoiceTable = ({
 
     // Only calculate for rental items (not sales, not delivery fee)
     const rentalItems = selectedInvoice.items.filter(
-      item => !item.is_sale && item.productId !== "delivery-fee"
+      (item) => !item.is_sale && item.productId !== "delivery-fee"
     );
 
     // Calculate the additional cost for each rental item
     return rentalItems.reduce((total, item) => {
       const product = invoices
-        .flatMap(inv => inv.items)
-        .find(i => i.productId === item.productId && i.size === item.size);
-      
+        .flatMap((inv) => inv.items)
+        .find((i) => i.productId === item.productId && i.size === item.size);
+
       if (!product) return total;
-      
+
       const basePrice = product.price / product.rentalDays; // Approximate base price
-      const itemAdditionalCost = calculateTotalPrice(basePrice, additionalDays) * item.quantity;
-      
+
+      const itemAdditionalCost =
+        calculateTotalPrice(additionalDays, basePrice) * item.quantity;
+
       return total + itemAdditionalCost;
     }, 0);
   };
 
   // Handle the extension confirmation
-  const handleExtendRentalConfirm = async (days: number, additionalCost: number) => {
+  const handleExtendRentalConfirm = async (
+    days: number,
+    additionalCost: number
+  ) => {
     if (!selectedInvoice) return;
 
     try {
       // Create the extension object
       const today = new Date();
       const extension = {
-        date: format(today, 'yyyy-MM-dd'),
+        date: format(today, "yyyy-MM-dd"),
         days: days,
-        additionalCost: additionalCost
+        additionalCost: additionalCost,
       };
 
       // Get current extensions or initialize empty array
       const currentExtensions = selectedInvoice.extensions || [];
-      
+
       // Add the new extension
       const updatedExtensions = [...currentExtensions, extension];
-      
+
       // Calculate new total
       const newTotal = selectedInvoice.total + additionalCost;
 
@@ -345,7 +350,9 @@ export const InvoiceTable = ({
               onPreview={() => onPreview(filteredCurrentInvoice)}
               onDelete={() => handleDeleteClick(filteredCurrentInvoice)}
               onNotesClick={() => handleNotesClick(filteredCurrentInvoice)}
-              onExtendRental={() => handleExtendRentalClick(filteredCurrentInvoice)}
+              onExtendRental={() =>
+                handleExtendRentalClick(filteredCurrentInvoice)
+              }
               formatCurrency={formatCurrency}
               isPaidDisabled={filteredCurrentInvoice.is_returned}
               isReturnedDisabled={
