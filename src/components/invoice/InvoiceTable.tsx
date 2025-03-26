@@ -194,6 +194,7 @@ export const InvoiceTable = ({
 
   const handleConfirmReturn = async () => {
     if (selectedInvoice) {
+
       try {
         await returnToInventory(selectedInvoice.items);
         await onToggleReturned(selectedInvoice.id, selectedInvoice.is_returned);

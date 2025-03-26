@@ -118,17 +118,6 @@ export const returnToInventory = async (items: InvoiceItem[]) => {
       );
     }
 
-    // Verifica a quantidade disponível e ajusta a quantidade alugada
-    const availableQuantity =
-      inventoryItem.total_quantity - inventoryItem.rented_quantity;
-    if (item.quantity > availableQuantity) {
-      throw new Error(
-        `Quantidade solicitada para o produto ${item.productId}${
-          item.size ? ` - ${item.size}` : ""
-        } excede a quantidade disponível em estoque.`
-      );
-    }
-
     const newRentedQuantity = Math.max(
       0,
       (inventoryItem?.rented_quantity || 0) - item.quantity
