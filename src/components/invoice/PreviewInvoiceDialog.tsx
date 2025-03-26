@@ -92,7 +92,7 @@ export const PreviewInvoiceDialog = ({
                 <div>
                   <p className="flex items-center">
                     <CreditCard className="h-4 w-4 mr-1" />
-                    Forma de Pagamento: {invoice.payment_method}
+                    Forma de Pagamento: {invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())}
                   </p>
                 </div>
               )}

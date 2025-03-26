@@ -1,3 +1,4 @@
+
 import { jsPDF } from "jspdf";
 import autoTable, { RowInput } from "jspdf-autotable";
 import { Invoice, InvoiceExtension } from "@/components/invoice/types";
@@ -126,7 +127,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     invoiceType !== "VENDA" ? `Duração: ${days} dias` : "",
     `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
     invoice.payment_method
-      ? `Forma de Pagamento: ${invoice.payment_method}`
+      ? `Forma de Pagamento: ${invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())}`
       : "",
   ].filter(Boolean);
 
@@ -179,7 +180,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   if (invoice.payment_fee && invoice.payment_fee > 0) {
     itemsTableData.push([
       "Taxa", // Tipo
-      `Taxa de pagamento (${invoice.payment_fee}%)`, // Descrição com percentual
+      `Taxa de pagamento (${invoice.payment_fee.toFixed(2)}%)`, // Descrição com percentual
       "-", // Dias
       "-", // Quantidade
       `R$ ${formatCurrency(feeAmount)}`, // Valor calculado
@@ -226,7 +227,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Taxa de pagamento (se houver)
   if (invoice.payment_fee && invoice.payment_fee > 0) {
     summaryData.push([
-      `Taxa de Pagamento (${invoice.payment_fee}%)`,
+      `Taxa de Pagamento (${invoice.payment_fee.toFixed(2)}%)`,
       `R$ ${formatCurrency(feeAmount)}`,
     ]);
   }
