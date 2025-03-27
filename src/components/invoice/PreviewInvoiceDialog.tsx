@@ -1,4 +1,3 @@
-
 import { format, parseISO, differenceInDays } from "date-fns";
 import {
   Dialog,
@@ -37,43 +36,43 @@ export const PreviewInvoiceDialog = ({
   formatCurrency,
 }: PreviewInvoiceDialogProps) => {
   const { fetchSettings, getFeeByMethod } = usePaymentSettingsStore();
-  
+
   useEffect(() => {
     fetchSettings();
   }, [fetchSettings]);
-  
+
   if (!invoice) return null;
-  
+
   // Calcular o período e dias para mostrar na visualização
   const startDate = format(parseISO(invoice.invoice_date), "dd/MM/yyyy");
-  const endDate = invoice.return_date 
-    ? format(parseISO(invoice.return_date), "dd/MM/yyyy") 
+  const endDate = invoice.return_date
+    ? format(parseISO(invoice.return_date), "dd/MM/yyyy")
     : "-";
-  const days = invoice.return_date 
-    ? differenceInDays(parseISO(invoice.return_date), parseISO(invoice.invoice_date))
+  const days = invoice.return_date
+    ? differenceInDays(
+        parseISO(invoice.return_date),
+        parseISO(invoice.invoice_date)
+      )
     : 0;
 
   // Calcular o subtotal (sem taxa de pagamento)
   const itemsTotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
   const subtotalWithoutFee = itemsTotal;
-  
+
   // Get actual fee percentage from payment settings if available
   const getActualFeePercentage = () => {
     if (!invoice.payment_method) return 0;
-    
+
     // Extract installment number if present in the payment_method
-    const methodParts = invoice.payment_method.split('_');
-    const installments = methodParts.length > 1 && !isNaN(Number(methodParts[1])) 
-      ? Number(methodParts[1]) 
-      : 1;
-    
+    const methodParts = invoice.payment_method.split("_");
+
     const baseMethod = methodParts[0];
-    return getFeeByMethod(baseMethod, installments);
+    return getFeeByMethod(baseMethod, invoice.installments);
   };
-  
+
   // Use either the actual fee from settings or the stored fee
-  const feePercentage = getActualFeePercentage() || invoice.payment_fee || 0;
-  
+  const feePercentage = getActualFeePercentage() || 0;
+
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const feeAmount = (subtotalWithoutFee * feePercentage) / 100;
 
@@ -116,7 +115,10 @@ export const PreviewInvoiceDialog = ({
                 <div>
                   <p className="flex items-center">
                     <CreditCard className="h-4 w-4 mr-1" />
-                    Forma de Pagamento: {invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())}
+                    Forma de Pagamento:{" "}
+                    {invoice.payment_method
+                      .replace("_", " ")
+                      .replace(/^\w/, (c) => c.toUpperCase())}
                   </p>
                 </div>
               )}
@@ -141,7 +143,7 @@ export const PreviewInvoiceDialog = ({
                   if (item.productId === "delivery-fee" && item.total === 0) {
                     return null;
                   }
-                  
+
                   const description = item.size
                     ? `${item.description} (${item.size})`
                     : item.description;
@@ -189,7 +191,7 @@ export const PreviewInvoiceDialog = ({
                 })}
 
                 {/* Adiciona a linha para a taxa de pagamento se existir */}
-                {invoice.payment_fee && invoice.payment_fee > 0 && (
+                {invoice.installments && invoice.installments > 0 && (
                   <TableRow>
                     <TableCell>
                       <div className="flex items-center space-x-2">
@@ -197,7 +199,9 @@ export const PreviewInvoiceDialog = ({
                         <span>Taxa</span>
                       </div>
                     </TableCell>
-                    <TableCell>Taxa de pagamento ({feePercentage.toFixed(2)}%)</TableCell>
+                    <TableCell>
+                      Taxa de pagamento ({feePercentage.toFixed(2)}%)
+                    </TableCell>
                     <TableCell>-</TableCell>
                     <TableCell>-</TableCell>
                     <TableCell className="text-right">
@@ -243,9 +247,20 @@ export const PreviewInvoiceDialog = ({
             <p className="text-sm text-muted-foreground">
               Subtotal: R$ {formatCurrency(subtotalWithoutFee)}
             </p>
-            {invoice.payment_fee && invoice.payment_fee > 0 && (
+            {invoice.extensions.length > 0 &&
+              invoice.extensions.map((extension, index) => (
+                <p
+                  key={index + "extensionstotal"}
+                  className="text-sm text-muted-foreground"
+                >
+                  Total Extenões: R$ {formatCurrency(extension.additionalCost)}
+                </p>
+              ))}
+
+            {invoice.installments && invoice.installments > 0 && (
               <p className="text-sm text-muted-foreground">
-                Taxa de pagamento ({feePercentage.toFixed(2)}%): R$ {formatCurrency(feeAmount)}
+                Taxa de pagamento ({feePercentage.toFixed(2)}%): R${" "}
+                {formatCurrency(feeAmount)}
               </p>
             )}
             <p className="font-semibold">

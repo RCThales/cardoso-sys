@@ -7,6 +7,7 @@ import { formatCurrency } from "@/utils/formatters";
 import { PreviewInvoiceDialog } from "./invoice/PreviewInvoiceDialog";
 import { saveAs } from "file-saver";
 import { generatePDF } from "@/utils/pdfGenerator";
+import { getSettingByName } from "@/services/settingsService";
 
 interface InvoiceHistoryProps {
   search: string;
@@ -102,11 +103,23 @@ export const InvoiceHistory = ({
     invoiceId: number,
     currentStatus: boolean,
     method?: string,
-    fee?: number
+    installments?: number
   ) => {
     const updateData: any = {
       is_paid: !currentStatus,
     };
+
+    let fee = 0;
+
+    if (method === "credito") {
+      let creditPaymentSettings = await getSettingByName("Cartão de Crédito");
+      fee = creditPaymentSettings.installments[installments];
+    } else if (method === "link") {
+      let linkPaymentSettings = await getSettingByName("Link");
+      fee = linkPaymentSettings.installments[installments];
+    } else {
+      fee = installments;
+    }
 
     // Se estiver marcando como pago E tiver um método de pagamento
     if (!currentStatus && method) {
@@ -114,22 +127,29 @@ export const InvoiceHistory = ({
 
       // Se tiver um valor de taxa de pagamento (percentual), inclui no update
       if (fee !== undefined && fee !== null) {
-        updateData.payment_fee = fee;
+        updateData.installments = installments;
 
         // Ajustar o total para incluir a taxa de pagamento
         const invoice = invoices.find((inv) => inv.id === invoiceId);
+
         if (invoice) {
-          // Calcular subtotal dos itens
-          const subtotal = invoice.items.reduce(
-            (sum, item) => sum + item.total,
-            0
-          );
+          const additionalCosts =
+            invoice.extensions?.reduce(
+              (acc, ext) => acc + (ext.additionalCost || 0),
+              0
+            ) || 0;
+
+          // Calcular subtotal dos itens incluindo os additionalCosts dentro de extensions
+          const subtotal = invoice.items.reduce((sum, item) => {
+            // Somar os additionalCosts dentro de extensions
+            return sum + item.total;
+          }, 0);
 
           // Calcular valor da taxa (percentual do subtotal)
-          const feeAmount = (subtotal * fee) / 100;
+          const feeAmount = (subtotal + additionalCosts) * (fee / 100);
 
           // Atualizar o total com a taxa incluída
-          updateData.total = subtotal - feeAmount;
+          updateData.total = subtotal + additionalCosts - feeAmount;
         }
       }
     }
@@ -137,7 +157,14 @@ export const InvoiceHistory = ({
     // Se estiver marcando como não pago, remover o método de pagamento e a taxa
     if (currentStatus) {
       const invoice = invoices.find((inv) => inv.id === invoiceId);
-      if (invoice && invoice.payment_fee) {
+
+      if (invoice) {
+        const additionalCosts =
+          invoice.extensions?.reduce(
+            (acc, ext) => acc + (ext.additionalCost || 0),
+            0
+          ) || 0;
+
         // Calcular subtotal dos itens
         const subtotal = invoice.items.reduce(
           (sum, item) => sum + item.total,
@@ -145,8 +172,8 @@ export const InvoiceHistory = ({
         );
 
         // Atualizar o total para remover a taxa de pagamento
-        updateData.total = subtotal;
-        updateData.payment_fee = null;
+        updateData.total = subtotal + additionalCosts;
+        updateData.installments = null;
       }
       updateData.payment_method = null;
     }

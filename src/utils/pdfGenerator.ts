@@ -1,4 +1,3 @@
-
 import { jsPDF } from "jspdf";
 import autoTable, { RowInput } from "jspdf-autotable";
 import { Invoice, InvoiceExtension } from "@/components/invoice/types";
@@ -120,8 +119,10 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   );
 
   // Get the payment method formatted for display
-  const paymentMethodDisplay = invoice.payment_method 
-    ? invoice.payment_method.replace("_", " ").replace(/^\w/, (c) => c.toUpperCase())
+  const paymentMethodDisplay = invoice.payment_method
+    ? invoice.payment_method
+        .replace("_", " ")
+        .replace(/^\w/, (c) => c.toUpperCase())
     : "";
 
   // Create an array of invoice info and filter out empty strings
@@ -131,9 +132,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     }`,
     invoiceType !== "VENDA" ? `Duração: ${days} dias` : "",
     `Status: ${invoice.is_paid ? "Pago" : "Pendente"}`,
-    invoice.payment_method
-      ? `Forma de Pagamento: ${paymentMethodDisplay}`
-      : "",
+    invoice.payment_method ? `Forma de Pagamento: ${paymentMethodDisplay}` : "",
   ].filter(Boolean);
 
   doc.text(invoiceInfo, pageWidth - 60, 75);
@@ -145,7 +144,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
 
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
-  const feePercentage = invoice.payment_fee || 0;
+  const feePercentage = invoice.installments || 0;
   const feeAmount = (subtotal * feePercentage) / 100;
 
   // Adiciona os itens principais (filtrados para remover delivery-fee com valor 0)
@@ -154,7 +153,7 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
     if (item.productId === "delivery-fee" && item.total === 0) {
       return;
     }
-    
+
     const description = item.size
       ? `${item.description} (${item.size})`
       : item.description;
@@ -187,10 +186,10 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   });
 
   // Adiciona a taxa de pagamento como uma linha adicional na tabela
-  if (invoice.payment_fee && invoice.payment_fee > 0) {
+  if (invoice.installments && invoice.installments > 0) {
     itemsTableData.push([
       "Taxa", // Tipo
-      `Taxa de pagamento (${invoice.payment_fee.toFixed(2)}%)`, // Descrição com percentual
+      `Taxa de pagamento (${invoice.installments.toFixed(2)}%)`, // Descrição com percentual
       "-", // Dias
       "-", // Quantidade
       `R$ ${formatCurrency(feeAmount)}`, // Valor calculado
@@ -235,9 +234,9 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   summaryData.push(["Subtotal", `R$ ${formatCurrency(subtotal)}`]);
 
   // Taxa de pagamento (se houver)
-  if (invoice.payment_fee && invoice.payment_fee > 0) {
+  if (invoice.installments && invoice.installments > 0) {
     summaryData.push([
-      `Taxa de Pagamento (${invoice.payment_fee.toFixed(2)}%)`,
+      `Taxa de Pagamento (${invoice.installments.toFixed(2)}%)`,
       `R$ ${formatCurrency(feeAmount)}`,
     ]);
   }

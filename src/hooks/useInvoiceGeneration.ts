@@ -31,14 +31,11 @@ export const useInvoiceGeneration = () => {
 
   const validateRequiredFields = () => {
     const hasName = !!clientData.name;
-    const hasValidPostalCode = clientData.postalCode.length === 8;
     const hasValidPhone = clientData.phone.replace(/\D/g, "").length === 11;
     const hasValidCPF = validateCPF(clientData.cpf);
     const hasItems = items.length > 0;
 
-    return (
-      hasName && hasValidPostalCode && hasValidPhone && hasValidCPF && hasItems
-    );
+    return hasName && hasValidPhone && hasValidCPF && hasItems;
   };
 
   const addItem = () => {

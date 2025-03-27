@@ -124,13 +124,23 @@ export const InvoiceTableRow = ({
   const hasNotes = invoice.notes && invoice.notes.trim().length > 0;
 
   // Verificar se tem taxa de pagamento
-  const hasPaymentFee = invoice.payment_fee && invoice.payment_fee > 0;
-  const feePercentage = getFeeByMethod(invoice.payment_method);
+  const hasPaymentFee = invoice.installments && invoice.installments > 0;
+  const feePercentage = getFeeByMethod(
+    invoice.payment_method,
+    invoice.installments
+  );
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
   const calculateFeeAmount = () => {
     if (!hasPaymentFee) return 0;
+
     const subtotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
-    return (subtotal * feePercentage) / 100;
+
+    const additionalCost = invoice.extensions.reduce(
+      (sum, ext) => sum + ext.additionalCost,
+      0
+    );
+
+    return (subtotal + additionalCost) * (feePercentage / 100);
   };
 
   const feeAmount = calculateFeeAmount();
@@ -239,7 +249,8 @@ export const InvoiceTableRow = ({
           {hasPaymentFee && (
             <div className="text-xs text-muted-foreground flex items-center justify-end mt-1">
               <Percent className="h-3 w-3 mr-1 text-orange-500" />
-              Taxa: {feePercentage.toFixed(2)}% (R$ {formatCurrency(feeAmount)})
+              Taxa: {feePercentage.toFixed(2)}% <br /> (R$
+              {formatCurrency(feeAmount)})
             </div>
           )}
         </div>

@@ -560,7 +560,7 @@ export const PaymentMethodDialog = ({
                       </div>
                     </div>
                     <Button onClick={handleConfirm} className="w-full">
-                      Confirmar Pagamento com Débito
+                      Confirmar Pagamento
                     </Button>
                   </CardContent>
                 </Card>
@@ -1039,7 +1039,7 @@ export const PaymentMethodDialog = ({
                         className="w-full"
                         disabled={!isSplitValid()}
                       >
-                        Confirmar Pagamento Dividido
+                        Confirmar Pagamento
                       </Button>
                     </div>
                   </div>

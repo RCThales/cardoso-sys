@@ -4,8 +4,6 @@ import { InvoiceGenerator } from "@/components/InvoiceGenerator";
 import { useCartStore } from "@/store/cartStore";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
-import { PaymentMethodDialog } from "@/components/invoice/PaymentMethodDialog";
-import { Button } from "@/components/ui/button";
 
 const CreateInvoice = () => {
   const { items } = useCartStore();
@@ -83,13 +81,6 @@ const CreateInvoice = () => {
           </p>
         </div>
         <InvoiceGenerator />
-
-        <PaymentMethodDialog
-          open={isPaymentDialogOpen}
-          onOpenChange={setIsPaymentDialogOpen}
-          onConfirm={handlePaymentSelect}
-          total={total}
-        />
       </div>
     </div>
   );

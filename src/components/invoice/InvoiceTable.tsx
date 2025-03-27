@@ -153,14 +153,20 @@ export const InvoiceTable = ({
     setPaymentDialogOpen(true);
   };
 
-  const handlePaymentConfirm = async (method: string, fee?: number) => {
+  const handlePaymentConfirm = async (
+    method: string,
+    installments?: number,
+    splitPayments?: { method: string; amount: number }[],
+    noInterest?: boolean
+  ) => {
     if (selectedInvoice) {
       await onTogglePaid(
         selectedInvoice.id,
         selectedInvoice.is_paid,
         method,
-        fee
+        installments
       );
+
       setPaymentDialogOpen(false);
       setSelectedInvoice(null);
     }

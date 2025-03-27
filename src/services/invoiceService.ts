@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import type { Json } from "@/integrations/supabase/types";
@@ -49,7 +48,7 @@ export const createInvoice = async (
   const dueDate = new Date(today);
   dueDate.setDate(today.getDate() + 30);
 
-  // The payment_fee is now stored as a percentage in the database
+  // The installments is now stored as a percentage in the database
   // The total should already include the calculated fee amount
 
   const allItems = [
@@ -89,7 +88,7 @@ export const createInvoice = async (
     total: total,
     is_paid: clientData.isPaid,
     payment_method: "Não informado",
-    payment_fee: paymentFee > 0 ? paymentFee : null, // Store as percentage
+    installments: paymentFee > 0 ? paymentFee : null, // Store as percentage
     user_id: userId,
   });
 

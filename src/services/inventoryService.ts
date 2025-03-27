@@ -96,55 +96,58 @@ export const returnToInventory = async (items: InvoiceItem[]) => {
   for (const item of items) {
     if (item.productId === "delivery-fee") continue;
 
-    const query = supabase
-      .from("inventory")
-      .select("*")
-      .eq("product_id", item.productId);
-
-    // Se houver tamanho, adiciona à query
-    if (item.size) {
-      query.eq("size", item.size);
-    } else {
-      query.is("size", null);
-    }
-
-    const { data: inventoryItem, error: fetchError } = await query.single();
-
-    if (fetchError) {
-      throw new Error(
-        `Erro ao buscar item do estoque: ${item.productId}${
-          item.size ? ` - ${item.size}` : ""
-        }`
+    try {
+      const inventoryItem = await fetchInventoryItem(item);
+      const newRentedQuantity = Math.max(
+        0,
+        (inventoryItem?.rented_quantity || 0) - item.quantity
       );
-    }
-
-    const newRentedQuantity = Math.max(
-      0,
-      (inventoryItem?.rented_quantity || 0) - item.quantity
-    );
-
-    const updateQuery = supabase
-      .from("inventory")
-      .update({
-        rented_quantity: newRentedQuantity,
-      })
-      .eq("product_id", item.productId);
-
-    // Se houver tamanho, adiciona à query de atualização
-    if (item.size) {
-      updateQuery.eq("size", item.size);
-    } else {
-      updateQuery.is("size", null);
-    }
-
-    const { error: updateError } = await updateQuery;
-
-    if (updateError) {
+      await updateRentedQuantityInInventory(item, newRentedQuantity);
+    } catch (error) {
+      console.error(error);
       throw new Error(
-        `Erro ao atualizar estoque: ${item.productId}${
+        `Erro ao processar item: ${item.productId}${
           item.size ? ` - ${item.size}` : ""
         }`
       );
     }
   }
+};
+
+const fetchInventoryItem = async (item: InvoiceItem) => {
+  let query = supabase
+    .from("inventory")
+    .select("*")
+    .eq("product_id", item.productId);
+  query = item.size ? query.eq("size", item.size) : query.is("size", null);
+
+  const { data, error } = await query.single();
+  if (error)
+    throw new Error(
+      `Erro ao buscar item do estoque: ${item.productId}${
+        item.size ? ` - ${item.size}` : ""
+      }`
+    );
+
+  return data;
+};
+
+const updateRentedQuantityInInventory = async (
+  item: InvoiceItem,
+  newRentedQuantity: number
+) => {
+  let query = supabase
+    .from("inventory")
+    .update({ rented_quantity: newRentedQuantity })
+    .eq("product_id", item.productId);
+
+  query = item.size ? query.eq("size", item.size) : query.is("size", null);
+
+  const { error } = await query;
+  if (error)
+    throw new Error(
+      `Erro ao atualizar estoque: ${item.productId}${
+        item.size ? ` - ${item.size}` : ""
+      }`
+    );
 };

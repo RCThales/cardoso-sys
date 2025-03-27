@@ -50,7 +50,7 @@ export const AddressInfo = ({
           postalCode: cep,
           address: address.street,
           city: address.city,
-          state: address.state, // Ensure state updates
+          state: address.state,
           neighborhood: address.neighborhood || "",
         });
       } catch (error) {

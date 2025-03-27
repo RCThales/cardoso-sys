@@ -17,6 +17,7 @@ import { CalendarIcon } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { useHotkeys } from "react-hotkeys-hook";
 
 export const InvoiceGenerator = () => {
   const navigate = useNavigate();
@@ -28,7 +29,6 @@ export const InvoiceGenerator = () => {
     addItem,
     updateItem,
     removeItem,
-    calculateSubtotal,
     generateInvoice,
     validateRequiredFields,
     startDate,
@@ -41,6 +41,21 @@ export const InvoiceGenerator = () => {
   const { data: products } = useQuery({
     queryKey: ["products"],
     queryFn: fetchProducts,
+  });
+
+  //FOR TESTING PURPOSES
+  useHotkeys("ctrl+alt+t", () => {
+    setClientData({
+      ...clientData,
+      name: "Test",
+      cpf: "03906773108",
+      postalCode: "72311801",
+      address: "QNO 18 Conjunto 1 Casa 1",
+      phone: "61999999999",
+      neighborhood: "Samambaia Norte",
+      city: "Brasília",
+      state: "DF",
+    });
   });
 
   useEffect(() => {
@@ -138,13 +153,7 @@ export const InvoiceGenerator = () => {
 
   const isFormValid = useMemo(
     () => validateRequiredFields(),
-    [
-      clientData.name,
-      clientData.cpf,
-      clientData.phone,
-      clientData.postalCode,
-      items.length,
-    ]
+    [clientData.name, clientData.cpf, clientData.phone, items.length]
   );
 
   if (!products) {
