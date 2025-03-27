@@ -55,6 +55,10 @@ export const PreviewInvoiceDialog = ({
       )
     : 0;
 
+  const totalExtensions = invoice.extensions
+    .map((extension) => extension.additionalCost)
+    .reduce((sum, cost) => sum + cost, 0);
+
   // Calcular o subtotal (sem taxa de pagamento)
   const itemsTotal = invoice.items.reduce((sum, item) => sum + item.total, 0);
   const subtotalWithoutFee = itemsTotal;
@@ -74,7 +78,8 @@ export const PreviewInvoiceDialog = ({
   const feePercentage = getActualFeePercentage() || 0;
 
   // Calcular o valor da taxa de pagamento (percentual do subtotal)
-  const feeAmount = (subtotalWithoutFee * feePercentage) / 100;
+  const feeAmount =
+    (subtotalWithoutFee + totalExtensions) * (feePercentage / 100);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -247,15 +252,11 @@ export const PreviewInvoiceDialog = ({
             <p className="text-sm text-muted-foreground">
               Subtotal: R$ {formatCurrency(subtotalWithoutFee)}
             </p>
-            {invoice.extensions.length > 0 &&
-              invoice.extensions.map((extension, index) => (
-                <p
-                  key={index + "extensionstotal"}
-                  className="text-sm text-muted-foreground"
-                >
-                  Total Extenões: R$ {formatCurrency(extension.additionalCost)}
-                </p>
-              ))}
+            {invoice.extensions.length > 0 && (
+              <p className="text-sm text-muted-foreground">
+                Total Extenões: R$ {formatCurrency(totalExtensions)}
+              </p>
+            )}
 
             {invoice.installments && invoice.installments > 0 && (
               <p className="text-sm text-muted-foreground">
