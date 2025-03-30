@@ -11,6 +11,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const InvoiceHistory = () => {
   const [search, setSearch] = useState("");
@@ -24,6 +26,7 @@ const InvoiceHistory = () => {
   const [filterType, setFilterType] = useState<
     "all" | "rental" | "sale" | "hybrid"
   >("all");
+  const [todayOnly, setTodayOnly] = useState<boolean>(false); // Added today only state
 
   const { invoice_id } = useParams();
   const location = useLocation();
@@ -46,7 +49,7 @@ const InvoiceHistory = () => {
 
         <div className="space-y-4 mb-6">
           <Input
-            placeholder="Buscar por nome, CPF ou número da fatura"
+            placeholder="Buscar por nome, CPF, número da fatura ou produtos"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="max-w-md"
@@ -100,6 +103,15 @@ const InvoiceHistory = () => {
                 <SelectItem value="hybrid">Somente Híbridos</SelectItem>
               </SelectContent>
             </Select>
+
+            <div className="flex items-center space-x-2">
+              <Switch 
+                id="today-only" 
+                checked={todayOnly}
+                onCheckedChange={setTodayOnly}
+              />
+              <Label htmlFor="today-only">Somente hoje</Label>
+            </div>
           </div>
         </div>
 
@@ -111,6 +123,7 @@ const InvoiceHistory = () => {
           filterType={filterType}
           invoiceId={invoiceId}
           showFeeInfo={true}
+          todayOnly={todayOnly}
         />
       </div>
     </div>

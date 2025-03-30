@@ -209,11 +209,16 @@ export const generatePDF = async (invoice: Invoice): Promise<Blob> => {
   // Extensões (se houver)
   if (invoice.extensions && invoice.extensions.length > 0) {
     const extensionsTableData = invoice.extensions.map(
-      (ext: InvoiceExtension) => [
-        format(parseISO(ext.date), "dd/MM/yyyy"),
-        ext.days.toString(),
-        `R$ ${formatCurrency(ext.additionalCost)}`,
-      ]
+      (ext: InvoiceExtension) => {
+        const hasDiscount = ext.discount && ext.discount > 0;
+        const discountText = hasDiscount ? ` (Desconto: R$ ${formatCurrency(ext.discount)})` : '';
+        
+        return [
+          format(parseISO(ext.date), "dd/MM/yyyy"),
+          ext.days.toString(),
+          `R$ ${formatCurrency(ext.additionalCost)}${discountText}`,
+        ];
+      }
     );
 
     autoTable(doc, {

@@ -1,3 +1,4 @@
+
 export interface InvoiceItem {
   is_sale: any;
   description: string;
@@ -14,6 +15,7 @@ export interface InvoiceExtension {
   date: string;
   days: number;
   additionalCost: number;
+  discount?: number; // Added discount field
 }
 
 export interface Invoice {
