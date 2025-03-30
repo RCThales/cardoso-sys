@@ -17,6 +17,7 @@ interface InvoiceHistoryProps {
   filterType: "all" | "rental" | "sale" | "hybrid";
   invoiceId?: string | null;
   showFeeInfo?: boolean;
+  todayOnly?: boolean; // Added todayOnly prop
 }
 
 export const InvoiceHistory = ({
@@ -27,6 +28,7 @@ export const InvoiceHistory = ({
   invoiceId,
   filterType,
   showFeeInfo = true,
+  todayOnly = false, // Added todayOnly default value
 }: InvoiceHistoryProps) => {
   const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [previewInvoice, setPreviewInvoice] = useState<Invoice | null>(null);
@@ -58,13 +60,6 @@ export const InvoiceHistory = ({
         break;
     }
 
-    // Aplicar busca
-    if (search) {
-      query = query.or(
-        `client_name.ilike.%${search}%,client_cpf.ilike.%${search}%,invoice_number.ilike.%${search}%`
-      );
-    }
-
     const { data: invoicesData, error } = await query;
 
     if (error) {
@@ -78,6 +73,24 @@ export const InvoiceHistory = ({
     }
 
     let convertedInvoices = invoicesData.map(convertDatabaseInvoice);
+
+    // Filter by search term (now includes products in items)
+    if (search) {
+      convertedInvoices = convertedInvoices.filter((invoice) => {
+        // Search in regular invoice fields
+        const fieldsMatch = 
+          invoice.client_name.toLowerCase().includes(search.toLowerCase()) ||
+          invoice.client_cpf.toLowerCase().includes(search.toLowerCase()) ||
+          invoice.invoice_number.toLowerCase().includes(search.toLowerCase());
+
+        // Search in product descriptions from invoice items
+        const productsMatch = invoice.items.some(item => 
+          item.description?.toLowerCase().includes(search.toLowerCase())
+        );
+
+        return fieldsMatch || productsMatch;
+      });
+    }
 
     // Ordenar por data
     convertedInvoices.sort((a, b) => {
@@ -194,8 +207,6 @@ export const InvoiceHistory = ({
 
     await fetchInvoices();
   };
-
-  // ... resto do código mantido como estava
 
   const handleToggleReturned = async (
     invoiceId: number,
@@ -403,6 +414,7 @@ export const InvoiceHistory = ({
           formatCurrency={formatCurrency}
           invoiceId={invoiceId}
           onRefresh={fetchInvoices}
+          todayOnly={todayOnly}
         />
       ) : (
         <div className="text-center p-8 border rounded-lg bg-muted/20">
