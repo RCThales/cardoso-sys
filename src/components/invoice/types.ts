@@ -15,6 +15,7 @@ export interface InvoiceExtension {
   date: string;
   days: number;
   additionalCost: number;
+  discount?: number; // Added discount field
 }
 
 export interface Invoice {

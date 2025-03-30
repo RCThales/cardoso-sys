@@ -1,3 +1,4 @@
+
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -8,7 +9,7 @@ import { useEffect } from "react";
 interface ExtendRentalDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onConfirm: (days: number, additionalCost: number) => void;
+  onConfirm: (days: number, additionalCost: number, discount: number) => void;
   calculateAdditionalCost: (days: number) => Promise<number>; // Fix: Ensure it's an async function
 }
 
@@ -21,6 +22,7 @@ export const ExtendRentalDialog = ({
   const [days, setDays] = useState(1);
   const [previousValue, setPreviousValue] = useState("1");
   const [additionalCost, setAdditionalCost] = useState(0);
+  const [discount, setDiscount] = useState(0);
 
   useEffect(() => {
     const fetchAdditionalCost = async () => {
@@ -45,6 +47,13 @@ export const ExtendRentalDialog = ({
     }
   };
 
+  const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = parseFloat(e.target.value) || 0;
+    setDiscount(Math.max(0, Math.min(value, additionalCost))); // Ensure discount doesn't exceed cost
+  };
+
+  const finalCost = Math.max(0, additionalCost - discount);
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
@@ -63,15 +72,39 @@ export const ExtendRentalDialog = ({
             />
           </div>
 
-          <div className="p-4 bg-muted rounded-md">
+          <div className="space-y-2">
+            <label className="text-sm font-medium">Desconto:</label>
+            <Input
+              type="number"
+              min="0"
+              max={additionalCost}
+              value={discount}
+              onChange={handleDiscountChange}
+              placeholder="0.00"
+            />
+          </div>
+
+          <div className="p-4 bg-muted rounded-md space-y-2">
             <div className="flex justify-between font-medium">
               <span>Custo Adicional:</span>
               <span>R$ {formatCurrency(additionalCost)}</span>
             </div>
+            
+            {discount > 0 && (
+              <div className="flex justify-between text-sm text-muted-foreground">
+                <span>Desconto:</span>
+                <span>- R$ {formatCurrency(discount)}</span>
+              </div>
+            )}
+            
+            <div className="flex justify-between font-bold pt-2 border-t border-border">
+              <span>Total:</span>
+              <span>R$ {formatCurrency(finalCost)}</span>
+            </div>
           </div>
 
           <Button
-            onClick={() => onConfirm(days, additionalCost)}
+            onClick={() => onConfirm(days, finalCost, discount)}
             className="w-full"
           >
             Confirmar Extensão

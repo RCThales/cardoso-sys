@@ -237,6 +237,9 @@ export const InvoiceTableRow = ({
                 {format(parseISO(ext.date), "dd/MM/yyyy")} (+{ext.days} dias)
                 {ext.additionalCost > 0 &&
                   ` - R$ ${formatCurrency(ext.additionalCost)}`}
+                {ext.discount && ext.discount > 0 && (
+                  <span className="text-green-600"> (-R$ {formatCurrency(ext.discount)})</span>
+                )}
               </div>
             ))}
           </div>
