@@ -40,20 +40,20 @@ export default defineConfig(({ mode }) => ({
         icons: [
           {
             src: "/icon.png",
-            sizes: "512x512",
+            sizes: "500x500",
             type: "image/svg+xml",
             purpose: "any",
           },
           {
             src: "/icon.png",
-            sizes: "512x512",
+            sizes: "500x500",
             type: "image/svg+xml",
             purpose: "maskable",
           },
           {
             src: "/icons/icon_small.png",
             type: "image/png",
-            sizes: "144x144",
+            sizes: "250x250",
           },
         ],
       },

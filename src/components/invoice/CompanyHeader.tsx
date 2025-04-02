@@ -1,11 +1,10 @@
-
 export const CompanyHeader = () => {
   return (
     <div className="text-center mb-6 p-4 border-b">
       <img
         src="/logo_cardoso.svg"
         alt="Cardoso Aluguel de Muletas"
-        className="h-24 mx-auto"
+        className="w-48 mx-auto"
       />
       <p className="text-sm text-muted-foreground mt-1">
         Quadra 207, Lote 4, Residencial Imprensa IV, Águas Claras
