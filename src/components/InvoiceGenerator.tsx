@@ -153,7 +153,7 @@ export const InvoiceGenerator = () => {
 
   const isFormValid = useMemo(
     () => validateRequiredFields(),
-    [clientData.name, clientData.cpf, clientData.phone, items.length]
+    [clientData.name, clientData.phone, items.length]
   );
 
   if (!products) {
