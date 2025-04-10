@@ -62,8 +62,6 @@ export const PersonalInfo = ({
     }
   }, [clientData]);
 
-  const CPF_TEST = "99999999999";
-
   const handleBlur = async (field: string) => {
     setTouchedFields((prev) => ({ ...prev, [field]: true }));
     if (field === "cpf" && clientData.cpf && validateCPF(clientData.cpf)) {
@@ -71,8 +69,10 @@ export const PersonalInfo = ({
     }
   };
 
+  const CPF_TEST = "999.999.999-99";
+
   const checkExistingCPF = async (cpf: string) => {
-    if (confirmedCPF === cpf) return;
+    if (confirmedCPF === cpf || clientData.cpf === CPF_TEST) return;
 
     const { data, error } = await supabase
       .from("invoices")
@@ -127,9 +127,6 @@ export const PersonalInfo = ({
   };
 
   const handleCPFConfirm = () => {
-    if (clientData.cpf === "99999999") {
-      return;
-    }
     setConfirmedCPF(clientData.cpf);
 
     // When confirming the CPF, also load all the client data
@@ -154,9 +151,6 @@ export const PersonalInfo = ({
   };
 
   const handleCPFCancel = () => {
-    if (clientData.cpf === "99999999") {
-      return;
-    }
     setShowCPFConfirm(false);
     onClientDataChange({ ...clientData, cpf: "" });
   };
@@ -185,7 +179,7 @@ export const PersonalInfo = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">CPF</label>
+        <label className="text-sm font-medium">CPF *</label>
         <Input
           value={clientData.cpf}
           onChange={(e) => handleCPFChange(e.target.value)}

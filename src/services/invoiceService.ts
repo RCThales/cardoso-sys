@@ -4,8 +4,13 @@ import type { Json } from "@/integrations/supabase/types";
 import type { InvoiceItem } from "@/components/invoice/types";
 import type { ClientData } from "@/types/invoice";
 
+const CPF_TEST = "999.999.999-99";
+
 // Helper function to update client information
 const updateClientInfoIfNeeded = async (clientData: ClientData) => {
+  if (clientData.cpf === CPF_TEST) {
+    return;
+  }
   // Check if client with same CPF exists
   const { data: existingInvoices } = await supabase
     .from("invoices")
