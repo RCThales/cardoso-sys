@@ -1,4 +1,3 @@
-
 import { Input } from "../../ui/input";
 import { formatCPF, formatPhone } from "@/utils/formatters";
 import { ClientData } from "../types/clientForm";
@@ -37,7 +36,8 @@ export const PersonalInfo = ({
   const [confirmedCPF, setConfirmedCPF] = useState<string | null>(null);
   const [showLoyaltyAlert, setShowLoyaltyAlert] = useState(false);
   const [orderCount, setOrderCount] = useState(0);
-  const [originalClientData, setOriginalClientData] = useState<ClientData | null>(null);
+  const [originalClientData, setOriginalClientData] =
+    useState<ClientData | null>(null);
 
   useEffect(() => {
     const storedData = sessionStorage.getItem("clientData");
@@ -74,7 +74,9 @@ export const PersonalInfo = ({
 
     const { data, error } = await supabase
       .from("invoices")
-      .select("client_name, id, client_phone, client_address, client_address_number, client_address_complement, client_neighborhood, client_city, client_state, client_postal_code")
+      .select(
+        "client_name, id, client_phone, client_address, client_address_number, client_address_complement, client_neighborhood, client_city, client_state, client_postal_code"
+      )
       .eq("client_cpf", cpf);
 
     if (error) {
@@ -89,7 +91,7 @@ export const PersonalInfo = ({
     if (data && data.length > 0) {
       setExistingClientName(data[0].client_name);
       setOrderCount(data.length);
-      
+
       // Store original client data for comparison when saving
       setOriginalClientData({
         name: data[0].client_name,
@@ -106,7 +108,7 @@ export const PersonalInfo = ({
         deliveryFee: 0,
         specialDiscount: 0,
       });
-      
+
       setShowCPFConfirm(true);
       if (data.length % 10 === 0) {
         setShowLoyaltyAlert(true);
@@ -124,24 +126,25 @@ export const PersonalInfo = ({
 
   const handleCPFConfirm = () => {
     setConfirmedCPF(clientData.cpf);
-    
+
     // When confirming the CPF, also load all the client data
     if (originalClientData) {
-      onClientDataChange({ 
+      onClientDataChange({
         ...originalClientData,
         isPaid: clientData.isPaid,
         deliveryFee: clientData.deliveryFee,
-        specialDiscount: clientData.specialDiscount
+        specialDiscount: clientData.specialDiscount,
       });
-      
+
       // Notify user that client data was loaded
       toast({
         title: "Dados do cliente carregados",
-        description: "Os dados do cliente foram carregados automaticamente. Qualquer alteração será salva na próxima fatura.",
+        description:
+          "Os dados do cliente foram carregados automaticamente. Qualquer alteração será salva na próxima fatura.",
         duration: 5000,
       });
     }
-    
+
     setShowCPFConfirm(false);
   };
 
@@ -174,9 +177,8 @@ export const PersonalInfo = ({
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">CPF *</label>
+        <label className="text-sm font-medium">CPF</label>
         <Input
-          required
           value={clientData.cpf}
           onChange={(e) => handleCPFChange(e.target.value)}
           onBlur={() => handleBlur("cpf")}
