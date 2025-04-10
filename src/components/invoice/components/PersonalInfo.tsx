@@ -62,6 +62,8 @@ export const PersonalInfo = ({
     }
   }, [clientData]);
 
+  const CPF_TEST = "99999999999";
+
   const handleBlur = async (field: string) => {
     setTouchedFields((prev) => ({ ...prev, [field]: true }));
     if (field === "cpf" && clientData.cpf && validateCPF(clientData.cpf)) {
@@ -125,6 +127,9 @@ export const PersonalInfo = ({
   };
 
   const handleCPFConfirm = () => {
+    if (clientData.cpf === "99999999") {
+      return;
+    }
     setConfirmedCPF(clientData.cpf);
 
     // When confirming the CPF, also load all the client data
@@ -149,6 +154,9 @@ export const PersonalInfo = ({
   };
 
   const handleCPFCancel = () => {
+    if (clientData.cpf === "99999999") {
+      return;
+    }
     setShowCPFConfirm(false);
     onClientDataChange({ ...clientData, cpf: "" });
   };
