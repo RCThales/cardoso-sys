@@ -1,4 +1,3 @@
-
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -33,23 +32,33 @@ export const ExtendRentalDialog = ({
   }, [days, calculateAdditionalCost]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setDays(Math.max(1, parseInt(value) || 1));
+    const newValue = e.target.value;
+    if (newValue === "") {
+      setDays(0); // Temporariamente vazio
+      return;
+    }
+    const newDaysValue = parseInt(newValue, 10);
+    if (newDaysValue >= 1) {
+      setDays(Math.max(1, parseInt(e.target.value) || 1));
+    }
   };
 
   const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    if (!e.target.value.trim()) {
-      // If the input is empty when blurred, restore the previous value
-      setDays(parseInt(previousValue) || 1);
-    } else {
-      // Save the current value as the previous value
-      setPreviousValue(days.toString());
+    if (days === 0) {
+      setDays(1); // Se estiver vazio ao perder o foco, volta para 1
     }
   };
 
   const handleDiscountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseFloat(e.target.value) || 0;
-    setDiscount(Math.max(0, Math.min(value, additionalCost))); // Ensure discount doesn't exceed cost
+    const newValue = e.target.value;
+    if (newValue === "") {
+      setDiscount(0); // Temporariamente vazio
+      return;
+    }
+    const newDiscountValue = parseFloat(e.target.value) || 0;
+    if (newDiscountValue >= 1) {
+      setDiscount(Math.max(0, Math.min(newDiscountValue, additionalCost))); // Ensure discount doesn't exceed cost
+    }
   };
 
   const finalCost = Math.max(0, additionalCost - discount);
@@ -65,8 +74,8 @@ export const ExtendRentalDialog = ({
             <label className="text-sm font-medium">Dias Adicionais:</label>
             <Input
               type="number"
-              min="1"
-              value={days}
+              min={0}
+              value={days === 0 ? "" : days}
               onChange={handleChange}
               onBlur={handleBlur}
             />
@@ -76,10 +85,15 @@ export const ExtendRentalDialog = ({
             <label className="text-sm font-medium">Desconto:</label>
             <Input
               type="number"
-              min="0"
+              min={0}
               max={additionalCost}
-              value={discount}
+              value={discount === 0 ? "" : discount}
               onChange={handleDiscountChange}
+              onBlur={() => {
+                if (discount === 0) {
+                  setDiscount(0); // Se estiver vazio ao perder o foco, volta para 1
+                }
+              }}
               placeholder="0.00"
             />
           </div>
@@ -89,14 +103,14 @@ export const ExtendRentalDialog = ({
               <span>Custo Adicional:</span>
               <span>R$ {formatCurrency(additionalCost)}</span>
             </div>
-            
+
             {discount > 0 && (
               <div className="flex justify-between text-sm text-muted-foreground">
                 <span>Desconto:</span>
                 <span>- R$ {formatCurrency(discount)}</span>
               </div>
             )}
-            
+
             <div className="flex justify-between font-bold pt-2 border-t border-border">
               <span>Total:</span>
               <span>R$ {formatCurrency(finalCost)}</span>

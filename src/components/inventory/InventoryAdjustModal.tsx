@@ -72,11 +72,24 @@ export const InventoryAdjustModal = ({
             <Input
               id="adjustQuantity"
               type="number"
-              min="1"
-              value={adjustQuantity}
-              onChange={(e) =>
-                setAdjustQuantity(Math.max(1, parseInt(e.target.value) || 1))
-              }
+              min={0}
+              value={adjustQuantity === 0 ? "" : adjustQuantity}
+              onChange={(e) => {
+                const newValue = e.target.value;
+                if (newValue === "") {
+                  setAdjustQuantity(0); // Temporariamente vazio
+                  return;
+                }
+                const newQuantityValue = parseInt(newValue, 10);
+                if (newQuantityValue >= 1) {
+                  setAdjustQuantity(Math.max(1, parseInt(e.target.value) || 1));
+                }
+              }}
+              onBlur={() => {
+                if (adjustQuantity === 0) {
+                  setAdjustQuantity(1); // Se estiver vazio ao perder o foco, volta para 1
+                }
+              }}
               className="w-full"
             />
           </div>
