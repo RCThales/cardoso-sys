@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useParams, useLocation } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
@@ -25,7 +24,7 @@ const InvoiceHistory = () => {
   );
   const [filterType, setFilterType] = useState<
     "all" | "rental" | "sale" | "hybrid"
-  >("all");
+  >("rental");
   const [todayOnly, setTodayOnly] = useState<boolean>(false); // Added today only state
 
   const { invoice_id } = useParams();
@@ -105,8 +104,8 @@ const InvoiceHistory = () => {
             </Select>
 
             <div className="flex items-center space-x-2">
-              <Switch 
-                id="today-only" 
+              <Switch
+                id="today-only"
                 checked={todayOnly}
                 onCheckedChange={setTodayOnly}
               />
