@@ -34,7 +34,7 @@ interface InvoiceTableProps {
   invoiceId?: string | null;
   onRefresh: () => void;
   filterType: "all" | "rental" | "sale" | "hybrid";
-  todayOnly: boolean; // Added todayOnly prop
+  todayOnly: boolean;
 }
 
 export const InvoiceTable = ({
@@ -48,7 +48,7 @@ export const InvoiceTable = ({
   invoiceId,
   onRefresh,
   filterType,
-  todayOnly, // Added todayOnly prop
+  todayOnly,
 }: InvoiceTableProps) => {
   const { toast } = useToast();
   const [returnDialogOpen, setReturnDialogOpen] = useState(false);
@@ -89,14 +89,12 @@ export const InvoiceTable = ({
   // Filter for today's invoices if todayOnly is true
   const filterInvoicesByDate = (invoices: Invoice[]) => {
     if (!todayOnly) return invoices;
-    
-    const today = new Date().toISOString().split('T')[0]; // Format: YYYY-MM-DD
-    
-    return invoices.filter(invoice => 
-      invoice.invoice_date === today
-    );
+
+    const today = new Date().toISOString().split("T")[0]; // Format: YYYY-MM-DD
+
+    return invoices.filter((invoice) => invoice.return_date === today);
   };
-  
+
   const filteredCurrentInvoice =
     currentInvoice &&
     (filterType === "all" ||
@@ -108,7 +106,8 @@ export const InvoiceTable = ({
           : filterType === "hybrid"
           ? "HÍBRIDO"
           : "all")) &&
-    (!todayOnly || currentInvoice.invoice_date === new Date().toISOString().split('T')[0])
+    (!todayOnly ||
+      currentInvoice.invoice_date === new Date().toISOString().split("T")[0])
       ? currentInvoice
       : null;
 
@@ -117,15 +116,17 @@ export const InvoiceTable = ({
     ? invoices.filter((invoice) => invoice.invoice_number !== invoiceId)
     : invoices;
 
-  const filteredInvoices = filterInvoicesByDate(otherInvoices).filter((invoice) => {
-    const type = getInvoiceType(invoice);
-    return (
-      filterType === "all" ||
-      (filterType === "rental" && type === "ALUGUEL") ||
-      (filterType === "sale" && type === "VENDA") ||
-      (filterType === "hybrid" && type === "HÍBRIDO")
-    );
-  });
+  const filteredInvoices = filterInvoicesByDate(otherInvoices).filter(
+    (invoice) => {
+      const type = getInvoiceType(invoice);
+      return (
+        filterType === "all" ||
+        (filterType === "rental" && type === "ALUGUEL") ||
+        (filterType === "sale" && type === "VENDA") ||
+        (filterType === "hybrid" && type === "HÍBRIDO")
+      );
+    }
+  );
 
   // Paginação: pega os 10 itens correspondentes à página atual
   const paginatedInvoices = filteredInvoices.slice(

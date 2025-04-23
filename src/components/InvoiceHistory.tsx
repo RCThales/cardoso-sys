@@ -78,13 +78,13 @@ export const InvoiceHistory = ({
     if (search) {
       convertedInvoices = convertedInvoices.filter((invoice) => {
         // Search in regular invoice fields
-        const fieldsMatch = 
+        const fieldsMatch =
           invoice.client_name.toLowerCase().includes(search.toLowerCase()) ||
           invoice.client_cpf.toLowerCase().includes(search.toLowerCase()) ||
           invoice.invoice_number.toLowerCase().includes(search.toLowerCase());
 
         // Search in product descriptions from invoice items
-        const productsMatch = invoice.items.some(item => 
+        const productsMatch = invoice.items.some((item) =>
           item.description?.toLowerCase().includes(search.toLowerCase())
         );
 
